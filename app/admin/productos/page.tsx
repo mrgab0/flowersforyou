@@ -16,7 +16,7 @@ export default async function InventarioAdmin() {
           <Link href="/admin/productos" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700">
             Editar Productos
           </Link>
-          <Link href="/admin/productos/crear" className="bg-[#D81B60] text-white px-6 py-2 rounded-lg font-bold hover:bg-[#B0004A]">
+          <Link href="/admin/productos/crear" className="bg-[#FF97A4] text-white px-6 py-2 rounded-lg font-bold hover:bg-[#B0004A]">
             + Crear Producto
           </Link>
         </div>
@@ -67,3 +67,4 @@ export default async function InventarioAdmin() {
     </div>
   );
 }
+

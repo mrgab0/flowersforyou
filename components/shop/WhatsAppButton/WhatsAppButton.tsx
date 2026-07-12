@@ -28,7 +28,7 @@ export const WhatsAppButton = ({
   return (
     <button
       onClick={handleClick}
-      className="fixed bottom-8 right-8 z-50 flex items-center gap-4 bg-[#D81B60] text-white pl-5 pr-7 py-4 rounded-full shadow-[0px_10px_30px_rgba(216,27,96,0.3)] hover:scale-105 transition-all duration-300 active:scale-95 group"
+      className="fixed bottom-8 right-8 z-50 flex items-center gap-4 bg-[#FF97A4] text-white pl-5 pr-7 py-4 rounded-full shadow-[0px_10px_30px_rgba(216,27,96,0.3)] hover:scale-105 transition-all duration-300 active:scale-95 group"
       aria-label="Contactar por WhatsApp"
     >
       <div className="relative bg-white/20 p-2 rounded-full backdrop-blur-sm">
@@ -45,3 +45,4 @@ export const WhatsAppButton = ({
     </button>
   );
 };
+

@@ -37,7 +37,7 @@ export const ProductCard = ({ name, price, image, onPress }: ProductCardProps) =
       />
       
       <StyledView className="p-5">
-        <StyledText className="text-[#D81B60] text-[10px] font-bold uppercase tracking-[2px] mb-1">
+        <StyledText className="text-[#FF97A4] text-[10px] font-bold uppercase tracking-[2px] mb-1">
           Premium Selection
         </StyledText>
         
@@ -48,12 +48,12 @@ export const ProductCard = ({ name, price, image, onPress }: ProductCardProps) =
         <StyledView className="flex-row justify-between items-center pt-3 border-t border-gray-50">
           <StyledView>
             <StyledText className="text-[9px] text-gray-400 uppercase font-bold tracking-widest">Desde</StyledText>
-            <StyledText className="text-2xl font-black text-[#D81B60]">
+            <StyledText className="text-2xl font-black text-[#FF97A4]">
               ${price.toFixed(2)}
             </StyledText>
           </StyledView>
           
-          <StyledView className="bg-[#D81B60] px-6 py-3 rounded-xl shadow-lg shadow-[#D81B60]/30">
+          <StyledView className="bg-[#FF97A4] px-6 py-3 rounded-xl shadow-lg shadow-[#FF97A4]/30">
             <StyledText className="text-white text-xs font-black uppercase tracking-widest">
               Añadir
             </StyledText>
@@ -63,3 +63,4 @@ export const ProductCard = ({ name, price, image, onPress }: ProductCardProps) =
     </StyledTouchableOpacity>
   );
 };
+

@@ -35,46 +35,46 @@ export default function CrearProductoPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre del Producto</label>
-            <input name="name" placeholder="Ramo Magenta Imperial" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
+            <input name="name" placeholder="Ramo Magenta Imperial" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">SKU (Código único)</label>
-            <input name="sku" placeholder="RAM-MAG-001" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
+            <input name="sku" placeholder="RAM-MAG-001" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Precio ($ USD)</label>
-              <input name="price" type="number" step="0.01" placeholder="85.00" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
+              <input name="price" type="number" step="0.01" placeholder="85.00" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Stock / Cantidad Total</label>
-              <input name="stock" type="number" placeholder="10" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
+              <input name="stock" type="number" placeholder="10" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Categoría</label>
-            <input name="category" placeholder="Bestseller" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
+            <input name="category" placeholder="Bestseller" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">URL de Imagen</label>
-            <input name="image" placeholder="https://images.unsplash.com/..." className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
+            <input name="image" placeholder="https://images.unsplash.com/..." className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción del Producto</label>
-            <textarea name="description" placeholder="Detalles sobre el diseño floral..." className="p-3 border rounded-xl h-32 focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
+            <textarea name="description" placeholder="Detalles sobre el diseño floral..." className="p-3 border rounded-xl h-32 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
           </div>
           
           <div className="flex gap-4 pt-4 border-t">
               <button 
                 type="submit" 
                 disabled={loading}
-                className="bg-[#D81B60] text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-[#B0004A] transition-colors shadow-md disabled:bg-gray-400 flex items-center gap-2"
+                className="bg-[#FF97A4] text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-[#B0004A] transition-colors shadow-md disabled:bg-gray-400 flex items-center gap-2"
               >
                 {loading ? "Guardando..." : "Guardar Producto"}
               </button>
@@ -124,3 +124,4 @@ export default function CrearProductoPage() {
     </div>
   );
 }
+

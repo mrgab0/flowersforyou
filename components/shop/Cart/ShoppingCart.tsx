@@ -27,7 +27,7 @@ export const ShoppingCartComponent = () => {
       {/* Botón activador - Magenta Style */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-28 right-6 z-50 p-4 bg-[#D81B60] text-white rounded-full shadow-[0px_8px_25px_rgba(216,27,96,0.3)] hover:scale-105 transition-all duration-300 active:scale-95"
+        className="fixed bottom-28 right-6 z-50 p-4 bg-[#FF97A4] text-white rounded-full shadow-[0px_8px_25px_rgba(216,27,96,0.3)] hover:scale-105 transition-all duration-300 active:scale-95"
       >
         <ShoppingCart size={24} />
         {cartItems.length > 0 && (
@@ -62,7 +62,7 @@ export const ShoppingCartComponent = () => {
                     <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg" />
                     <div className="flex-1">
                       <h3 className="font-bold text-[#1A1C1C] text-sm leading-tight">{item.name}</h3>
-                      <p className="text-[#D81B60] font-extrabold mt-1">${item.price.toFixed(2)}</p>
+                      <p className="text-[#FF97A4] font-extrabold mt-1">${item.price.toFixed(2)}</p>
                     </div>
                     <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
                       <button className="p-1 hover:bg-white rounded transition-colors text-gray-500"><Minus size={14}/></button>
@@ -81,7 +81,7 @@ export const ShoppingCartComponent = () => {
               </div>
               <button 
                 disabled={cartItems.length === 0}
-                className="w-full bg-[#D81B60] text-white py-5 rounded-xl font-bold hover:bg-[#B0004A] disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-300 shadow-lg shadow-[#D81B60]/20 flex justify-center items-center gap-2 group"
+                className="w-full bg-[#FF97A4] text-white py-5 rounded-xl font-bold hover:bg-[#B0004A] disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-300 shadow-lg shadow-[#FF97A4]/20 flex justify-center items-center gap-2 group"
               >
                 Tramitar Pedido
                 <span className="transform group-hover:translate-x-1 transition-transform">→</span>
@@ -93,3 +93,4 @@ export const ShoppingCartComponent = () => {
     </>
   );
 };
+

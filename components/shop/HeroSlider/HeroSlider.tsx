@@ -43,7 +43,7 @@ export const HeroSlider = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex flex-col items-start justify-center p-12 text-left">
             <h3 className="text-4xl md:text-5xl font-serif font-extrabold text-white mb-3 tracking-tight">{slide.title}</h3>
             <p className="text-xl text-white/90 mb-6 max-w-lg">{slide.description}</p>
-            <button className="bg-[#D81B60] text-white px-8 py-3 rounded-full font-bold hover:bg-[#B0004A] transition-colors shadow-lg">
+            <button className="bg-[#FF97A4] text-white px-8 py-3 rounded-full font-bold hover:bg-[#B0004A] transition-colors shadow-lg">
               Ver Oferta
             </button>
           </div>
@@ -52,3 +52,4 @@ export const HeroSlider = () => {
     </div>
   );
 };
+

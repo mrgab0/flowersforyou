@@ -20,18 +20,18 @@ export default async function Home() {
           <LoginButton />
         </div>
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 -left-20 w-72 h-72 bg-[#D81B60] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 -right-20 w-96 h-96 bg-[#D81B60] rounded-full blur-3xl animate-pulse delay-700" />
+          <div className="absolute top-0 -left-20 w-72 h-72 bg-[#FF97A4] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 -right-20 w-96 h-96 bg-[#FF97A4] rounded-full blur-3xl animate-pulse delay-700" />
         </div>
         
         <div className="container mx-auto px-6 text-center z-10">
           <h1 className="text-5xl md:text-7xl font-serif font-black text-[#1A1C1C] mb-6 tracking-tighter">
-            Lujo <span className="text-[#D81B60]">Floral</span> Editorial
+            Flowers <span className="text-[#FF97A4]">For You</span>
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
             Transformamos el arte de regalar en una experiencia de boutique moderna. Diseños vibrantes que respiran sofisticación.
           </p>
-          <button className="bg-[#D81B60] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#D81B60]/20">
+          <button className="bg-[#FF97A4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20">
             Explorar Colección
           </button>
         </div>
@@ -46,10 +46,10 @@ export default async function Home() {
       <section className="container mx-auto px-6 py-20">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <span className="text-[#D81B60] text-xs font-black uppercase tracking-[0.2em]">Selección Premium</span>
+            <span className="text-[#FF97A4] text-xs font-black uppercase tracking-[0.2em]">Selección Premium</span>
             <h2 className="text-4xl font-serif font-bold text-[#1A1C1C] mt-2">Nuestras Flores</h2>
           </div>
-          <a href="#" className="text-[#D81B60] font-bold border-b-2 border-[#D81B60] pb-1 hover:text-[#B0004A] hover:border-[#B0004A] transition-all">
+          <a href="#" className="text-[#FF97A4] font-bold border-b-2 border-[#FF97A4] pb-1 hover:text-[#B0004A] hover:border-[#B0004A] transition-all">
             Ver catálogo completo
           </a>
         </div>
@@ -60,6 +60,7 @@ export default async function Home() {
               <ProductCard 
                 key={product._id.toString()}
                 name={product.name}
+                slug={product.slug}
                 price={product.price}
                 category={product.category}
                 image={product.images[0] || "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?auto=format&fit=crop&q=80&w=800"}
@@ -103,3 +104,4 @@ export default async function Home() {
     </main>
   );
 }
+

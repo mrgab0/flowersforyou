@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CookieConsent } from "@/components/CookieConsent";
+import { CartProvider } from "@/components/shop/Cart/CartContext";
 
 export const metadata: Metadata = {
   title: "Flowers For You | Magenta Flora Modern",
@@ -9,18 +10,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="es">
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans antialiased">
-        {children}
-        <CookieConsent />
+        <CartProvider>
+          {children}
+          <CookieConsent />
+        </CartProvider>
       </body>
     </html>
   );
 }
+

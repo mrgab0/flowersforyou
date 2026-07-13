@@ -1,24 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ShoppingCart, X, Plus, Minus } from 'lucide-react';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
+import { useCart } from './CartContext';
+import Link from 'next/link';
 
 export const ShoppingCartComponent = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
-  useEffect(() => {
-    const savedCart = localStorage.getItem('flower_cart');
-    if (savedCart) setCartItems(JSON.parse(savedCart));
-  }, []);
+  const { cartItems, addToCart, removeFromCart, decreaseFromCart } = useCart();
 
   const total = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
@@ -32,7 +21,7 @@ export const ShoppingCartComponent = () => {
         <ShoppingCart size={24} />
         {cartItems.length > 0 && (
           <span className="absolute -top-1 -right-1 bg-[#1A1C1C] text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white">
-            {cartItems.length}
+            {cartItems.reduce((acc, item) => acc + item.quantity, 0)}
           </span>
         )}
       </button>
@@ -58,16 +47,34 @@ export const ShoppingCartComponent = () => {
                 </div>
               ) : (
                 cartItems.map((item) => (
-                  <div key={item.id} className="flex gap-4 p-4 bg-white rounded-xl shadow-[0px_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 items-center">
+                  <div key={item.id} className="relative flex gap-4 p-4 bg-white rounded-xl shadow-[0px_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 items-center">
+                    {/* Botón X para eliminar producto */}
+                    <button 
+                      onClick={() => removeFromCart(item.id)}
+                      className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                    
                     <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg" />
                     <div className="flex-1">
                       <h3 className="font-bold text-[#1A1C1C] text-sm leading-tight">{item.name}</h3>
                       <p className="text-[#FF97A4] font-extrabold mt-1">${item.price.toFixed(2)}</p>
                     </div>
                     <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
-                      <button className="p-1 hover:bg-white rounded transition-colors text-gray-500"><Minus size={14}/></button>
+                      <button 
+                        onClick={() => decreaseFromCart(item.id)}
+                        className="p-1 hover:bg-white rounded transition-colors text-gray-500"
+                      >
+                        <Minus size={14}/>
+                      </button>
                       <span className="text-xs font-bold text-[#1A1C1C] w-4 text-center">{item.quantity}</span>
-                      <button className="p-1 hover:bg-white rounded transition-colors text-gray-500"><Plus size={14}/></button>
+                      <button 
+                        onClick={() => addToCart(item)}
+                        className="p-1 hover:bg-white rounded transition-colors text-gray-500"
+                      >
+                        <Plus size={14}/>
+                      </button>
                     </div>
                   </div>
                 ))
@@ -79,13 +86,10 @@ export const ShoppingCartComponent = () => {
                 <span className="text-gray-400 font-bold uppercase text-xs tracking-widest">Total Estimado</span>
                 <span className="text-3xl font-extrabold text-[#1A1C1C]">${total.toFixed(2)}</span>
               </div>
-              <button 
-                disabled={cartItems.length === 0}
-                className="w-full bg-[#FF97A4] text-white py-5 rounded-xl font-bold hover:bg-[#B0004A] disabled:bg-gray-200 disabled:text-gray-400 transition-all duration-300 shadow-lg shadow-[#FF97A4]/20 flex justify-center items-center gap-2 group"
-              >
+              <Link href="/checkout" className={`w-full bg-[#FF97A4] text-white py-5 rounded-xl font-bold hover:bg-[#B0004A] transition-all duration-300 shadow-lg shadow-[#FF97A4]/20 flex justify-center items-center gap-2 group ${cartItems.length === 0 ? 'pointer-events-none bg-gray-200 text-gray-400' : ''}`}>
                 Tramitar Pedido
                 <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>

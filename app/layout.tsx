@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CookieConsent } from "@/components/CookieConsent";
 import { CartProvider } from "@/components/shop/Cart/CartContext";
+import { PedidoFlotante } from "@/components/shop/PedidoFlotante";
 
 export const metadata: Metadata = {
   title: "Flowers For You | Magenta Flora Modern",
@@ -20,6 +21,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <CartProvider>
+          <PedidoFlotante />
           {children}
           <CookieConsent />
         </CartProvider>

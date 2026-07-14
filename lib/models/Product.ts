@@ -35,11 +35,23 @@ const ProductSchema: Schema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+export function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD') // Normaliza acentos
+    .replace(/[\u0300-\u036f]/g, '') // Elimina acentos
+    .replace(/\s+/g, '-') // Reemplaza espacios por -
+    .replace(/[^\w\-]+/g, '') // Elimina caracteres especiales (incluyendo rayas especiales)
+    .replace(/\-\-+/g, '-') // Evita guiones múltiples --
+    .replace(/^-+/, '') // Quita guiones iniciales
+    .replace(/-+$/, ''); // Quita guiones finales
+}
+
 // Middleware para generar slug si no existe (opcional)
 ProductSchema.pre('save', function(next) {
   if (this.isModified('name')) {
-    // Lógica simple de slug
-    this.set('slug', this.get('name').toLowerCase().replace(/ /g, '-'));
+    this.set('slug', slugify(this.get('name')));
   }
   next();
 });

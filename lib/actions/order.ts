@@ -7,37 +7,35 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
   await dbConnect();
 
   if (existingOrderId) {
-    // Intentamos encontrar la orden base (ej: quitar el -2, -3 para buscar la base)
-    const baseOrderId = existingOrderId.split('-').slice(0, -1).join('-');
-    const baseOrder = await Order.findOne({ orderId: new RegExp(`^${baseOrderId}`) }).sort({ createdAt: 1 });
+    // Buscamos la orden original por su ID exacto
+    const originalOrder = await Order.findOne({ orderId: existingOrderId });
+    
+    if (originalOrder) {
+        // Extraemos la parte base (FFY-12345) y el sufijo (-1)
+        const parts = existingOrderId.split('-');
+        const baseId = `${parts[0]}-${parts[1]}`;
+        const currentVersion = parseInt(parts[2]) || 1;
+        const newVersion = currentVersion + 1;
+        const newOrderId = `${baseId}-${newVersion}`;
 
-    if (baseOrder) {
-      // Calcular nuevo sufijo
-      const currentSuffix = parseInt(existingOrderId.split('-').pop() || "1");
-      const newSuffix = currentSuffix + 1;
-      const newOrderId = `${baseOrderId}-${newSuffix}`;
-
-      // Crear nueva versión de la orden
-      const expandedOrder = new Order({
-        ...baseOrder.toObject(),
-        _id: undefined, // Crear nuevo documento
-        orderId: newOrderId,
-        items: [...baseOrder.items, ...orderData.items],
-        total: baseOrder.total + orderData.total,
-        paymentRef: orderData.paymentRef, // Actualizamos con la nueva referencia
-        createdAt: new Date(),
-      });
-
-      await expandedOrder.save();
-      return { success: true, orderId: newOrderId };
+        // Creamos una nueva orden con la información acumulada
+        const expandedOrder = new Order({
+            ...orderData,
+            orderId: newOrderId,
+            items: [...originalOrder.items, ...orderData.items],
+            total: originalOrder.total + orderData.total,
+            createdAt: new Date(),
+        });
+        
+        await expandedOrder.save();
+        return { success: true, orderId: expandedOrder.orderId };
     }
   }
 
-  // Si no hay orden existente, creamos la primera
-  const baseId = "FFY-" + Math.floor(Math.random() * 100000);
+  // LÓGICA DE NUEVO PEDIDO
   const newOrder = new Order({
     ...orderData,
-    orderId: `${baseId}-1`,
+    orderId: "FFY-" + Math.floor(Math.random() * 100000) + "-1",
     createdAt: new Date(),
   });
 

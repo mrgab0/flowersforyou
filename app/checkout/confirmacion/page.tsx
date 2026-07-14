@@ -1,12 +1,19 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
+import { Order } from "@/lib/models/Order";
+import dbConnect from "@/lib/db";
 import Link from "next/link";
 import { CheckCircle2, MessageCircle, Home } from "lucide-react";
+import { OrderSummary } from "@/components/shop/OrderSummary";
 
-export default function ConfirmacionPage() {
-  const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId") || "FFY-" + Math.floor(Math.random() * 100000);
+export default async function ConfirmacionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ orderId: string }>;
+}) {
+  const { orderId } = await searchParams;
+  await dbConnect();
+  
+  const orderDoc = await Order.findOne({ orderId }).lean();
+  const order = orderDoc ? JSON.parse(JSON.stringify(orderDoc)) : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F9F9F9] p-6">
@@ -23,6 +30,8 @@ export default function ConfirmacionPage() {
             <p className="text-sm text-gray-500 uppercase tracking-widest font-bold">Número de Pedido</p>
             <p className="text-2xl font-mono font-bold text-[#D81B60]">{orderId}</p>
         </div>
+
+        {order && <OrderSummary items={order.items} />}
 
         <div className="flex flex-col gap-4">
           <a 

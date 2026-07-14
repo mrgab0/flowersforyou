@@ -1,7 +1,7 @@
 "use server";
 
 import dbConnect from "@/lib/db";
-import { Product } from "@/lib/models/Product";
+import { Product, slugify } from "@/lib/models/Product";
 import { revalidatePath } from "next/cache";
 
 export async function updateProduct(id: string, formData: FormData) {
@@ -24,7 +24,7 @@ export async function updateProduct(id: string, formData: FormData) {
       images: [image],
       stock,
       sku,
-      slug: name.toLowerCase().replace(/ /g, '-'),
+      slug: slugify(name),
     }, { new: true });
 
     revalidatePath("/admin/productos");
@@ -57,7 +57,7 @@ export async function createProduct(formData: FormData) {
       images: [image],
       stock,
       sku,
-      slug: name.toLowerCase().replace(/ /g, '-'),
+      slug: slugify(name),
     });
 
     const saved = await newProduct.save();

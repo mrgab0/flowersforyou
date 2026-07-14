@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/db";
 import { Product } from "@/lib/models/Product";
 import { notFound } from "next/navigation";
+import { AddToCartButton } from "@/components/shop/AddToCartButton";
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   await dbConnect();
@@ -31,14 +32,27 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#1A1C1C] mb-4">{product.name}</h1>
             <p className="text-3xl font-extrabold text-[#D81B60] mb-6">${product.price.toFixed(2)}</p>
             
-            <p className="text-gray-600 text-lg leading-relaxed mb-8">
-              {product.description}
-            </p>
+            {/* Especificaciones Técnicas */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <p className="text-[10px] text-gray-500 font-bold uppercase">SKU</p>
+                <p className="font-mono font-bold text-sm">{product.sku || "N/A"}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <p className="text-[10px] text-gray-500 font-bold uppercase">Stock</p>
+                <p className="font-bold text-sm">{product.stock || 0} unidades</p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="font-bold text-sm uppercase tracking-widest text-[#1A1C1C] mb-3">Detalles</h3>
+              <p className="text-gray-600 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
 
             <div className="flex flex-col gap-4">
-              <button className="bg-[#D81B60] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-lg shadow-[#D81B60]/20">
-                Añadir al Carrito
-              </button>
+              <AddToCartButton product={product} />
             </div>
           </div>
         </div>

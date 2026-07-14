@@ -1,5 +1,4 @@
 import { ProductCard } from "@/components/shop/ProductCard/ProductCard";
-import { ShoppingCartComponent } from "@/components/shop/Cart/ShoppingCart";
 import { WhatsAppButton } from "@/components/shop/WhatsAppButton/WhatsAppButton";
 import { LoginButton } from "@/components/LoginButton";
 import { HeroSlider } from "@/components/shop/HeroSlider/HeroSlider";
@@ -74,7 +73,6 @@ export default async function Home() {
       </section>
 
       {/* Global Components */}
-      <ShoppingCartComponent />
       <WhatsAppButton phoneNumber="5491122334455" />
 
       {/* Footer */}

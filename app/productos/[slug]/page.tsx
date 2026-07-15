@@ -7,11 +7,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   await dbConnect();
   
   const resolvedParams = await params;
-  const product = await Product.findOne({ slug: resolvedParams.slug }).lean();
+  const productDoc = await Product.findOne({ slug: resolvedParams.slug }).lean();
 
-  if (!product) {
+  if (!productDoc) {
     notFound();
   }
+
+  // Convertimos a JSON plano para que React pueda pasarlo a un Client Component
+  const product = JSON.parse(JSON.stringify(productDoc));
 
   return (
     <main className="min-h-screen bg-[#F9F9F9] py-20">

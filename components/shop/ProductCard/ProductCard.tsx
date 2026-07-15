@@ -20,11 +20,11 @@ export const ProductCard = ({ id, name, slug, price, image, category }: ProductC
     <div className="group relative bg-white rounded-2xl transition-all duration-500 overflow-hidden shadow-[0px_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0px_12px_30px_rgba(0,0,0,0.08)]">
       <Link href={`/productos/${slug}`} className="block">
         {/* Contenedor de Imagen con Zoom suave */}
-        <div className="relative aspect-[4/5] overflow-hidden bg-[#F9F9F9]">
+        <div className="relative aspect-square overflow-hidden bg-[#F9F9F9]">
           <img
             src={image}
             alt={name}
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+            className="w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           {/* Badge Flotante estilo Chip */}
           <div className="absolute top-4 left-4">

@@ -33,7 +33,8 @@ export const ProductCard = ({ name, price, image, onPress }: ProductCardProps) =
     >
       <Image 
         source={{ uri: image }} 
-        className="w-full h-56 object-cover bg-gray-50"
+        resizeMode="contain"
+        className="w-full h-56 bg-gray-50"
       />
       
       <StyledView className="p-5">

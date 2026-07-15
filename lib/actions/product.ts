@@ -1,7 +1,7 @@
 "use server";
 
 import dbConnect from "@/lib/db";
-import { Product } from "@/lib/models/Product";
+import { Product, slugify } from "@/lib/models/Product";
 import { Order } from "@/lib/models/Order";
 import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
@@ -20,6 +20,9 @@ export async function createProduct(formData: FormData) {
     const image = formData.get("image") as string;
     const stock = parseInt(formData.get("stock") as string) || 0;
     const sku = formData.get("sku") as string || "";
+    const flowerType = formData.get("flowerType") as string || "";
+    const dimensions = formData.get("dimensions") as string || "";
+    const careInstructions = formData.get("careInstructions") as string || "";
 
     const newProduct = new Product({
       name,
@@ -29,7 +32,10 @@ export async function createProduct(formData: FormData) {
       images: [image],
       stock,
       sku,
-      slug: name.toLowerCase().replace(/ /g, '-'),
+      flowerType,
+      dimensions,
+      careInstructions,
+      slug: slugify(name),
     });
 
     const saved = await newProduct.save();
@@ -52,6 +58,9 @@ export async function updateProduct(id: string, formData: FormData) {
     const image = formData.get("image") as string;
     const stock = parseInt(formData.get("stock") as string) || 0;
     const sku = formData.get("sku") as string || "";
+    const flowerType = formData.get("flowerType") as string || "";
+    const dimensions = formData.get("dimensions") as string || "";
+    const careInstructions = formData.get("careInstructions") as string || "";
 
     const updated = await Product.findByIdAndUpdate(id, {
       name,
@@ -61,7 +70,10 @@ export async function updateProduct(id: string, formData: FormData) {
       images: [image],
       stock,
       sku,
-      slug: name.toLowerCase().replace(/ /g, '-'),
+      flowerType,
+      dimensions,
+      careInstructions,
+      slug: slugify(name),
     }, { new: true });
 
     revalidatePath("/admin/productos");

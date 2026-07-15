@@ -10,7 +10,9 @@ export interface IProduct extends Document {
   images: string[];
   stock: number;
   category: string;
-  occasion: string;
+  flowerType: string;
+  dimensions: string;
+  careInstructions: string;
   seo: {
     title: string;
     description: string;
@@ -27,7 +29,9 @@ const ProductSchema: Schema = new Schema({
   images: [{ type: String }],
   stock: { type: Number, default: 0 },
   category: { type: String, required: true },
-  occasion: { type: String },
+  flowerType: { type: String, default: "" },
+  dimensions: { type: String, default: "" },
+  careInstructions: { type: String, default: "" },
   seo: {
     title: { type: String },
     description: { type: String }

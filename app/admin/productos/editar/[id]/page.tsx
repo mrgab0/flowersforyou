@@ -1,18 +1,21 @@
 import dbConnect from "@/lib/db";
-import { Product } from "@/lib/models/Product";
+import { Product, IProduct } from "@/lib/models/Product";
 import { updateProduct } from "@/lib/actions/product";
 
 export default async function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
   
   const resolvedParams = await params;
-  const product = await Product.findById(resolvedParams.id).lean();
+  const product = (await Product.findById(resolvedParams.id).lean()) as IProduct | null;
 
   if (!product) {
     return <div className="p-8">Producto no encontrado</div>;
   }
 
-  const updateProductWithId = updateProduct.bind(null, product._id.toString());
+  const updateProductWithId = async (formData: FormData) => {
+    'use server';
+    await updateProduct(product._id.toString(), formData);
+  };
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-2xl mx-auto">

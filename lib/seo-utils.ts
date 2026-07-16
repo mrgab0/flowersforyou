@@ -1,4 +1,4 @@
-import { Product } from "@prisma/client"; // Asumiendo Prisma
+import { IProduct as Product } from "@/lib/models/Product";
 
 /**
  * Genera el script JSON-LD para un arreglo floral.
@@ -11,7 +11,7 @@ export function getProductSchema(product: Product) {
     "name": product.name,
     "image": product.images,
     "description": product.description,
-    "sku": product.id,
+    "sku": product._id.toString(),
     "offers": {
       "@type": "Offer",
       "url": `https://tuflowershop.com/product/${product.slug}`,

@@ -59,7 +59,8 @@ export function slugify(text: string) {
 // Middleware para generar slug si no existe (opcional)
 ProductSchema.pre('save', function(next) {
   if (this.isModified('name')) {
-    this.set('slug', slugify(this.get('name')));
+    const name = this.get('name') as string;
+    this.set('slug', slugify(name));
   }
   next();
 });

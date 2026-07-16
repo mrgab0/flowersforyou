@@ -3,6 +3,10 @@ import NextAuth from "next-auth"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import { authConfig } from "./auth-config"
 
+// DEBUG: Forzar validación de variables
+if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI no definida");
+if (!process.env.AUTH_SECRET) throw new Error("AUTH_SECRET no definida");
+
 const uri = process.env.MONGODB_URI!
 const options = {}
 

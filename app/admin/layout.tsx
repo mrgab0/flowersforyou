@@ -57,9 +57,6 @@ export default async function AdminLayout({
       return (
         // ... (resto del código igual) **/
 
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-
 export const runtime = 'nodejs';
 
 export default async function AdminLayout({
@@ -67,14 +64,6 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  
-  const adminEmails = process.env.ADMIN_EMAILS?.split(",") || [];
-
-  if (!session?.user?.email || !adminEmails.includes(session.user.email)) {
-    redirect("/");
-  }
-
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm p-4">

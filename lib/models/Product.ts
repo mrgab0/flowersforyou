@@ -13,6 +13,7 @@ export interface IProduct extends Document {
   flowerType: string;
   dimensions: string;
   careInstructions: string;
+  addons: mongoose.Types.ObjectId[] | any[]; // Reforzado
   seo: {
     title: string;
     description: string;

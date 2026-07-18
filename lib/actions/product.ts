@@ -54,7 +54,7 @@ export async function createProduct(formData: FormData) {
     return { success: true, id: saved._id.toString() };
   } catch (error) {
     console.error("Error al crear:", error);
-    return { success: false, error: "No se pudo guardar el producto" };
+    return { success: false, error: error instanceof Error ? error.message : "No se pudo guardar el producto" };
   }
 }
 
@@ -101,7 +101,7 @@ export async function updateProduct(id: string, formData: FormData) {
     return { success: true, id: updated?._id.toString() };
   } catch (error) {
     console.error("Error al editar:", error);
-    return { success: false, error: "No se pudo actualizar el producto" };
+    return { success: false, error: error instanceof Error ? error.message : "No se pudo actualizar el producto" };
   }
 }
 

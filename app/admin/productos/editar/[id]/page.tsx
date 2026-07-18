@@ -1,12 +1,15 @@
 import dbConnect from "@/lib/db";
 import { Product, IProduct } from "@/lib/models/Product";
+import { Addon } from "@/lib/models/Addon";
 import { updateProduct } from "@/lib/actions/product";
+import { AdminAddonManager } from "@/components/admin/AdminAddonManager";
 
 export default async function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
   
   const resolvedParams = await params;
-  const product = (await Product.findById(resolvedParams.id).lean()) as IProduct | null;
+  const product = (await Product.findById(resolvedParams.id).populate('addons').lean()) as IProduct | null;
+  const allAddons = await Addon.find({ isActive: true }).lean();
 
   if (!product) {
     return <div className="p-8">Producto no encontrado</div>;
@@ -22,6 +25,7 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
       <h2 className="text-2xl font-bold mb-6 text-[#1A1C1C]">Editar Producto</h2>
       
       <form action={updateProductWithId} className="space-y-6">
+        {/* ... (previous inputs) */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre del Producto</label>
           <input name="name" defaultValue={product.name} placeholder="Ramo Magenta Imperial" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
@@ -60,6 +64,9 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
           <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción del Producto</label>
           <textarea name="description" defaultValue={product.description} placeholder="Detalles sobre el diseño floral..." className="p-3 border rounded-xl h-32 focus:outline-none focus:ring-2 focus:ring-[#D81B60]" required />
         </div>
+        
+        {/* Admin Addon Manager */}
+        <AdminAddonManager availableAddons={JSON.parse(JSON.stringify(allAddons))} initialAddons={JSON.parse(JSON.stringify(product.addons || []))} />
         
         <div className="flex gap-4 pt-4 border-t">
             <button type="submit" className="bg-[#D81B60] text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-[#B0004A] transition-colors shadow-md">

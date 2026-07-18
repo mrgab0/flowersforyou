@@ -47,7 +47,7 @@ export const ShoppingCartComponent = () => {
                 </div>
               ) : (
                 cartItems.map((item) => (
-                  <div key={item.id} className="relative flex gap-4 p-4 bg-white rounded-xl shadow-[0px_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 items-center">
+                  <div key={`${item.id}-${JSON.stringify(item.addons)}`} className="relative flex gap-4 p-4 bg-white rounded-xl shadow-[0px_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 items-center">
                     {/* Botón X para eliminar producto */}
                     <button 
                       onClick={() => removeFromCart(item.id)}

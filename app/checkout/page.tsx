@@ -162,7 +162,7 @@ export default function CheckoutPage() {
           <h2 className="text-2xl font-bold mb-6">Tu Pedido</h2>
           <div className="space-y-4">
             {cartItems.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
+              <div key={`${item.id}-${JSON.stringify(item.addons)}`} className="flex justify-between text-sm">
                 <span>{item.quantity}x {item.name}</span>
                 <span>${(item.price * item.quantity).toFixed(2)}</span>
               </div>

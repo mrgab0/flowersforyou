@@ -19,10 +19,14 @@ export async function createAddon(formData: FormData) {
   try {
     const name = formData.get("name") as string;
     const price = parseFloat(formData.get("price") as string);
-    await Addon.create({ name, price });
+    const category = formData.get("category") as string;
+    const type = formData.get("type") as string;
+
+    await Addon.create({ name, price, category, type });
     revalidatePath("/admin/adicionales");
     return { success: true };
   } catch (error) {
+    console.error("Error al crear addon:", error);
     return { success: false, error: "Failed to create addon" };
   }
 }

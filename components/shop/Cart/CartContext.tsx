@@ -8,13 +8,14 @@ interface CartItem {
   price: number;
   quantity: number;
   image: string;
+  addons?: { addonId: string; value?: string }[];
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Omit<CartItem, 'quantity'>) => void;
-  decreaseFromCart: (id: string) => void;
-  removeFromCart: (id: string) => void;
+  decreaseFromCart: (id: string, addons?: { addonId: string; value?: string }[]) => void;
+  removeFromCart: (id: string, addons?: { addonId: string; value?: string }[]) => void;
   clearCart: () => void;
 }
 
@@ -34,10 +35,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id);
+      // Comparar tanto ID como addons para identificar artículos únicos
+      const existingItem = prev.find((item) => 
+        item.id === product.id && 
+        JSON.stringify(item.addons) === JSON.stringify(product.addons)
+      );
       if (existingItem) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id && JSON.stringify(item.addons) === JSON.stringify(product.addons)
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
       return [...prev, { ...product, quantity: 1 }];

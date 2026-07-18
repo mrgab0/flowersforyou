@@ -68,6 +68,7 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm p-4">
         <div className="container mx-auto flex justify-between items-center">
+            <img src="/logo.png" alt="Logo" className="h-10" />
             <h1 className="font-bold text-xl">Panel de Administración</h1>
         </div>
       </nav>

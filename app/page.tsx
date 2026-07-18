@@ -22,7 +22,7 @@ export default async function Home() {
         
         <div className="container mx-auto px-6 text-center z-10">
           <h1 className="text-5xl md:text-7xl font-serif font-black text-[#1A1C1C] mb-6 tracking-tighter">
-            Flowers <span className="text-[#FF97A4]">For You</span>
+            Flowers <span className="text-[#FF97A4]">For You</span> LLC
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
             Transformamos el arte de regalar en una experiencia de boutique moderna. Diseños vibrantes que respiran sofisticación.
@@ -70,7 +70,7 @@ export default async function Home() {
       </section>
 
       {/* Global Components */}
-      <WhatsAppButton phoneNumber="5491122334455" />
+      <WhatsAppButton phoneNumber="16576988586" />
 
       {/* Footer */}
       <footer className="bg-[#1A1C1C] text-gray-200 py-16">
@@ -78,7 +78,8 @@ export default async function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-gray-800 pb-12 mb-12">
             <h3 className="text-2xl font-serif font-bold text-white">Flowers For You</h3>
             <div className="flex gap-6 text-sm font-bold tracking-widest text-gray-300 uppercase">
-              <span>Houston, TX</span>
+              <span>6705 Fairway Dr.</span>
+              <span>Houston Texas 77087</span>
               <span>Boutique Digital</span>
             </div>
           </div>

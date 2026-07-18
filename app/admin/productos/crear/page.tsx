@@ -66,6 +66,11 @@ export default function CrearProductoPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción del Producto</label>
+            <textarea name="description" placeholder="Detalles sobre el diseño floral..." className="p-3 border rounded-xl h-32 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Categoría</label>
             <input name="category" placeholder="Bestseller" className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" required />
           </div>

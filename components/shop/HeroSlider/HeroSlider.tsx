@@ -36,11 +36,22 @@ export const HeroSlider = () => {
         >
           {slide.type === 'banner' ? (
             <>
-              <img 
-                src={slide.image} 
-                alt={slide.title} 
-                className="h-full w-full object-cover"
-              />
+              {slide.image.match(/\.(mp4|webm|ogg)$/i) ? (
+                <video 
+                  src={slide.image} 
+                  autoPlay 
+                  muted 
+                  loop 
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <img 
+                  src={slide.image} 
+                  alt={slide.title} 
+                  className="h-full w-full object-cover"
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex flex-col items-start justify-center p-12 text-left">
                 <h3 className="text-4xl md:text-5xl font-serif font-extrabold text-white mb-3 tracking-tight">{slide.title}</h3>
                 <p className="text-xl text-white/90 mb-6 max-w-lg">{slide.description}</p>

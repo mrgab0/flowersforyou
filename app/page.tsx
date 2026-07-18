@@ -2,6 +2,7 @@ import { ProductCard } from "@/components/shop/ProductCard/ProductCard";
 import { WhatsAppButton } from "@/components/shop/WhatsAppButton/WhatsAppButton";
 import { LoginButton } from "@/components/LoginButton";
 import { HeroSlider } from "@/components/shop/HeroSlider/HeroSlider";
+import { StickyNav } from "@/components/shop/StickyNav";
 import { CreditCard } from "lucide-react";
 import dbConnect from "@/lib/db";
 import { Product } from "@/lib/models/Product";
@@ -14,12 +15,15 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#F9F9F9]">
       {/* Hero Section */}
-      <section className="relative h-[60vh] flex items-center justify-center bg-white overflow-hidden">
+      <section className="relative h-[60vh] flex flex-col items-center justify-center bg-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 -left-20 w-72 h-72 bg-[#FF97A4] rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-0 -right-20 w-96 h-96 bg-[#FF97A4] rounded-full blur-3xl animate-pulse delay-700" />
         </div>
         
+        {/* Aquí insertamos la navegación */}
+        <StickyNav />
+
         <div className="container mx-auto px-6 text-center z-10">
           <h1 className="text-5xl md:text-7xl font-serif font-black text-[#1A1C1C] mb-6 tracking-tighter">
             Flowers <span className="text-[#FF97A4]">For You</span> LLC

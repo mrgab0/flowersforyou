@@ -21,7 +21,7 @@ export const InquiryModal = ({ isOpen, onClose }: InquiryModalProps) => {
           <X size={20} />
         </button>
         <iframe 
-          src="https://ais-dev-gjeqou6mjjfun4rarzcnn2-600791695047.us-west2.run.app"
+          src="https://flowers-for-you-chatbot-de-ventas.ai.studio/"
           className="w-full h-full border-none"
           title="Consulta Floral Chatbot"
         />

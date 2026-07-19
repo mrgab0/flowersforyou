@@ -11,21 +11,26 @@ export const InquiryModal = ({ isOpen, onClose }: InquiryModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg h-[80vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 z-10"
-        >
-          <X size={20} />
-        </button>
+    <>
+      {/* Overlay opcional solo en móviles para enfocar el chat */}
+      <div className="fixed inset-0 z-[90] bg-black/20 sm:hidden" onClick={onClose} />
+      
+      <div className="fixed bottom-24 right-4 sm:right-8 z-[100] w-[calc(100vw-2rem)] sm:w-[380px] h-[60vh] sm:h-[550px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-200">
+        <div className="flex justify-between items-center p-3 border-b bg-white">
+          <span className="font-bold text-sm text-gray-700">Consulta Floral</span>
+          <button 
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded-full text-gray-500"
+          >
+            <X size={18} />
+          </button>
+        </div>
         <iframe 
           src="https://flowers-for-you-chatbot-de-ventas.ai.studio/"
-          className="w-full h-full border-none"
+          className="w-full flex-1 border-none"
           title="Consulta Floral Chatbot"
         />
       </div>
-    </div>
+    </>
   );
 };

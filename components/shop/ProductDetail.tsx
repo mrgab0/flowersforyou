@@ -14,11 +14,11 @@ export const ProductDetail = ({ product }: { product: any }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
           {/* Imagen */}
           <div className="md:sticky md:top-20 h-fit">
-            <div className="relative aspect-square overflow-hidden rounded-3xl bg-white shadow-sm border border-gray-100">
+            <div className="relative aspect-square overflow-hidden rounded-3xl bg-white">
               <img
                 src={product.images[0]}
                 alt={product.name}
-                className="w-full h-full object-contain p-4"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>

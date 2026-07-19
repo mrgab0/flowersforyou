@@ -86,7 +86,11 @@ export const ShoppingCartComponent = () => {
                 <span className="text-gray-400 font-bold uppercase text-xs tracking-widest">Total Estimado</span>
                 <span className="text-3xl font-extrabold text-[#1A1C1C]">${total.toFixed(2)}</span>
               </div>
-              <Link href="/checkout" className={`w-full bg-[#FF97A4] text-white py-5 rounded-xl font-bold hover:bg-[#B0004A] transition-all duration-300 shadow-lg shadow-[#FF97A4]/20 flex justify-center items-center gap-2 group ${cartItems.length === 0 ? 'pointer-events-none bg-gray-200 text-gray-400' : ''}`}>
+              <Link 
+                href="/checkout" 
+                onClick={() => setIsOpen(false)}
+                className={`w-full bg-[#FF97A4] text-white py-5 rounded-xl font-bold hover:bg-[#B0004A] transition-all duration-300 shadow-lg shadow-[#FF97A4]/20 flex justify-center items-center gap-2 group ${cartItems.length === 0 ? 'pointer-events-none bg-gray-200 text-gray-400' : ''}`}
+              >
                 Tramitar Pedido
                 <span className="transform group-hover:translate-x-1 transition-transform">→</span>
               </Link>

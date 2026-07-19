@@ -20,7 +20,7 @@ export const ProductCard = ({ id, name, slug, price, image, category }: ProductC
     <div className="group relative bg-white rounded-2xl transition-all duration-500 overflow-hidden shadow-[0px_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0px_12px_30px_rgba(0,0,0,0.08)]">
       <Link href={`/productos/${slug}`} className="block">
         {/* Contenedor de Imagen con Zoom suave */}
-        <div className="relative aspect-square overflow-hidden bg-[#F9F9F9]">
+        <div className="relative aspect-square overflow-hidden bg-white">
           <img
             src={image}
             alt={name}

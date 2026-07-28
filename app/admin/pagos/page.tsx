@@ -156,7 +156,9 @@ export default function AdminPagosPage() {
                         <QrCode size={14} className="text-[#FF97A4]" /> Imagen del Código QR (ImageKit)
                       </label>
                       <SingleImageUploader
+                        name="qrImage"
                         currentImage={cfg.qrImage || ""}
+                        defaultValue={cfg.qrImage || ""}
                         label={`Subir Código QR de ${m.name}`}
                       />
                     </div>

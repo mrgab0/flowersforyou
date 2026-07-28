@@ -33,13 +33,13 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
             {t('Index.description')}
           </p>
-          <button className="bg-[#FF97A4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20">
+          <a href="/productos" className="inline-block bg-[#FF97A4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20 hover:scale-105 active:scale-95">
             {t('Index.exploreButton')}
-          </button>
+          </a>
         </div>
       </section>
 
-      {/* ... Rest of the component ... */}
+      {/* Slider Section */}
       <div className="container mx-auto px-6 -mt-24 relative z-20">
         <HeroSlider />
       </div>
@@ -50,7 +50,7 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
             <span className="text-[#FF97A4] text-xs font-black uppercase tracking-[0.2em]">{t('Index.premiumSelection')}</span>
             <h2 className="text-4xl font-serif font-bold text-[#1A1C1C] mt-2">{t('Index.ourFlowers')}</h2>
           </div>
-          <a href="#" className="text-[#FF97A4] font-bold border-b-2 border-[#FF97A4] pb-1 hover:text-[#B0004A] hover:border-[#B0004A] transition-all">
+          <a href="/productos" className="text-[#FF97A4] font-bold border-b-2 border-[#FF97A4] pb-1 hover:text-[#B0004A] hover:border-[#B0004A] transition-all">
             {t('Index.viewCatalog')}
           </a>
         </div>

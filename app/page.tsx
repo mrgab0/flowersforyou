@@ -34,9 +34,9 @@ export default async function Home() {
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
             Transformamos el arte de regalar en una experiencia de boutique moderna. Diseños vibrantes que respiran sofisticación.
           </p>
-          <button className="bg-[#FF97A4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20">
+          <a href="/productos" className="inline-block bg-[#FF97A4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20 hover:scale-105 active:scale-95">
             Explorar Colección
-          </button>
+          </a>
         </div>
       </section>
 
@@ -52,7 +52,7 @@ export default async function Home() {
             <span className="text-[#FF97A4] text-xs font-black uppercase tracking-[0.2em]">Selección Premium</span>
             <h2 className="text-4xl font-serif font-bold text-[#1A1C1C] mt-2">Nuestras Flores</h2>
           </div>
-          <a href="#" className="text-[#FF97A4] font-bold border-b-2 border-[#FF97A4] pb-1 hover:text-[#B0004A] hover:border-[#B0004A] transition-all">
+          <a href="/productos" className="text-[#FF97A4] font-bold border-b-2 border-[#FF97A4] pb-1 hover:text-[#B0004A] hover:border-[#B0004A] transition-all">
             Ver catálogo completo
           </a>
         </div>

@@ -16,6 +16,9 @@ export interface IProduct extends Document {
   addons: mongoose.Types.ObjectId[] | any[]; // Reforzado
   badge?: string; // Etiqueta destacada (ej: "Bestseller 🌟", "¡Nuevo!", "Edición Limitada")
   isActive?: boolean; // Estado de activación (true = activo, false = pausado)
+  flowerCount?: number;
+  bouquetType?: string;
+  features?: any[];
   seo: {
     title: string;
     description: string;

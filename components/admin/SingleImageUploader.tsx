@@ -27,21 +27,25 @@ const authenticator = async () => {
 };
 
 interface SingleImageUploaderProps {
-  name: string;
+  name?: string;
   label: string;
   defaultValue?: string;
+  currentImage?: string;
   recommendation?: string;
   required?: boolean;
+  onImageUploaded?: (url: string) => void;
 }
 
 export function SingleImageUploader({
-  name,
+  name = "image",
   label,
   defaultValue = "",
+  currentImage,
   recommendation,
   required = false,
+  onImageUploaded,
 }: SingleImageUploaderProps) {
-  const [imageUrl, setImageUrl] = useState<string>(defaultValue);
+  const [imageUrl, setImageUrl] = useState<string>(currentImage || defaultValue);
   const [uploading, setUploading] = useState(false);
   const [manualUrl, setManualUrl] = useState("");
   const [showManualInput, setShowManualInput] = useState(false);
@@ -61,16 +65,20 @@ export function SingleImageUploader({
     setUploading(false);
     if (res && res.url) {
       setImageUrl(res.url);
+      onImageUploaded?.(res.url);
     }
   };
 
   const handleRemove = () => {
     setImageUrl("");
+    onImageUploaded?.("");
   };
 
   const handleAddManualUrl = () => {
     if (!manualUrl.trim()) return;
-    setImageUrl(manualUrl.trim());
+    const url = manualUrl.trim();
+    setImageUrl(url);
+    onImageUploaded?.(url);
     setManualUrl("");
     setShowManualInput(false);
   };

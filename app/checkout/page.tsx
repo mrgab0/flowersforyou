@@ -69,7 +69,7 @@ export default function CheckoutPage() {
 
       // Verificar cupón de lanzamiento automático (Primeros N clientes)
       const autoRes = await checkAutoLaunchCoupon();
-      if (autoRes.success && autoRes.isAutoAvailable) {
+      if (autoRes.success && autoRes.isAutoAvailable && autoRes.coupon) {
         setAutoLaunchInfo({
           isAvailable: true,
           orderIndex: autoRes.orderIndex,

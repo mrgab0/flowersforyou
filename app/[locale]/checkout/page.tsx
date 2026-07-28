@@ -63,7 +63,7 @@ export default function CheckoutPage() {
       }
 
       const autoRes = await checkAutoLaunchCoupon();
-      if (autoRes.success && autoRes.isAutoAvailable) {
+      if (autoRes.success && autoRes.isAutoAvailable && autoRes.coupon) {
         setAppliedCoupon(autoRes.coupon);
         setCouponSuccess(`🎁 ¡Felicidades! Eres el cliente #${autoRes.orderIndex} de inauguración. Cupón del ${autoRes.coupon.discountValue}% OFF aplicado automáticamente.`);
       }

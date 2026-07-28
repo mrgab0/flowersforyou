@@ -1,0 +1,137 @@
+"use server";
+
+import dbConnect from "@/lib/db";
+import { Product, slugify } from "@/lib/models/Product";
+import { revalidatePath } from "next/cache";
+
+// --- PRODUCT ACTIONS ---
+
+export async function createProduct(formData: FormData) {
+  try {
+    await dbConnect();
+    const name = formData.get("name") as string;
+    const price = parseFloat(formData.get("price") as string);
+    const category = formData.get("category") as string;
+    const description = formData.get("description") as string;
+    const images = formData.getAll("images") as string[];
+    const stock = parseInt(formData.get("stock") as string) || 0;
+    const sku = formData.get("sku") as string || "";
+    
+    // Nuevos campos
+    const flowerCount = parseInt(formData.get("flowerCount") as string) || 0;
+    const bouquetType = formData.get("bouquetType") as string || "";
+    const badge = formData.get("badge") as string || "";
+    const addons = formData.getAll("addons") as string[];
+
+    // Procesar características (features)
+    const featureLabels = formData.getAll("featureLabels") as string[];
+    const featureValues = formData.getAll("featureValues") as string[];
+    const features = featureLabels
+      .map((label, index) => ({ label, value: featureValues[index] }))
+      .filter(f => f.label && f.value);
+
+    const newProduct = new Product({
+      name,
+      price,
+      category,
+      description,
+      images: images.filter(img => img !== ""), // Solo imágenes válidas
+      stock,
+      sku,
+      flowerCount,
+      bouquetType,
+      badge,
+      addons,
+      features,
+      slug: slugify(name + "-" + Math.floor(Math.random() * 1000)),
+    });
+
+    const saved = await newProduct.save();
+    revalidatePath("/admin/productos");
+    revalidatePath("/");
+    return { success: true, id: saved._id.toString() };
+  } catch (error) {
+    console.error("Error al crear:", error);
+    return { success: false, error: error instanceof Error ? error.message : "No se pudo guardar el producto" };
+  }
+}
+
+export async function updateProduct(id: string, formData: FormData) {
+  try {
+    await dbConnect();
+    const name = formData.get("name") as string;
+    const price = parseFloat(formData.get("price") as string);
+    const category = formData.get("category") as string;
+    const description = formData.get("description") as string;
+    const images = formData.getAll("images") as string[];
+    const stock = parseInt(formData.get("stock") as string) || 0;
+    const sku = formData.get("sku") as string || "";
+    
+    // Nuevos campos
+    const flowerCount = parseInt(formData.get("flowerCount") as string) || 0;
+    const bouquetType = formData.get("bouquetType") as string || "";
+    const badge = formData.get("badge") as string || "";
+    const addons = formData.getAll("addons") as string[];
+
+    // Procesar características
+    const featureLabels = formData.getAll("featureLabels") as string[];
+    const featureValues = formData.getAll("featureValues") as string[];
+    const features = featureLabels
+      .map((label, index) => ({ label, value: featureValues[index] }))
+      .filter(f => f.label && f.value);
+
+    const updated = await Product.findByIdAndUpdate(id, {
+      name,
+      price,
+      category,
+      description,
+      images: images.filter(img => img !== ""),
+      stock,
+      sku,
+      flowerCount,
+      bouquetType,
+      badge,
+      addons,
+      features,
+      slug: slugify(name),
+    }, { new: true });
+
+    revalidatePath("/admin/productos");
+    revalidatePath("/");
+    return { success: true, id: updated?._id.toString() };
+  } catch (error) {
+    console.error("Error al editar:", error);
+    return { success: false, error: error instanceof Error ? error.message : "No se pudo actualizar el producto" };
+  }
+}
+
+export async function getProductById(id: string) {
+  try {
+    await dbConnect();
+    const product = await Product.findById(id).lean();
+    if (!product) return { success: false, error: "Producto no encontrado" };
+    return { success: true, data: JSON.parse(JSON.stringify(product)) };
+  } catch (error) {
+    return { success: false, error: "Error al cargar producto" };
+  }
+}
+
+export async function toggleProductStatus(id: string, isActive: boolean) {
+  try {
+    await dbConnect();
+    await Product.findByIdAndUpdate(id, { isActive });
+    revalidatePath("/", "layout");
+    revalidatePath("/admin/productos");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al cambiar estado del producto:", error);
+    return { success: false, error: "Error al actualizar estado del producto" };
+  }
+}
+
+export async function deleteProduct(id: string) {
+  await dbConnect();
+  await Product.findByIdAndDelete(id);
+  revalidatePath("/admin/productos");
+  revalidatePath("/");
+}

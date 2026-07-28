@@ -1,0 +1,24 @@
+{
+  "Index": {
+    "title": "Flowers For You LLC",
+    "description": "We transform the art of gifting into a modern boutique experience. Vibrant designs that breathe sophistication.",
+    "exploreButton": "Explore Collection",
+    "premiumSelection": "Premium Selection",
+    "ourFlowers": "Our Flowers",
+    "viewCatalog": "View full catalog",
+    "noProducts": "No products available at the moment."
+  },
+  "Footer": {
+    "address1": "6705 Fairway Dr.",
+    "address2": "Houston Texas 77087",
+    "boutique": "Digital Boutique",
+    "copyright": "© 2026 Flowers For You. Created with passion by Alonso de los Ríos.",
+    "accept": "We accept:",
+    "cards": "Visa • MC • Amex • Discover"
+  },
+  "WhatsApp": {
+    "message": "Hi! I'd like more information.",
+    "vip": "VIP Attention",
+    "consultation": "Floral Consultation"
+  }
+}

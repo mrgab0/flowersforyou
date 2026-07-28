@@ -2,7 +2,7 @@ No es solo un frontend. Es un proyecto Next.js Full-stack con base de datos conf
   conexión a MongoDB (lib/db.ts) y modelos Mongoose (Product y Post), pero actualmente el frontend muestra
   datos estáticos ficticios.
 
-  Para convertirlo en un CMS funcional, nos falta implementar:
+  Para convertirlo en una CMS funcional, nos falta implementar:
 
   1. Backend y Persistencia (Server Actions / APIs)
    * Crear funciones del lado del servidor (Server Actions o API Routes en /app/api/) para realizar

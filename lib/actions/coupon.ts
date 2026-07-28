@@ -9,7 +9,7 @@ export async function validateCoupon(code: string, subtotal: number = 0) {
   await dbConnect();
   try {
     const cleanCode = code.trim().toUpperCase();
-    const coupon = await Coupon.findOne({ code: cleanCode, isActive: true }).lean();
+    const coupon: any = await Coupon.findOne({ code: cleanCode, isActive: true }).lean();
 
     if (!coupon) {
       return { success: false, error: "El código de cupón no existe o ha expirado." };
@@ -49,7 +49,7 @@ export async function checkAutoLaunchCoupon() {
     const totalOrders = await Order.countDocuments({});
 
     // 2. Buscamos si hay un cupón de lanzamiento automático configurado (o por defecto si hay < 10 órdenes)
-    const autoCoupon = await Coupon.findOne({ isAutoLaunch: true, isActive: true }).lean();
+    const autoCoupon: any = await Coupon.findOne({ isAutoLaunch: true, isActive: true }).lean();
 
     if (autoCoupon) {
       if (autoCoupon.maxUses > 0 && autoCoupon.usedCount >= autoCoupon.maxUses) {

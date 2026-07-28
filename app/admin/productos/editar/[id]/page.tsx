@@ -5,7 +5,7 @@ import { Product, IProduct } from "@/lib/models/Product";
 import { Addon } from "@/lib/models/Addon";
 import { updateProduct } from "@/lib/actions/product";
 import { AdminAddonManager } from "@/components/admin/AdminAddonManager";
-import { ArrowLeft, Package, DollarSign, Image as ImageIcon, Flower2, Save } from "lucide-react";
+import { ArrowLeft, Package, DollarSign, Image as ImageIcon, Flower2, Save, Tag } from "lucide-react";
 import Link from "next/link";
 
 export default async function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {

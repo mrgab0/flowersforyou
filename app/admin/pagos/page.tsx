@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPaymentConfigs, updatePaymentConfig, getDefaultPaymentConfigs } from "@/lib/actions/paymentConfig";
+import { getPaymentConfigs, updatePaymentConfig, togglePaymentActive } from "@/lib/actions/paymentConfig";
 import { SingleImageUploader } from "@/components/admin/SingleImageUploader";
-import { CreditCard, Save, QrCode, CheckCircle2, Copy, Link as LinkIcon, RefreshCw, ArrowLeft, ShieldCheck, DollarSign } from "lucide-react";
+import { CreditCard, Save, QrCode, CheckCircle2, Copy, Link as LinkIcon, RefreshCw, ArrowLeft, ShieldCheck, DollarSign, Play, Pause, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 const PaymentLogos = {
@@ -18,6 +18,7 @@ export default function AdminPagosPage() {
   const [configs, setConfigs] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [savingMethod, setSavingMethod] = useState<string | null>(null);
+  const [togglingMethod, setTogglingMethod] = useState<string | null>(null);
   const [savedSuccess, setSavedSuccess] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +46,17 @@ export default function AdminPagosPage() {
       loadConfigs();
     } else {
       alert("Error al actualizar la información de pago.");
+    }
+  }
+
+  async function handleToggleActive(methodId: string, currentIsActive: boolean) {
+    setTogglingMethod(methodId);
+    const result = await togglePaymentActive(methodId, !currentIsActive);
+    setTogglingMethod(null);
+    if (result.success) {
+      loadConfigs();
+    } else {
+      alert("Error al cambiar estado de publicación.");
     }
   }
 
@@ -82,35 +94,53 @@ export default function AdminPagosPage() {
         {methodsList.map((m) => {
           const cfg = configs[m.id] || {};
           const isSaving = savingMethod === m.id;
+          const isToggling = togglingMethod === m.id;
+          const isActive = cfg.isActive !== false; // por defecto activo a menos que sea explícitamente false
 
           return (
             <form
               key={m.id}
               onSubmit={(e) => handleSave(m.id, e)}
-              className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4 hover:shadow-md transition-all relative flex flex-col justify-between"
+              className={`p-6 rounded-3xl border shadow-sm space-y-4 hover:shadow-md transition-all relative flex flex-col justify-between ${
+                isActive ? "bg-white border-gray-100 dark:border-gray-800" : "bg-gray-50/70 dark:bg-[#12131A] border-amber-200 dark:border-amber-900/50 opacity-90"
+              }`}
             >
               {savedSuccess === m.id && (
-                <div className="absolute top-4 right-4 bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 animate-in fade-in duration-300">
+                <div className="absolute top-4 right-4 bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 animate-in fade-in duration-300 shadow-sm z-10">
                   <CheckCircle2 size={14} /> ¡Guardado!
                 </div>
               )}
 
               <div className="space-y-4">
-                {/* Cabecera del Método */}
-                <div className="flex items-center gap-3 border-b pb-3">
-                  <div className="p-2 bg-gray-50 border rounded-xl">
-                    {PaymentLogos[m.id as keyof typeof PaymentLogos]}
+                {/* Cabecera del Método con Insignia de Estado */}
+                <div className="flex items-center justify-between border-b pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-50 dark:bg-gray-800 border rounded-xl">
+                      {PaymentLogos[m.id as keyof typeof PaymentLogos]}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-base text-[#1A1C1C] dark:text-white flex items-center gap-2">
+                        <span>{m.name}</span>
+                      </h3>
+                      <p className="text-[11px] text-gray-400 font-medium">{m.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-base text-[#1A1C1C]">{m.name}</h3>
-                    <p className="text-[11px] text-gray-400 font-medium">{m.desc}</p>
-                  </div>
+
+                  <span
+                    className={`text-[10px] font-extrabold px-3 py-1 rounded-full flex items-center gap-1 border ${
+                      isActive
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+                        : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+                    }`}
+                  >
+                    {isActive ? "🟢 Publicado en Checkout" : "⚪ Pausado (Oculto)"}
+                  </span>
                 </div>
 
                 <div className="space-y-3">
                   {/* Titular de la Cuenta */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-gray-700">Nombre del Titular / Negocio</label>
+                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Nombre del Titular / Negocio</label>
                     <input
                       name="holderName"
                       defaultValue={cfg.holderName || ""}
@@ -122,14 +152,14 @@ export default function AdminPagosPage() {
                   {/* Correo, Teléfono o $Cashtag */}
                   {m.id !== "efectivo" && (
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-bold text-gray-700">
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
                         {m.id === "zelle" ? "Correo o Teléfono de Zelle *" : m.id === "cashapp" ? "$Cashtag de CashApp *" : m.id === "paypal" ? "Correo de PayPal *" : "Detalle de Cuenta"}
                       </label>
                       <input
                         name="accountDetail"
                         defaultValue={cfg.accountDetail || ""}
                         placeholder={m.id === "zelle" ? "pagos@flowersforyou.com" : m.id === "cashapp" ? "$FlowersShop" : "paypal@flowers.com"}
-                        className="p-3 border rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
+                        className="p-3 border rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
                       />
                     </div>
                   )}
@@ -137,7 +167,7 @@ export default function AdminPagosPage() {
                   {/* Enlace Directo (Square / Paypal.me) */}
                   {(m.id === "square" || m.id === "paypal" || m.id === "cashapp") && (
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
                         <LinkIcon size={12} className="text-[#FF97A4]" /> Enlace Directo de Pago (URL)
                       </label>
                       <input
@@ -152,7 +182,7 @@ export default function AdminPagosPage() {
                   {/* Subida de Imagen QR (ImageKit) */}
                   {m.id !== "efectivo" && m.id !== "square" && (
                     <div className="flex flex-col gap-1 pt-1">
-                      <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
                         <QrCode size={14} className="text-[#FF97A4]" /> Imagen del Código QR (ImageKit)
                       </label>
                       <SingleImageUploader
@@ -166,7 +196,7 @@ export default function AdminPagosPage() {
 
                   {/* Instrucciones Personalizadas */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-gray-700">Instrucciones Breves para el Cliente</label>
+                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Instrucciones Breves para el Cliente</label>
                     <textarea
                       name="instructions"
                       defaultValue={cfg.instructions || ""}
@@ -177,14 +207,39 @@ export default function AdminPagosPage() {
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end">
+              {/* Botones de Acción (Pausar/Publicar + Guardar) */}
+              <div className="pt-4 border-t flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  disabled={isToggling}
+                  onClick={() => handleToggleActive(m.id, isActive)}
+                  className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 ${
+                    isActive
+                      ? "bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800"
+                      : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                  }`}
+                  title={isActive ? "Pausar este método de pago para que no aparezca en el Checkout" : "Publicar este método de pago para que aparezca en el Checkout"}
+                >
+                  {isActive ? (
+                    <>
+                      <Pause size={14} />
+                      <span>{isToggling ? "Pausando..." : "Pausar / Ocultar"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={14} />
+                      <span>{isToggling ? "Publicando..." : "Publicar en Checkout"}</span>
+                    </>
+                  )}
+                </button>
+
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="bg-[#FF97A4] text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-[#B0004A] transition-colors shadow-sm disabled:bg-gray-400 flex items-center gap-1.5"
+                  className="bg-[#FF97A4] text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-[#B0004A] transition-colors shadow-sm disabled:bg-gray-400 flex items-center gap-1.5 ml-auto"
                 >
                   <Save size={14} />
-                  {isSaving ? "Guardando..." : `Guardar Datos de ${m.name}`}
+                  {isSaving ? "Guardando..." : `Guardar Datos`}
                 </button>
               </div>
             </form>

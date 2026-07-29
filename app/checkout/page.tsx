@@ -13,10 +13,10 @@ import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2,
 
 const PaymentLogos = {
   zelle: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><path d="M0 0h38v24H0z" fill="#6d2277"/><path d="M10 5h18v3l-10 8h10v5H10v-3l10-8H10z" fill="#fff"/></svg>,
+  cashapp: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><rect width="38" height="24" fill="#00D632"/><path d="M19 6v12M14 9h7a2 2 0 0 1 0 4h-4a2 2 0 0 0 0 4h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none"/></svg>,
   paypal: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><path d="M0 0h38v24H0z" fill="#003087"/><path d="M10 5h18v14H10z" fill="#009cde"/></svg>,
-  gpay: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><rect width="38" height="24" fill="#4285F4"/><path d="M10 12h18v2H10z" fill="#fff"/></svg>,
-  venmo: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><rect width="38" height="24" fill="#3D95CE"/></svg>,
-  efectivo: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><rect width="38" height="24" fill="#22C55E"/></svg>
+  square: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><rect width="38" height="24" fill="#000000" rx="4"/><rect x="11" y="7" width="16" height="10" rx="2" fill="#fff"/></svg>,
+  efectivo: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><rect width="38" height="24" fill="#22C55E" rx="4"/><circle cx="19" cy="12" r="5" fill="#fff"/></svg>
 };
 
 const iconMap: Record<string, any> = {
@@ -132,13 +132,18 @@ export default function CheckoutPage() {
     }
   };
 
-  const paymentMethods = [
+  const rawPaymentMethods = [
     { id: "zelle", label: "Zelle" },
+    { id: "cashapp", label: "CashApp" },
     { id: "paypal", label: "PayPal" },
-    { id: "gpay", label: "Google Pay" },
-    { id: "venmo", label: "Venmo" },
+    { id: "square", label: "Square (Tarjeta)" },
     { id: "efectivo", label: "Efectivo" },
   ];
+
+  const paymentMethods = rawPaymentMethods.filter((method) => {
+    const cfg = paymentConfigs[method.id];
+    return !cfg || cfg.isActive !== false;
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

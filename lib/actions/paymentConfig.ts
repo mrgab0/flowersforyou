@@ -88,26 +88,55 @@ export async function updatePaymentConfig(methodId: string, formData: FormData) 
     const linkUrl = formData.get("linkUrl") as string || "";
     const title = formData.get("title") as string || DEFAULT_PAYMENT_CONFIGS[methodId]?.title || methodId;
 
+    const isActiveInput = formData.get("isActive");
+    const updateData: any = {
+      methodId,
+      title,
+      holderName,
+      accountDetail,
+      qrImage,
+      instructions,
+      linkUrl,
+      updatedAt: new Date(),
+    };
+
+    if (isActiveInput !== null) {
+      updateData.isActive = isActiveInput === "true";
+    }
+
     await PaymentConfig.findOneAndUpdate(
       { methodId },
-      {
-        methodId,
-        title,
-        holderName,
-        accountDetail,
-        qrImage,
-        instructions,
-        linkUrl,
-        updatedAt: new Date(),
-      },
+      updateData,
       { upsert: true, new: true }
     );
 
     revalidatePath("/admin/pagos");
     revalidatePath("/checkout");
+    revalidatePath("/es/checkout");
+    revalidatePath("/en/checkout");
     return { success: true };
   } catch (error) {
     console.error("Error al actualizar datos de pago:", error);
     return { success: false, error: "No se pudieron actualizar los datos de pago." };
+  }
+}
+
+export async function togglePaymentActive(methodId: string, isActive: boolean) {
+  await dbConnect();
+  try {
+    await PaymentConfig.findOneAndUpdate(
+      { methodId },
+      { isActive, updatedAt: new Date() },
+      { upsert: true, new: true }
+    );
+
+    revalidatePath("/admin/pagos");
+    revalidatePath("/checkout");
+    revalidatePath("/es/checkout");
+    revalidatePath("/en/checkout");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al pausar/publicar método de pago:", error);
+    return { success: false, error: "No se pudo cambiar el estado del método de pago." };
   }
 }

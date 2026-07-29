@@ -51,9 +51,13 @@ export function SingleImageUploader({
   const [showManualInput, setShowManualInput] = useState(false);
   const ikUploadRef = useRef<HTMLInputElement>(null);
 
+  const prevPropRef = useRef(currentImage || defaultValue);
+
   React.useEffect(() => {
-    if (currentImage || defaultValue) {
-      setImageUrl(currentImage || defaultValue);
+    const propVal = currentImage || defaultValue || "";
+    if (propVal !== prevPropRef.current) {
+      setImageUrl(propVal);
+      prevPropRef.current = propVal;
     }
   }, [currentImage, defaultValue]);
 

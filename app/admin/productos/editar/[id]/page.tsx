@@ -7,6 +7,7 @@ import { updateProduct } from "@/lib/actions/product";
 import { AdminAddonManager } from "@/components/admin/AdminAddonManager";
 import { ArrowLeft, Package, DollarSign, Image as ImageIcon, Flower2, Save, Tag } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
@@ -29,7 +30,10 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
 
   const updateProductWithId = async (formData: FormData) => {
     'use server';
-    await updateProduct(product._id.toString(), formData);
+    const res = await updateProduct(product._id.toString(), formData);
+    if (res.success) {
+      redirect("/admin/productos");
+    }
   };
 
   return (

@@ -1,44 +1,39 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import React from 'react';
 import { MessageCircle } from 'lucide-react';
-import { InquiryModal } from '../InquiryModal';
 
-interface InquiryButtonProps {
-  phoneNumber: string; // Mantener por si acaso, aunque no se use
+interface WhatsAppButtonProps {
+  phoneNumber?: string;
+  message?: string;
 }
 
-/**
- * InquiryButton: Magenta Flora Modern Style
- * Reemplaza la funcionalidad de WhatsApp por el nuevo Chatbot de consultas.
- */
-export const WhatsAppButton = ({ phoneNumber }: InquiryButtonProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const t = useTranslations('WhatsApp');
+export const WhatsAppButton = ({
+  phoneNumber = "16576988586",
+  message = "¡Hola! 🌸 Me gustaría recibir asesoría personalizada para elegir el arreglo floral ideal. ¿Me podrían ayudar?",
+}: WhatsAppButtonProps) => {
+  const cleanPhone = phoneNumber.replace(/[^\d]/g, "");
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 
   return (
-    <>
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 z-50 flex items-center gap-4 bg-[#FF97A4] text-white pl-5 pr-7 py-4 rounded-full shadow-[0px_10px_30px_rgba(216,27,96,0.3)] hover:scale-105 transition-all duration-300 active:scale-95 group"
-        aria-label="Abrir consulta floral"
-      >
-        <div className="relative bg-white/20 p-2 rounded-full backdrop-blur-sm">
-          <MessageCircle size={24} fill="white" className="text-transparent" />
-          <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-          </span>
-        </div>
-        <div className="flex flex-col items-start leading-none">
-          <span className="text-[9px] uppercase font-black tracking-widest opacity-70 mb-0.5">{t('vip')}</span>
-          <span className="text-base font-bold">{t('consultation')}</span>
-        </div>
-      </button>
-
-      <InquiryModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-    </>
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-8 right-8 z-50 flex items-center gap-3.5 bg-[#25D366] hover:bg-[#20ba5a] text-white pl-4 pr-6 py-3.5 rounded-full shadow-[0px_10px_30px_rgba(37,211,102,0.4)] hover:scale-105 transition-all duration-300 active:scale-95 group border-2 border-white"
+      aria-label="Consulta Floral por WhatsApp"
+    >
+      <div className="relative bg-white/20 p-2 rounded-full backdrop-blur-sm">
+        <MessageCircle size={22} fill="white" className="text-transparent" />
+        <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+        </span>
+      </div>
+      <div className="flex flex-col items-start leading-tight">
+        <span className="text-[9px] uppercase font-black tracking-widest opacity-90">ASESORÍA VIP</span>
+        <span className="text-sm font-extrabold">Consulta Floral</span>
+      </div>
+    </a>
   );
 };
-

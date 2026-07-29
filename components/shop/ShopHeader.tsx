@@ -5,6 +5,8 @@ import { useState } from "react";
 import { ShoppingCart, ArrowLeft, Flower2 } from "lucide-react";
 import { useCart } from "@/components/shop/Cart/CartContext";
 import { ShoppingCartComponent } from "@/components/shop/Cart/ShoppingCart";
+import { LanguageSwitcher } from "@/components/shop/LanguageSwitcher";
+import { ThemeToggle } from "@/components/shop/ThemeToggle";
 
 export const ShopHeader = () => {
   const { cartItems } = useCart();
@@ -12,15 +14,15 @@ export const ShopHeader = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
+      <header className="sticky top-0 z-40 bg-white/90 dark:bg-[#181922]/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 shadow-sm transition-all">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
           {/* Logo Presionable hacia el Home */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-200 shadow-sm group-hover:scale-105 transition-transform flex-shrink-0 bg-white">
-              <img src="/logo.jpg" alt="Flowers For You Logo" className="w-full h-full object-cover" />
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#FF97A4]/40 dark:border-gray-700 shadow-md group-hover:scale-105 transition-transform flex-shrink-0 bg-white p-0.5">
+              <img src="/logo.jpg" alt="Flowers For You Logo" className="w-full h-full object-cover rounded-full" />
             </div>
             <div>
-              <span className="text-xl font-serif font-black text-[#1A1C1C] tracking-tight group-hover:text-[#FF97A4] transition-colors block">
+              <span className="text-xl font-serif font-black text-[#1A1C1C] dark:text-white tracking-tight group-hover:text-[#FF97A4] transition-colors block">
                 Flowers <span className="text-[#FF97A4]">For You</span>
               </span>
               <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold block -mt-1">
@@ -30,7 +32,7 @@ export const ShopHeader = () => {
           </Link>
 
           {/* Navegación Central */}
-          <nav className="hidden md:flex items-center gap-8 font-bold text-xs uppercase tracking-widest text-gray-600">
+          <nav className="hidden md:flex items-center gap-8 font-bold text-xs uppercase tracking-widest text-gray-600 dark:text-gray-300">
             <Link href="/" className="hover:text-[#FF97A4] transition-colors">
               Inicio
             </Link>
@@ -45,13 +47,16 @@ export const ShopHeader = () => {
             </Link>
           </nav>
 
-          {/* Acciones Derecha (Carrito de Compras) */}
-          <div className="flex items-center gap-3">
+          {/* Acciones Derecha (Selector de Modo Oscuro, Idioma y Carrito) */}
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
+            <LanguageSwitcher />
+
             <Link
               href="/"
               className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-black px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              <ArrowLeft size={16} /> Volver a la Tienda
+              <ArrowLeft size={16} /> Tienda
             </Link>
 
             {/* Cart Button indicator */}

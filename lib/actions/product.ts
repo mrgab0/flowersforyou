@@ -63,7 +63,7 @@ export async function updateProduct(id: string, formData: FormData) {
     const price = parseFloat(formData.get("price") as string);
     const category = formData.get("category") as string;
     const description = formData.get("description") as string;
-    const images = formData.getAll("images") as string[];
+    const images = (formData.getAll("images") as string[]).filter((img) => img && typeof img === 'string' && img.trim() !== "");
     const stock = parseInt(formData.get("stock") as string) || 0;
     const sku = formData.get("sku") as string || "";
     
@@ -71,7 +71,8 @@ export async function updateProduct(id: string, formData: FormData) {
     const flowerCount = parseInt(formData.get("flowerCount") as string) || 0;
     const bouquetType = formData.get("bouquetType") as string || "";
     const badge = formData.get("badge") as string || "";
-    const addons = formData.getAll("addons") as string[];
+    const addonsRaw = formData.getAll("addons") as string[];
+    const addons = addonsRaw.filter((a) => a && typeof a === 'string' && a.trim() !== "");
 
     // Procesar características
     const featureLabels = formData.getAll("featureLabels") as string[];
@@ -80,27 +81,38 @@ export async function updateProduct(id: string, formData: FormData) {
       .map((label, index) => ({ label, value: featureValues[index] }))
       .filter(f => f.label && f.value);
 
-    const updated = await Product.findByIdAndUpdate(id, {
-      name,
-      price,
-      category,
-      description,
-      images: images.filter(img => img !== ""),
-      stock,
-      sku,
-      flowerCount,
-      bouquetType,
-      badge,
-      addons,
-      features,
-      slug: slugify(name),
-    }, { new: true });
+    // Evitar colisiones de Slug si cambia el nombre
+    const baseSlug = slugify(name);
+    const existingProduct = await Product.findOne({ slug: baseSlug, _id: { $ne: id } });
+    const slug = existingProduct
+      ? slugify(`${name}-${Math.floor(Math.random() * 1000)}`)
+      : baseSlug;
+
+    const updated = await Product.findByIdAndUpdate(
+      id,
+      {
+        name,
+        price,
+        category,
+        description,
+        images,
+        stock,
+        sku,
+        flowerCount,
+        bouquetType,
+        badge,
+        addons,
+        features,
+        slug,
+      },
+      { new: true }
+    );
 
     revalidatePath("/admin/productos");
     revalidatePath("/");
     return { success: true, id: updated?._id.toString() };
   } catch (error) {
-    console.error("Error al editar:", error);
+    console.error("Error al editar producto:", error);
     return { success: false, error: error instanceof Error ? error.message : "No se pudo actualizar el producto" };
   }
 }

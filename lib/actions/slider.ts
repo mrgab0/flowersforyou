@@ -20,7 +20,7 @@ export async function createSlider(data: any) {
 export async function getSliders() {
   await dbConnect();
   try {
-    const sliders = await Slider.find({ isActive: true }).populate('products');
+    const sliders = await Slider.find({ isActive: true }).populate('products').lean();
     return { success: true, data: JSON.parse(JSON.stringify(sliders)) };
   } catch (error) {
     return { success: false, error: "Failed to fetch sliders" };
@@ -30,7 +30,7 @@ export async function getSliders() {
 export async function getSliderById(id: string) {
   await dbConnect();
   try {
-    const slider = await Slider.findById(id);
+    const slider = await Slider.findById(id).lean();
     return { success: true, data: JSON.parse(JSON.stringify(slider)) };
   } catch (error) {
     return { success: false, error: "Failed to fetch slider" };

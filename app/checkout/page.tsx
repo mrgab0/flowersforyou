@@ -39,6 +39,7 @@ export default function CheckoutPage() {
 
   // Estados para datos de contacto
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
 
@@ -82,10 +83,12 @@ export default function CheckoutPage() {
     loadOptionsAndCoupon();
 
     const savedName = localStorage.getItem("customerName") || "";
+    const savedEmail = localStorage.getItem("customerEmail") || "";
     const savedPhone = localStorage.getItem("customerPhone") || "";
     const savedAddress = localStorage.getItem("customerAddress") || "";
     
     setName(savedName);
+    setEmail(savedEmail);
     setPhone(savedPhone);
     setAddress(savedAddress);
   }, []);
@@ -144,6 +147,7 @@ export default function CheckoutPage() {
     const data = new FormData(e.currentTarget);
     const orderData = {
       customerName: data.get("name")?.toString() || "",
+      customerEmail: data.get("email")?.toString() || "",
       customerPhone: data.get("phone")?.toString() || "",
       address: data.get("address")?.toString() || "",
       deliveryMethod: `${selectedDelivery.title} (${selectedDelivery.estimatedTimeLabel})`,
@@ -163,6 +167,7 @@ export default function CheckoutPage() {
       clearCart();
       localStorage.setItem("lastOrderId", result.orderId);
       localStorage.setItem("customerName", orderData.customerName);
+      localStorage.setItem("customerEmail", orderData.customerEmail);
       localStorage.setItem("customerPhone", orderData.customerPhone);
       localStorage.setItem("customerAddress", orderData.address);
 
@@ -209,6 +214,15 @@ export default function CheckoutPage() {
                       value={name} 
                       onChange={(e) => setName(e.target.value)} 
                       placeholder="Nombre y Apellido Completo *" 
+                      className="w-full p-3.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
+                      required 
+                    />
+                    <input 
+                      type="email"
+                      name="email" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      placeholder="Correo Electrónico del Cliente *" 
                       className="w-full p-3.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
                       required 
                     />
@@ -426,19 +440,29 @@ export default function CheckoutPage() {
             <div className="md:col-span-5 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 h-fit space-y-6">
               <h2 className="text-xl font-serif font-black text-[#1A1C1C] border-b pb-3">Resumen de Tu Pedido</h2>
               
-              <div className="space-y-4 max-h-[250px] overflow-y-auto pr-1">
+              <div className="space-y-4 max-h-[280px] overflow-y-auto pr-1">
                 {cartItems.map((item) => (
-                  <div key={`${item.id}-${JSON.stringify(item.addons)}`} className="flex justify-between items-center text-sm border-b pb-3 border-gray-50">
-                    <div className="flex items-center gap-3">
+                  <div key={`${item.id}-${JSON.stringify(item.addons)}`} className="flex justify-between items-start text-sm border-b pb-3 border-gray-50">
+                    <div className="flex items-start gap-3">
                       {item.image && (
-                        <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover border" />
+                        <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover border flex-shrink-0" />
                       )}
                       <div>
                         <span className="font-bold text-[#1A1C1C] block">{item.name}</span>
-                        <span className="text-xs text-gray-400 font-medium">Cant: {item.quantity}</span>
+                        <span className="text-xs text-gray-400 font-medium block">Cant: {item.quantity}</span>
+                        
+                        {item.addons && item.addons.length > 0 && (
+                          <div className="mt-1 space-y-0.5 border-t border-gray-100 pt-1">
+                            {item.addons.map((add: any, idx: number) => (
+                              <span key={idx} className="block text-[10px] text-[#FF97A4] font-bold">
+                                ✨ {add.name || add.value} {add.price ? `(+$${add.price.toFixed(2)})` : ''}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <span className="font-bold text-gray-800">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-bold text-gray-800 flex-shrink-0 ml-2">${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>

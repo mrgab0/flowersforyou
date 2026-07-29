@@ -85,10 +85,13 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
       const transporter = getTransporter();
       const sender = process.env.SMTP_USER ? `"Flowers For You" <${process.env.SMTP_USER}>` : '"Flowers For You"';
 
+      const cleanPhoneDigits = (savedOrder.customerPhone || "").replace(/\D/g, "");
+      const waLink = cleanPhoneDigits ? `https://wa.me/${cleanPhoneDigits.length === 10 ? '1' + cleanPhoneDigits : cleanPhoneDigits}` : "https://wa.me/16576988586";
+
       const emailContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;">
           <div style="background-color: #FF97A4; padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0; font-family: Georgia, serif;">Flores y Rosas Shop</h1>
+            <h1 style="color: white; margin: 0; font-family: Georgia, serif;">Flowers For You LLC</h1>
           </div>
           
           <div style="padding: 20px;">
@@ -97,7 +100,8 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
               <p style="margin: 5px 0;"><strong>ID Pedido:</strong> ${savedOrder.orderId}</p>
               <p style="margin: 5px 0;"><strong>Cliente:</strong> ${savedOrder.customerName}</p>
-              <p style="margin: 5px 0;"><strong>Teléfono:</strong> ${savedOrder.customerPhone}</p>
+              <p style="margin: 5px 0;"><strong>Correo Electrónico:</strong> <a href="mailto:${savedOrder.customerEmail || ''}" style="color: #FF97A4; font-weight: bold;">${savedOrder.customerEmail || 'No especificado'}</a></p>
+              <p style="margin: 5px 0;"><strong>Teléfono / WhatsApp:</strong> ${savedOrder.customerPhone}</p>
               <p style="margin: 5px 0;"><strong>Opción de Entrega:</strong> ${savedOrder.deliveryMethod || orderData.deliveryMethod || "Envío a Domicilio"}</p>
               <p style="margin: 5px 0;"><strong>Costo de Envío:</strong> ${savedOrder.deliveryFee > 0 ? `$${savedOrder.deliveryFee.toFixed(2)} USD` : "Gratis / Incluido"}</p>
               ${savedOrder.couponCode ? `<p style="margin: 5px 0; color: #22C55E;"><strong>Cupón Aplicado:</strong> ${savedOrder.couponCode} (-$${(savedOrder.discountAmount || 0).toFixed(2)} USD)</p>` : ''}
@@ -111,6 +115,7 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
                   <td style="padding: 10px; border-bottom: 1px solid #eee;">
                     <strong>${item.name}</strong><br>
                     <small>Cantidad: ${item.quantity}</small>
+                    ${item.addons && item.addons.length > 0 ? `<br><small style="color: #FF97A4; font-weight: bold;">+ Adicionales: ${item.addons.map((a: any) => `${a.name || a.value} ${a.price ? `(+$${a.price.toFixed(2)})` : ''}`).join(', ')}</small>` : ''}
                   </td>
                   <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">$${(item.price * item.quantity).toFixed(2)}</td>
                 </tr>
@@ -125,9 +130,10 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="https://wa.me/${savedOrder.customerPhone.replace(/\D/g, '')}" 
+              <a href="${waLink}" 
+                 target="_blank"
                  style="background-color: #25D366; color: white; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block;">
-                 Contactar Cliente por WhatsApp
+                 Contactar Cliente por WhatsApp 💬
               </a>
             </div>
           </div>

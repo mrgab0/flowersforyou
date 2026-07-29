@@ -59,7 +59,18 @@ export const ShoppingCartComponent = () => {
                     <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg" />
                     <div className="flex-1">
                       <h3 className="font-bold text-[#1A1C1C] text-sm leading-tight">{item.name}</h3>
-                      <p className="text-[#FF97A4] font-extrabold mt-1">${item.price.toFixed(2)}</p>
+                      
+                      {item.addons && item.addons.length > 0 && (
+                        <div className="mt-1 space-y-0.5 border-t border-gray-100 pt-1">
+                          {item.addons.map((add: any, idx: number) => (
+                            <span key={idx} className="block text-[10px] text-gray-500 font-medium">
+                              ✨ {add.name || add.value} {add.price ? `(+$${add.price.toFixed(2)})` : ''}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <p className="text-[#FF97A4] font-extrabold mt-1.5">${item.price.toFixed(2)}</p>
                     </div>
                     <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
                       <button 

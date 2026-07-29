@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React from 'react';
 import { useCart } from "@/components/shop/Cart/CartContext";
+import { useTranslations } from "next-intl";
 
 interface ProductCardProps {
   id: string; // ID es necesario para el carrito
@@ -16,6 +17,7 @@ interface ProductCardProps {
 
 export const ProductCard = ({ id, name, slug, price, image, category, badge }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const t = useTranslations("Catalog");
 
   return (
     <div className="group relative bg-white rounded-2xl transition-all duration-500 overflow-hidden shadow-[0px_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0px_12px_30px_rgba(0,0,0,0.08)]">
@@ -53,7 +55,7 @@ export const ProductCard = ({ id, name, slug, price, image, category, badge }: P
         
         <div className="flex items-end justify-between mt-4">
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Precio</span>
+            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">USD</span>
             <span className="text-2xl font-extrabold text-[#FF97A4]">${price.toFixed(2)}</span>
           </div>
           
@@ -62,7 +64,7 @@ export const ProductCard = ({ id, name, slug, price, image, category, badge }: P
             onClick={() => addToCart({ id, name, price, image })}
             className="bg-[#FF97A4] text-white px-5 py-2.5 rounded-lg hover:bg-[#B0004A] active:scale-95 transition-all duration-300 font-bold text-sm shadow-md shadow-[#FF97A4]/20"
           >
-            Añadir
+            {t('addToCart')}
           </button>
         </div>
       </div>

@@ -8,7 +8,85 @@
   --background-end-rgb: 249, 249, 249;
 }
 
+.dark {
+  --foreground-rgb: 243, 244, 246;
+  --background-start-rgb: 15, 16, 21;
+  --background-end-rgb: 15, 16, 21;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-start-rgb));
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- COBERTURA COMPLETA DE MODO OSCURO (CLIENTE & ADMIN) --- */
+
+.dark body,
+.dark main,
+.dark .bg-gray-100,
+.dark .bg-gray-200 {
+  background-color: #0F1015 !important;
+  color: #F3F4F6 !important;
+}
+
+.dark .bg-white {
+  background-color: #181922 !important;
+  color: #F3F4F6 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .bg-\[\#F9F9F9\] {
+  background-color: #0F1015 !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-50\/50,
+.dark .bg-gray-50\/80 {
+  background-color: #12131A !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Colores de Texto Generales */
+.dark .text-\[\#1A1C1C\],
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: #F3F4F6 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: #9CA3AF !important;
+}
+
+/* Bordes en Modo Oscuro */
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Formularios y Tablas Admin */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #12131A !important;
+  color: #F3F4F6 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark table,
+.dark tr,
+.dark td,
+.dark th {
+  background-color: #181922 !important;
+  color: #F3F4F6 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark header {
+  background-color: rgba(24, 25, 34, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }

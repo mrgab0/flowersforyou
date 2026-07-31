@@ -3,9 +3,10 @@ import { ProductCard } from "@/components/shop/ProductCard/ProductCard";
 import { WhatsAppButton } from "@/components/shop/WhatsAppButton/WhatsAppButton";
 import { HeroSlider } from "@/components/shop/HeroSlider/HeroSlider";
 import { StickyNav } from "@/components/shop/StickyNav";
-import { CreditCard } from "lucide-react";
+import { Footer } from "@/components/shop/Footer";
 import dbConnect from "@/lib/db";
 import { Product } from "@/lib/models/Product";
+import { getSiteConfig } from "@/lib/actions/siteConfig";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,10 +16,11 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
   const t = await getTranslations({locale});
   await dbConnect();
   const products = await Product.find({ isActive: { $ne: false } }).lean();
+  const { data: siteConfig } = await getSiteConfig();
 
   return (
-    <main className="min-h-screen bg-[#F9F9F9]">
-      <section className="relative h-[60vh] flex flex-col items-center justify-center bg-white overflow-hidden">
+    <main className="min-h-screen bg-[#F9F9F9] dark:bg-[#0B0C10] transition-colors duration-300">
+      <section className="relative min-h-[440px] py-10 sm:py-14 flex flex-col items-center justify-center bg-white dark:bg-[#12131A] overflow-hidden transition-colors duration-300">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 -left-20 w-72 h-72 bg-[#FF97A4] rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-0 -right-20 w-96 h-96 bg-[#FF97A4] rounded-full blur-3xl animate-pulse delay-700" />
@@ -26,21 +28,21 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
         
         <StickyNav />
 
-        <div className="container mx-auto px-6 text-center z-10">
-          <h1 className="text-5xl md:text-7xl font-serif font-black text-[#1A1C1C] mb-6 tracking-tighter">
-            {t('Index.title')}
+        <div className="container mx-auto px-6 text-center z-10 pt-8 pb-8">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif font-black text-[#1A1C1C] dark:text-white mb-4 tracking-tighter">
+            {siteConfig?.heroTitle || t('Index.title')}
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
-            {t('Index.description')}
+          <p className="text-base sm:text-lg md:text-xl text-gray-500 dark:text-gray-300 max-w-3xl mx-auto mb-8 font-medium leading-relaxed">
+            {siteConfig?.heroSlogan || t('Index.description')}
           </p>
-          <a href="/productos" className="inline-block bg-[#FF97A4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20 hover:scale-105 active:scale-95">
-            {t('Index.exploreButton')}
+          <a href="/productos" className="inline-block bg-[#FF97A4] text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20 hover:scale-105 active:scale-95">
+            {siteConfig?.heroButtonText || t('Index.exploreButton')}
           </a>
         </div>
       </section>
 
       {/* Slider Section */}
-      <div className="container mx-auto px-6 -mt-24 relative z-20">
+      <div className="container mx-auto px-6 -mt-12 sm:-mt-14 relative z-20">
         <HeroSlider />
       </div>
 
@@ -77,31 +79,7 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
 
       <WhatsAppButton phoneNumber="16576988586" />
 
-      <footer className="bg-[#1A1C1C] text-gray-200 py-16">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-gray-800 pb-12 mb-12">
-            <h3 className="text-2xl font-serif font-bold text-white">Flowers For You</h3>
-            <div className="flex gap-6 text-sm font-bold tracking-widest text-gray-300 uppercase">
-              <span>{t('Footer.address1')}</span>
-              <span>{t('Footer.address2')}</span>
-              <span>{t('Footer.boutique')}</span>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8 text-center md:text-left">
-            <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">
-              {t('Footer.copyright')}
-            </p>
-            <div className="flex justify-center md:justify-end gap-4 items-center">
-              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{t('Footer.accept')}</span>
-              <div className="flex gap-3 text-white">
-                <CreditCard size={24} strokeWidth={1.5} />
-                <span className="text-xs font-semibold">{t('Footer.cards')}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer siteConfig={siteConfig} />
     </main>
   );
 }

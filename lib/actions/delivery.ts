@@ -18,6 +18,7 @@ export async function getDeliveryOptions() {
         estimatedTimeMinutes: opt.estimatedTimeMinutes,
         estimatedTimeLabel: opt.estimatedTimeLabel,
         extraPrice: opt.extraPrice,
+        pricePerMile: opt.pricePerMile,
         badge: opt.badge,
         iconName: opt.iconName,
         isActive: opt.isActive,
@@ -43,6 +44,7 @@ export async function updateDeliveryOption(id: string, formData: FormData) {
     const estimatedTimeLabel = formData.get("estimatedTimeLabel") as string;
     const estimatedTimeMinutes = parseInt(formData.get("estimatedTimeMinutes") as string) || 60;
     const extraPrice = parseFloat(formData.get("extraPrice") as string) || 0;
+    const pricePerMile = parseFloat(formData.get("pricePerMile") as string) || 0;
     const badge = formData.get("badge") as string || "";
 
     await DeliveryOptionModel.findByIdAndUpdate(id, {
@@ -51,6 +53,7 @@ export async function updateDeliveryOption(id: string, formData: FormData) {
       estimatedTimeLabel,
       estimatedTimeMinutes,
       extraPrice,
+      pricePerMile,
       badge,
     });
 

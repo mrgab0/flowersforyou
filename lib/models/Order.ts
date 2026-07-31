@@ -6,6 +6,10 @@ export interface IOrder extends Document {
   customerEmail?: string;
   customerPhone: string;
   address: string;
+  destLat?: number;
+  destLng?: number;
+  distanceMiles?: number;
+  googleMapsUrl?: string;
   deliveryMethod?: string;
   deliveryFee?: number;
   couponCode?: string;
@@ -23,6 +27,10 @@ const OrderSchema: Schema = new Schema({
   customerEmail: { type: String, default: "" },
   customerPhone: { type: String, required: true },
   address: { type: String, required: true },
+  destLat: { type: Number, default: 0 },
+  destLng: { type: Number, default: 0 },
+  distanceMiles: { type: Number, default: 0 },
+  googleMapsUrl: { type: String, default: "" },
   deliveryMethod: { type: String, default: "Envío Estándar" },
   deliveryFee: { type: Number, default: 0 },
   couponCode: { type: String, default: "" },

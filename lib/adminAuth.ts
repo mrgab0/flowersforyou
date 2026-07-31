@@ -8,6 +8,9 @@ const ADMIN_COOKIE_NAME = "ffy_admin_session";
 // Contraseña por defecto o la configurada en la variable de entorno
 const getAdminPassword = () => process.env.ADMIN_PASSWORD || "flores2026";
 
+import dbConnect from "@/lib/db";
+import { SiteConfig } from "@/lib/models/SiteConfig";
+
 export async function loginAdminAction(formData: FormData) {
   const password = formData.get("password") as string;
 
@@ -18,6 +21,19 @@ export async function loginAdminAction(formData: FormData) {
   const expectedPassword = getAdminPassword();
 
   if (password.trim() === expectedPassword.trim()) {
+    // Consultar si el 2FA está activo
+    await dbConnect();
+    const config: any = await SiteConfig.findOne({ key: "global" }).lean();
+    const twoFactorMode = config?.twoFactorMode || "none";
+
+    if (twoFactorMode !== "none") {
+      return {
+        success: true,
+        require2FA: true,
+        twoFactorMode: twoFactorMode as "pin" | "totp",
+      };
+    }
+
     const cookieStore = await cookies();
     cookieStore.set(ADMIN_COOKIE_NAME, "authenticated_session_token", {
       httpOnly: true,
@@ -27,7 +43,7 @@ export async function loginAdminAction(formData: FormData) {
       path: "/",
     });
 
-    redirect("/admin");
+    return { success: true, require2FA: false };
   }
 
   return { success: false, error: "Contraseña incorrecta. Inténtalo de nuevo." };

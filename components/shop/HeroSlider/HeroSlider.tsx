@@ -30,7 +30,7 @@ export const HeroSlider = () => {
   if (slides.length === 0) return null;
 
   return (
-    <div className="mt-8 md:mt-12 relative h-[350px] sm:h-[420px] md:h-[500px] w-full rounded-2xl shadow-xl border-2 sm:border-4 border-white overflow-hidden bg-gray-100">
+    <div className="mt-8 md:mt-12 relative w-full aspect-[16/9] sm:aspect-[16/8] md:aspect-[21/9] lg:aspect-[24/9] max-h-[520px] rounded-3xl shadow-2xl border-2 sm:border-4 border-white dark:border-gray-800 overflow-hidden bg-[#0F1015] transition-all">
       {slides.map((slide, index) => {
         const isCurrent = index === currentIndex;
         const isVideo = slide.image?.match(/\.(mp4|webm|ogg)$/i);
@@ -43,8 +43,36 @@ export const HeroSlider = () => {
             }`}
           >
             {slide.type === 'banner' ? (
-              <div className="relative w-full h-full">
-                {/* Banner de Video o Imagen Responsiva */}
+              <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                {/* Fondo Difuminado Ambiental en Espejo (Mirrored Expansion) para una transición 100% natural */}
+                {!isVideo && (
+                  <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
+                    <div className="absolute inset-0 flex items-center justify-center filter blur-md sm:blur-lg opacity-90 scale-105 transform-gpu">
+                      {/* Fragmento Espejo Izquierda */}
+                      <img 
+                        src={slide.image} 
+                        alt="" 
+                        className="h-full w-1/2 object-cover scale-x-[-1] brightness-95 saturate-110"
+                      />
+                      {/* Fragmento Central */}
+                      <img 
+                        src={slide.image} 
+                        alt="" 
+                        className="h-full w-full object-cover brightness-95 saturate-110"
+                      />
+                      {/* Fragmento Espejo Derecha */}
+                      <img 
+                        src={slide.image} 
+                        alt="" 
+                        className="h-full w-1/2 object-cover scale-x-[-1] brightness-95 saturate-110"
+                      />
+                    </div>
+                    {/* Viñeta sutil de integración */}
+                    <div className="absolute inset-0 bg-black/10" />
+                  </div>
+                )}
+
+                {/* Banner de Video o Imagen Principal */}
                 {isVideo ? (
                   <video 
                     src={slide.image} 
@@ -55,7 +83,7 @@ export const HeroSlider = () => {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <a href={slide.link || '#'} className={slide.link ? "cursor-pointer" : "cursor-default"}>
+                  <a href={slide.link || '#'} className={`w-full h-full flex items-center justify-center relative z-10 ${slide.link ? "cursor-pointer" : "cursor-default"}`}>
                     <picture className="w-full h-full block">
                       {slide.mobileImage && (
                         <source media="(max-width: 768px)" srcSet={slide.mobileImage} />
@@ -63,7 +91,7 @@ export const HeroSlider = () => {
                       <img 
                         src={slide.image} 
                         alt={slide.title || 'Banner'} 
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover md:object-contain drop-shadow-xl"
                       />
                     </picture>
                   </a>

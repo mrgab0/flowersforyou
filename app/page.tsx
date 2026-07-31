@@ -3,7 +3,7 @@ import { WhatsAppButton } from "@/components/shop/WhatsAppButton/WhatsAppButton"
 import { LoginButton } from "@/components/LoginButton";
 import { HeroSlider } from "@/components/shop/HeroSlider/HeroSlider";
 import { StickyNav } from "@/components/shop/StickyNav";
-import { CreditCard } from "lucide-react";
+import { Footer } from "@/components/shop/Footer";
 import dbConnect from "@/lib/db";
 import { Product } from "@/lib/models/Product";
 
@@ -80,32 +80,7 @@ export default async function Home() {
       {/* Global Components */}
       <WhatsAppButton phoneNumber="16576988586" />
 
-      {/* Footer */}
-      <footer className="bg-[#1A1C1C] text-gray-200 py-16">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-gray-800 pb-12 mb-12">
-            <h3 className="text-2xl font-serif font-bold text-white">Flowers For You</h3>
-            <div className="flex gap-6 text-sm font-bold tracking-widest text-gray-300 uppercase">
-              <span>6705 Fairway Dr.</span>
-              <span>Houston Texas 77087</span>
-              <span>Boutique Digital</span>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8 text-center md:text-left">
-            <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">
-              © 2026 Flowers For You. Creado con pasión por Alonso de los Ríos.
-            </p>
-            <div className="flex justify-center md:justify-end gap-4 items-center">
-              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Aceptamos:</span>
-              <div className="flex gap-3 text-white">
-                <CreditCard size={24} strokeWidth={1.5} />
-                <span className="text-xs font-semibold">Visa • MC • Amex • Discover</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

@@ -6,6 +6,7 @@ export interface IDeliveryOption extends Document {
   estimatedTimeMinutes: number;
   estimatedTimeLabel: string;
   extraPrice: number;
+  pricePerMile: number;
   badge?: string;
   iconName: string;
   isActive: boolean;
@@ -18,6 +19,7 @@ const DeliveryOptionSchema: Schema = new Schema({
   estimatedTimeMinutes: { type: Number, default: 60 },
   estimatedTimeLabel: { type: String, required: true },
   extraPrice: { type: Number, default: 0 },
+  pricePerMile: { type: Number, default: 1.50 },
   badge: { type: String, default: "" },
   iconName: { type: String, default: "Truck" },
   isActive: { type: Boolean, default: true },

@@ -98,10 +98,10 @@ export default function DeliveryAdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="flex flex-col gap-1">
                   <label className="font-bold text-gray-600 flex items-center gap-1">
-                    <Clock size={12} className="text-[#FF97A4]" /> Tiempo / Rango Estimado
+                    <Clock size={12} className="text-[#FF97A4]" /> Tiempo Estimado
                   </label>
                   <input
                     name="estimatedTimeLabel"
@@ -114,7 +114,7 @@ export default function DeliveryAdminPage() {
 
                 <div className="flex flex-col gap-1">
                   <label className="font-bold text-gray-600 flex items-center gap-1">
-                    <DollarSign size={12} className="text-[#FF97A4]" /> Recargo Adicional ($ USD)
+                    <DollarSign size={12} className="text-[#FF97A4]" /> Precio Base ($ USD)
                   </label>
                   <input
                     name="extraPrice"
@@ -123,6 +123,21 @@ export default function DeliveryAdminPage() {
                     defaultValue={option.extraPrice}
                     placeholder="0.00"
                     className="p-2.5 border rounded-xl font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-bold text-gray-600 flex items-center gap-1">
+                    <DollarSign size={12} className="text-[#FF97A4]" /> Costo por Milla ($/milla)
+                  </label>
+                  <input
+                    name="pricePerMile"
+                    type="number"
+                    step="0.01"
+                    defaultValue={option.pricePerMile || 0}
+                    placeholder="1.50"
+                    className="p-2.5 border rounded-xl font-bold text-purple-700 bg-purple-50/30 border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     required
                   />
                 </div>

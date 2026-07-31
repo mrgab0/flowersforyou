@@ -29,13 +29,32 @@ const iconMap: Record<string, any> = {
   Store: Store,
 };
 
+import { DeliveryMapPicker } from "@/components/shop/DeliveryMapPicker";
+
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [deliveryOptionsList, setDeliveryOptionsList] = useState<DeliveryOption[]>(DEFAULT_DELIVERY_OPTIONS);
-  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption>(DEFAULT_DELIVERY_OPTIONS[2]); // Default a Estándar 3h
+  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null); // Por defecto nada seleccionado (Total $0.00)
+
+  // Estado de Ubicación y Distancia por Millas
+  const [deliveryLocation, setDeliveryLocation] = useState<{
+    address: string;
+    lat: number;
+    lng: number;
+    distanceMiles: number;
+    googleMapsUrl: string;
+  }>({
+    address: "",
+    lat: 25.7617,
+    lng: -80.1918,
+    distanceMiles: 0,
+    googleMapsUrl: "https://maps.google.com",
+  });
+
+  const [isMounted, setIsMounted] = useState(false);
 
   // Estados para datos de contacto
   const [name, setName] = useState("");
@@ -59,7 +78,6 @@ export default function CheckoutPage() {
       const { data } = await getDeliveryOptions();
       if (data && data.length > 0) {
         setDeliveryOptionsList(data);
-        setSelectedDelivery(data[2] || data[0]);
       }
 
       // Cargar credenciales y QR de pago
@@ -91,6 +109,7 @@ export default function CheckoutPage() {
     setEmail(savedEmail);
     setPhone(savedPhone);
     setAddress(savedAddress);
+    setIsMounted(true);
   }, []);
 
   const handleCopyText = (text: string) => {
@@ -101,7 +120,22 @@ export default function CheckoutPage() {
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const deliveryFee = selectedDelivery ? selectedDelivery.extraPrice : 0;
+  
+  // Cálculo dinámico de tarifa por milla según la opción seleccionada
+  const calcOptionFee = (opt: DeliveryOption) => {
+    if (opt.id === "pickup") return 0;
+    const miles = deliveryLocation?.distanceMiles || 0;
+    const perMile = opt.pricePerMile || 0;
+    const base = opt.extraPrice || 0;
+    
+    // Si la opción requiere millas y aún no se ha obtenido la ubicación (miles === 0), retorna 0
+    if (perMile > 0 && miles === 0) return base;
+
+    const totalFee = perMile > 0 ? (miles * perMile) + base : base;
+    return Math.round(totalFee * 100) / 100;
+  };
+
+  const deliveryFee = selectedDelivery ? calcOptionFee(selectedDelivery) : 0;
 
   // Cálculo del Descuento del Cupón
   let discountAmount = 0;
@@ -147,6 +181,12 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!selectedDelivery) {
+      alert("Por favor selecciona una Opción de Entrega para completar tu pedido.");
+      return;
+    }
+
     setLoading(true);
 
     const data = new FormData(e.currentTarget);
@@ -154,7 +194,11 @@ export default function CheckoutPage() {
       customerName: data.get("name")?.toString() || "",
       customerEmail: data.get("email")?.toString() || "",
       customerPhone: data.get("phone")?.toString() || "",
-      address: data.get("address")?.toString() || "",
+      address: deliveryLocation.address || data.get("address")?.toString() || address,
+      destLat: deliveryLocation.lat,
+      destLng: deliveryLocation.lng,
+      distanceMiles: deliveryLocation.distanceMiles,
+      googleMapsUrl: deliveryLocation.googleMapsUrl,
       deliveryMethod: `${selectedDelivery.title} (${selectedDelivery.estimatedTimeLabel})`,
       deliveryFee: deliveryFee,
       couponCode: appliedCoupon ? appliedCoupon.code : "",
@@ -239,13 +283,12 @@ export default function CheckoutPage() {
                       className="w-full p-3.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
                       required 
                     />
-                    <textarea 
-                      name="address" 
-                      value={address} 
-                      onChange={(e) => setAddress(e.target.value)} 
-                      placeholder="Dirección Exacta de Entrega (o escribir 'Retiro en Tienda') *" 
-                      className="w-full p-3.5 border rounded-xl h-20 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]" 
-                      required 
+                    <DeliveryMapPicker
+                      initialAddress={address}
+                      onLocationChange={(locData) => {
+                        setAddress(locData.address);
+                        setDeliveryLocation(locData);
+                      }}
                     />
                   </div>
                 </div>
@@ -262,7 +305,8 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-1 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
                     {deliveryOptionsList.map((option, index) => {
                       const IconComponent = iconMap[option.iconName] || Truck;
-                      const isSelected = (selectedDelivery.id && selectedDelivery.id === option.id) || selectedDelivery.title === option.title;
+                      const isSelected = selectedDelivery ? ((selectedDelivery.id && selectedDelivery.id === option.id) || selectedDelivery.title === option.title) : false;
+                      const optionPrice = calcOptionFee(option);
 
                       return (
                         <label
@@ -288,15 +332,22 @@ export default function CheckoutPage() {
                                 )}
                               </div>
                               <p className="text-xs text-gray-400 mt-0.5">{option.description}</p>
-                              <span className="text-[11px] font-bold text-gray-500 block mt-1">
-                                ⏱️ Tiempo estimado: <strong className="text-gray-800">{option.estimatedTimeLabel}</strong>
-                              </span>
+                              <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px]">
+                                <span className="font-bold text-gray-500">
+                                  ⏱️ <strong className="text-gray-800">{option.estimatedTimeLabel}</strong>
+                                </span>
+                                {isMounted && option.id !== "pickup" && option.pricePerMile > 0 && (
+                                  <span suppressHydrationWarning className="text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                                    📍 {deliveryLocation?.distanceMiles || 0} mi × ${option.pricePerMile.toFixed(2)}/mi
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
                           <div className="text-right flex-shrink-0 ml-3">
-                            <span className={`text-sm font-extrabold block ${option.extraPrice > 0 ? "text-[#FF97A4]" : "text-green-600"}`}>
-                              {option.extraPrice > 0 ? `+$${option.extraPrice.toFixed(2)} USD` : "Gratis"}
+                            <span suppressHydrationWarning className={`text-sm font-extrabold block ${optionPrice > 0 ? "text-[#FF97A4]" : "text-green-600"}`}>
+                              {optionPrice > 0 ? `+$${optionPrice.toFixed(2)} USD` : "Gratis"}
                             </span>
                             {isSelected && (
                               <CheckCircle2 size={18} className="text-[#FF97A4] ml-auto mt-1" />
@@ -512,15 +563,28 @@ export default function CheckoutPage() {
 
               {/* Desglose de Totales */}
               <div className="space-y-2.5 pt-4 border-t border-gray-100 text-sm">
+                {(() => {
+                  const taxAmount = finalTotal * 0.0825;
+                  const netSubtotal = Math.max(0, finalTotal - taxAmount - deliveryFee + discountAmount);
+                  return (
+                    <>
+                      <div className="flex justify-between text-gray-500">
+                        <span>Subtotal Arreglos (Base)</span>
+                        <span className="font-bold text-gray-800">${netSubtotal.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between text-gray-500">
+                        <span>Impuestos / Taxes (8.25% incl.)</span>
+                        <span className="font-bold text-gray-800">${taxAmount.toFixed(2)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
+
                 <div className="flex justify-between text-gray-500">
-                  <span>Subtotal Arreglos</span>
-                  <span className="font-bold text-gray-800">${subtotal.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between text-gray-500">
-                  <span>Entrega ({selectedDelivery.title})</span>
-                  <span className="font-bold text-[#FF97A4]">
-                    {deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : "GRATIS"}
+                  <span>Entrega {selectedDelivery ? `(${selectedDelivery.title})` : "(Por seleccionar)"}</span>
+                  <span className={`font-bold ${deliveryFee > 0 ? "text-[#FF97A4]" : "text-gray-800"}`}>
+                    {selectedDelivery ? (deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : "Gratis") : "$0.00"}
                   </span>
                 </div>
 

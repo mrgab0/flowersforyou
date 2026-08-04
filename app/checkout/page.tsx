@@ -48,8 +48,8 @@ export default function CheckoutPage() {
     googleMapsUrl: string;
   }>({
     address: "",
-    lat: 25.7617,
-    lng: -80.1918,
+    lat: 29.7027,
+    lng: -95.2936,
     distanceMiles: 0,
     googleMapsUrl: "https://maps.google.com",
   });

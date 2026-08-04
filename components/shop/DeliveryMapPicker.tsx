@@ -16,9 +16,9 @@ interface DeliveryMapPickerProps {
   }) => void;
 }
 
-// Coordenadas por defecto del punto de partida de la boutique (Miami / Houston Sede Central)
-const DEFAULT_STORE_LAT = 25.7617;
-const DEFAULT_STORE_LNG = -80.1918;
+// Coordenadas del punto de partida de la boutique matriz (6705 Fairway Dr, Houston, TX 77087)
+const DEFAULT_STORE_LAT = 29.7027;
+const DEFAULT_STORE_LNG = -95.2936;
 
 // Cálculo de Distancia Haversine corregida por factor terrestre de carretera (x 1.25)
 function calculateHaversineMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -76,20 +76,33 @@ export function DeliveryMapPicker({
     });
   };
 
-  // Buscar coordenadas a partir del texto ingresado (Geocoding libre OpenStreetMap Nominatim)
+  // Buscar coordenadas a partir del texto ingresado (Geocoding optimizado con delimitación en Houston TX)
   const geocodeAddress = async (queryText?: string) => {
-    const textToSearch = queryText || addressInput;
-    if (!textToSearch.trim()) return;
+    const rawText = queryText || addressInput;
+    if (!rawText.trim()) return;
+
+    // Sanitizar texto para Nominatim (reemplazar "EE. UU" o "EEUU" por "USA")
+    let cleanText = rawText
+      .replace(/EE\.?\s*UU\.?/gi, "USA")
+      .replace(/EEUU/gi, "USA")
+      .trim();
+
+    // Si el texto no especifica Houston, asegurar delimitación en Houston TX
+    if (!cleanText.toLowerCase().includes("houston")) {
+      cleanText += ", Houston, TX";
+    }
 
     setSearching(true);
     setErrorMsg("");
     setGeocodedSuccess(false);
 
     try {
+      // Delimitación espacial viewbox alrededor de la tienda en Houston TX (29.7027, -95.2936)
+      const viewboxStr = `${storeLng - 0.8},${storeLat + 0.8},${storeLng + 0.8},${storeLat - 0.8}`;
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          textToSearch
-        )}&limit=1`,
+          cleanText
+        )}&limit=1&viewbox=${viewboxStr}`,
         {
           headers: {
             "Accept-Language": "es,en",
@@ -99,20 +112,42 @@ export function DeliveryMapPicker({
       const data = await res.json();
 
       if (data && data.length > 0) {
-        const foundLat = parseFloat(data[0].lat);
-        const foundLng = parseFloat(data[0].lon);
+        let foundLat = parseFloat(data[0].lat);
+        let foundLng = parseFloat(data[0].lon);
+
+        let miles = calculateHaversineMiles(storeLat, storeLng, foundLat, foundLng);
+
+        // Si la distancia supera 100 millas (por error de Nominatim ubicando otra ciudad/estado), forzar búsqueda estricta en Houston TX
+        if (miles > 100) {
+          const strictRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+              cleanText + ", Houston, TX, USA"
+            )}&limit=1&viewbox=${viewboxStr}&bounded=1`,
+            {
+              headers: {
+                "Accept-Language": "es,en",
+              },
+            }
+          );
+          const strictData = await strictRes.json();
+          if (strictData && strictData.length > 0) {
+            foundLat = parseFloat(strictData[0].lat);
+            foundLng = parseFloat(strictData[0].lon);
+            miles = calculateHaversineMiles(storeLat, storeLng, foundLat, foundLng);
+          }
+        }
 
         setLat(foundLat);
         setLng(foundLng);
         setGeocodedSuccess(true);
-        updateParent(textToSearch, foundLat, foundLng);
+        updateParent(rawText, foundLat, foundLng);
       } else {
-        // Fallback: Si no lo halla por texto exacto, estimar cercanía
-        updateParent(textToSearch, lat, lng);
+        // Fallback a coordenadas de la tienda si no hay coincidencia
+        updateParent(rawText, storeLat, storeLng);
       }
     } catch (err) {
       console.error("Geocoding error:", err);
-      updateParent(textToSearch, lat, lng);
+      updateParent(rawText, storeLat, storeLng);
     } finally {
       setSearching(false);
     }
@@ -194,7 +229,7 @@ export function DeliveryMapPicker({
               updateParent(e.target.value, lat, lng);
             }}
             onBlur={() => geocodeAddress()}
-            placeholder="Ej: 1234 Biscayne Blvd, Apt 4B, Miami, FL"
+            placeholder="Ej: 6705 Fairway Dr, Houston, TX 77087"
             className="w-full p-3.5 pr-24 border rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] dark:bg-gray-900 dark:text-white"
             required
           />

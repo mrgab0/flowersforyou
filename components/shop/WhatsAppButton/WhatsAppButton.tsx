@@ -20,7 +20,7 @@ export const WhatsAppButton = ({
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-8 right-8 z-50 flex items-center gap-3.5 bg-[#25D366] hover:bg-[#20ba5a] text-white pl-4 pr-6 py-3.5 rounded-full shadow-[0px_10px_30px_rgba(37,211,102,0.4)] hover:scale-105 transition-all duration-300 active:scale-95 group border-2 border-white"
+      className="fixed bottom-24 sm:bottom-28 right-6 sm:right-8 z-50 flex items-center gap-3.5 bg-[#25D366] hover:bg-[#20ba5a] text-white pl-4 pr-6 py-3.5 rounded-full shadow-[0px_10px_30px_rgba(37,211,102,0.4)] hover:scale-105 transition-all duration-300 active:scale-95 group border-2 border-white"
       aria-label="Consulta Floral por WhatsApp"
     >
       <div className="relative bg-white/20 p-2 rounded-full backdrop-blur-sm">

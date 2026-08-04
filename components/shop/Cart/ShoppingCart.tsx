@@ -16,7 +16,7 @@ export const ShoppingCartComponent = () => {
       {/* Botón activador - Magenta Style */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-28 right-6 z-50 p-4 bg-[#FF97A4] text-white rounded-full shadow-[0px_8px_25px_rgba(216,27,96,0.3)] hover:scale-105 transition-all duration-300 active:scale-95"
+        className="fixed bottom-44 sm:bottom-48 right-6 z-50 p-4 bg-[#FF97A4] text-white rounded-full shadow-[0px_8px_25px_rgba(216,27,96,0.3)] hover:scale-105 transition-all duration-300 active:scale-95"
       >
         <ShoppingCart size={24} />
         {cartItems.length > 0 && (

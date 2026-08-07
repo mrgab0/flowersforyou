@@ -1,16 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CartProvider } from "@/components/shop/Cart/CartContext";
 import { NextIntlClientProvider } from 'next-intl';
 import esMessages from '@/messages/es.json';
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { AnalyticsTracker } from "@/components/analytics/AnalyticsTracker";
 
 export const metadata: Metadata = {
   title: "Flowers For You LLC",
   description: "Boutique floral de lujo con envíos a domicilio",
+  manifest: "/manifest.json",
   icons: {
     icon: "/logo.jpg",
+    apple: "/logo.jpg",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#be185d",
 };
 
 export default function RootLayout({
@@ -23,12 +31,16 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
         <link rel="icon" href="/logo.jpg" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextIntlClientProvider locale="es" messages={esMessages}>
             <CartProvider>
               {children}
+              <AnalyticsTracker />
+              <InstallPrompt />
             </CartProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
@@ -36,4 +48,3 @@ export default function RootLayout({
     </html>
   );
 }
-

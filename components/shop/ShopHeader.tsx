@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ShoppingCart, ArrowLeft, Flower2 } from "lucide-react";
+import { ShoppingCart, ArrowLeft, Fingerprint } from "lucide-react";
 import { useCart } from "@/components/shop/Cart/CartContext";
-import { ShoppingCartComponent } from "@/components/shop/Cart/ShoppingCart";
 import { LanguageSwitcher } from "@/components/shop/LanguageSwitcher";
 import { ThemeToggle } from "@/components/shop/ThemeToggle";
+import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
 
 export const ShopHeader = () => {
   const { cartItems } = useCart();
   const totalCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const [isBioModalOpen, setIsBioModalOpen] = useState(false);
 
   return (
     <>
@@ -36,8 +37,11 @@ export const ShopHeader = () => {
             <Link href="/" className="hover:text-[#FF97A4] transition-colors">
               Inicio
             </Link>
-            <Link href="/#productos" className="hover:text-[#FF97A4] transition-colors">
+            <Link href="/productos" className="hover:text-[#FF97A4] transition-colors">
               Colección
+            </Link>
+            <Link href="/rastreo" className="hover:text-[#FF97A4] transition-colors">
+              Rastreo
             </Link>
             <Link href="/nosotros" className="hover:text-[#FF97A4] transition-colors">
               Nosotros
@@ -47,20 +51,23 @@ export const ShopHeader = () => {
             </Link>
           </nav>
 
-          {/* Acciones Derecha (Selector de Modo Oscuro, Idioma y Carrito) */}
-          <div className="flex items-center gap-2.5">
+          {/* Acciones Derecha (Acceso por Huella, Tema, Idioma y Carrito) */}
+          <div className="flex items-center gap-2">
+            {/* Botón de Acceso Biométrico / Passkeys con Huella */}
+            <button
+              onClick={() => setIsBioModalOpen(true)}
+              className="flex items-center gap-1.5 bg-pink-50 dark:bg-pink-950/60 text-[#FF97A4] border border-pink-200 dark:border-pink-900 px-3 py-2 rounded-xl text-xs font-extrabold hover:bg-pink-100 dark:hover:bg-pink-900 transition-colors"
+              title="Acceso con Huella / Face ID"
+            >
+              <Fingerprint size={16} />
+              <span className="hidden sm:inline">Huella / Passkey</span>
+            </button>
+
             <ThemeToggle />
             <LanguageSwitcher />
 
-            <Link
-              href="/"
-              className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-black px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeft size={16} /> Tienda
-            </Link>
-
             {/* Cart Button indicator */}
-            <div className="relative">
+            <div className="relative ml-1">
               <Link
                 href="/checkout"
                 className="flex items-center gap-2 bg-[#FF97A4] text-white px-5 py-2.5 rounded-full font-bold text-xs hover:bg-[#B0004A] transition-all shadow-md shadow-[#FF97A4]/20"
@@ -77,6 +84,12 @@ export const ShopHeader = () => {
           </div>
         </div>
       </header>
+
+      {/* Modal Biométrico */}
+      <CustomerBiometricModal
+        isOpen={isBioModalOpen}
+        onClose={() => setIsBioModalOpen(false)}
+      />
     </>
   );
 };

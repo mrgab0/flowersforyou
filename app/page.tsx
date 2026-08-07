@@ -68,20 +68,17 @@ export default async function Home() {
                 price={product.price}
                 category={product.category}
                 badge={product.badge}
-                image={product.images[0] || "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?auto=format&fit=crop&q=80&w=800"}
+                image={product.images && product.images.length > 0 ? product.images[0] : ""}
               />
             ))
           ) : (
-            <p className="text-gray-500">No hay productos disponibles por el momento.</p>
+            <p className="col-span-full text-center text-gray-500 py-8 font-medium">No hay productos disponibles por el momento.</p>
           )}
         </div>
       </section>
 
-      {/* Global Components */}
-      <WhatsAppButton phoneNumber="16576988586" />
-
       <Footer />
+      <WhatsAppButton />
     </main>
   );
 }
-

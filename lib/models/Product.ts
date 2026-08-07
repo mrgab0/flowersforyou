@@ -4,26 +4,26 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IProduct extends Document {
   name: string;
   slug: string;
-  sku: string;
+  sku?: string;
   description: string;
   price: number;
   images: string[];
   stock: number;
   category: string;
-  flowerType: string;
-  dimensions: string;
-  careInstructions: string;
-  addons: mongoose.Types.ObjectId[] | any[]; // Reforzado
-  badge?: string; // Etiqueta destacada (ej: "Bestseller 🌟", "¡Nuevo!", "Edición Limitada")
-  isActive?: boolean; // Estado de activación (true = activo, false = pausado)
+  flowerType?: string;
+  dimensions?: string;
+  careInstructions?: string;
+  addons?: mongoose.Types.ObjectId[] | any[];
+  badge?: string;
+  isActive?: boolean;
   flowerCount?: number;
   bouquetType?: string;
   features?: any[];
-  seo: {
-    title: string;
-    description: string;
+  seo?: {
+    title?: string;
+    description?: string;
   };
-  createdAt: Date;
+  createdAt?: Date;
 }
 
 const ProductSchema: Schema = new Schema({
@@ -38,18 +38,22 @@ const ProductSchema: Schema = new Schema({
   flowerType: { type: String, default: "" },
   dimensions: { type: String, default: "" },
   careInstructions: { type: String, default: "" },
-  features: [{ label: String, value: String }],
-  flowerCount: { type: Number },
-  bouquetType: { type: String },
+  addons: [{ type: Schema.Types.ObjectId, ref: 'Addon' }],
   badge: { type: String, default: "" },
   isActive: { type: Boolean, default: true },
-  addons: [{ type: Schema.Types.ObjectId, ref: 'Addon' }],
+  flowerCount: { type: Number, default: 0 },
+  bouquetType: { type: String, default: "" },
+  features: [{ label: String, value: String }],
   seo: {
     title: { type: String },
     description: { type: String }
   },
   createdAt: { type: Date, default: Date.now }
 });
+
+// Índices de Base de Datos para Consultas Ultrarrápidas y Menor Consumo de RAM (slug ya es único en el esquema)
+ProductSchema.index({ category: 1, isActive: 1 });
+ProductSchema.index({ isActive: 1, createdAt: -1 });
 
 export function slugify(text: string) {
   return text
@@ -58,13 +62,13 @@ export function slugify(text: string) {
     .normalize('NFD') // Normaliza acentos
     .replace(/[\u0300-\u036f]/g, '') // Elimina acentos
     .replace(/\s+/g, '-') // Reemplaza espacios por -
-    .replace(/[^\w\-]+/g, '') // Elimina caracteres especiales (incluyendo rayas especiales)
+    .replace(/[^\w\-]+/g, '') // Elimina caracteres especiales
     .replace(/\-\-+/g, '-') // Evita guiones múltiples --
     .replace(/^-+/, '') // Quita guiones iniciales
     .replace(/-+$/, ''); // Quita guiones finales
 }
 
-// Middleware para generar slug si no existe (opcional)
+// Middleware para generar slug si cambia el nombre
 ProductSchema.pre('save', function(next) {
   if (this.isModified('name')) {
     const name = this.get('name') as string;

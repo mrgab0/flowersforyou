@@ -18,6 +18,7 @@ export interface IOrder extends Document {
   total: number;
   paymentMethod: string;
   paymentRef: string;
+  status: string;
   createdAt: Date;
 }
 
@@ -39,6 +40,10 @@ const OrderSchema: Schema = new Schema({
   total: { type: Number, required: true },
   paymentMethod: { type: String, required: true },
   paymentRef: { type: String, required: true },
+  status: { 
+    type: String, 
+    default: "En diseño",
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

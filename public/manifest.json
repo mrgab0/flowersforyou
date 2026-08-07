@@ -1,0 +1,24 @@
+{
+  "name": "Flowers For You | Boutique Floristería",
+  "short_name": "FlowersForYou",
+  "description": "Boutique digital de alta floristería. Arreglos florales exclusivos y detalles de lujo a domicilio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#be185d",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

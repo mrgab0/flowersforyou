@@ -9,7 +9,9 @@ import { DEFAULT_DELIVERY_OPTIONS, DeliveryOption } from "@/lib/deliveryOptions"
 import { getDeliveryOptions } from "@/lib/actions/delivery";
 import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
-import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode } from "lucide-react";
+import { logAnalyticsEventAction } from "@/lib/actions/analytics";
+import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare } from "lucide-react";
+
 
 const PaymentLogos = {
   zelle: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><path d="M0 0h38v24H0z" fill="#6d2277"/><path d="M10 5h18v3l-10 8h10v5H10v-3l10-8H10z" fill="#fff"/></svg>,
@@ -32,7 +34,7 @@ const iconMap: Record<string, any> = {
 import { DeliveryMapPicker } from "@/components/shop/DeliveryMapPicker";
 
 export default function CheckoutPage() {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, updateAddonCustomText } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState("");
@@ -110,7 +112,19 @@ export default function CheckoutPage() {
     setPhone(savedPhone);
     setAddress(savedAddress);
     setIsMounted(true);
-  }, []);
+
+    if (cartItems.length > 0) {
+      logAnalyticsEventAction({
+        type: "cart_abandon",
+        path: "/checkout",
+        customerName: savedName,
+        customerPhone: savedPhone,
+        price: subtotal,
+        cartItems: cartItems.map((i) => ({ productId: i.id, name: i.name, price: i.price, image: i.image }))
+      });
+    }
+  }, [cartItems]);
+
 
   const handleCopyText = (text: string) => {
     if (!text) return;
@@ -128,7 +142,7 @@ export default function CheckoutPage() {
     const perMile = opt.pricePerMile || 0;
     const base = opt.extraPrice || 0;
     
-    // Si la opción requiere millas y aún no se ha obtenido la ubicación (miles === 0), retorna 0
+    // Si la opción requiere millas y aún no se ha obtenido la ubicación (miles === 0), retorna base
     if (perMile > 0 && miles === 0) return base;
 
     const totalFee = perMile > 0 ? (miles * perMile) + base : base;
@@ -492,11 +506,11 @@ export default function CheckoutPage() {
               </form>
             </div>
 
-            {/* RESUMEN DE COMPRA CON DESGLOSE DINÁMICO */}
+            {/* RESUMEN DE COMPRA CON DESGLOSE DINÁMICO DE PRODUCTOS Y ADICIONALES */}
             <div className="md:col-span-5 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 h-fit space-y-6">
               <h2 className="text-xl font-serif font-black text-[#1A1C1C] border-b pb-3">Resumen de Tu Pedido</h2>
               
-              <div className="space-y-4 max-h-[280px] overflow-y-auto pr-1">
+              <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
                 {cartItems.map((item) => (
                   <div key={`${item.id}-${JSON.stringify(item.addons)}`} className="flex justify-between items-start text-sm border-b pb-3 border-gray-50">
                     <div className="flex items-start gap-3">
@@ -508,11 +522,28 @@ export default function CheckoutPage() {
                         <span className="text-xs text-gray-400 font-medium block">Cant: {item.quantity}</span>
                         
                         {item.addons && item.addons.length > 0 && (
-                          <div className="mt-1 space-y-0.5 border-t border-gray-100 pt-1">
+                          <div className="mt-1 space-y-1 border-t border-gray-100 pt-1">
                             {item.addons.map((add: any, idx: number) => (
-                              <span key={idx} className="block text-[10px] text-[#FF97A4] font-bold">
-                                ✨ {add.name || add.value} {add.price ? `(+$${add.price.toFixed(2)})` : ''}
-                              </span>
+                              <div key={idx} className="text-[10px]">
+                                <span className="block text-[#FF97A4] font-bold">
+                                  ✨ {add.name || add.value} {add.price ? `(+$${add.price.toFixed(2)})` : ''}
+                                </span>
+                                {add.customText ? (
+                                  <div className="bg-pink-50 p-1.5 rounded-md text-gray-800 font-medium my-0.5 border border-pink-100 flex items-start gap-1">
+                                    <MessageSquare size={11} className="text-[#FF97A4] flex-shrink-0 mt-0.5" />
+                                    <span><em>"{add.customText}"</em></span>
+                                  </div>
+                                ) : (
+                                  updateAddonCustomText && (
+                                    <input
+                                      type="text"
+                                      placeholder="Añadir dedicatoria para este adicional..."
+                                      onChange={(e) => updateAddonCustomText(item.id, add.addonId, e.target.value)}
+                                      className="mt-0.5 p-1 text-[9px] border rounded w-full focus:outline-none focus:ring-1 focus:ring-[#FF97A4]"
+                                    />
+                                  )
+                                )}
+                              </div>
                             ))}
                           </div>
                         )}

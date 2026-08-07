@@ -42,30 +42,15 @@ export async function createAddon(formData: FormData) {
   try {
     const name = formData.get("name") as string;
     const price = parseFloat(formData.get("price") as string) || 0;
-    const category = formData.get("category") as string || "Otros";
-    const type = formData.get("type") as string || "checkbox";
+    const category = formData.get("category") as string || "Chocolates";
     const image = formData.get("image") as string || "";
     const description = formData.get("description") as string || "";
-    const optionsRaw = formData.get("options") as string || "";
-    const options = optionsRaw.split(",").map(o => o.trim()).filter(Boolean);
 
-    const newAddon = await Addon.create({
-      name,
-      price,
-      category,
-      type,
-      image,
-      description,
-      options,
-      isActive: true,
-    });
-
+    await Addon.create({ name, price, category, image, description, isActive: true });
     revalidatePath("/admin/adicionales");
-    revalidatePath("/admin/productos");
-    return { success: true, id: newAddon._id.toString() };
+    return { success: true };
   } catch (error) {
-    console.error("Error al crear adicional:", error);
-    return { success: false, error: "No se pudo crear el adicional" };
+    return { success: false, error: "Error al crear adicional" };
   }
 }
 
@@ -74,29 +59,15 @@ export async function updateAddon(id: string, formData: FormData) {
   try {
     const name = formData.get("name") as string;
     const price = parseFloat(formData.get("price") as string) || 0;
-    const category = formData.get("category") as string || "Otros";
-    const type = formData.get("type") as string || "checkbox";
+    const category = formData.get("category") as string || "Chocolates";
     const image = formData.get("image") as string || "";
     const description = formData.get("description") as string || "";
-    const optionsRaw = formData.get("options") as string || "";
-    const options = optionsRaw.split(",").map(o => o.trim()).filter(Boolean);
 
-    await Addon.findByIdAndUpdate(id, {
-      name,
-      price,
-      category,
-      type,
-      image,
-      description,
-      options,
-    });
-
+    await Addon.findByIdAndUpdate(id, { name, price, category, image, description });
     revalidatePath("/admin/adicionales");
-    revalidatePath("/admin/productos");
     return { success: true };
   } catch (error) {
-    console.error("Error al editar adicional:", error);
-    return { success: false, error: "No se pudo actualizar el adicional" };
+    return { success: false, error: "Error al actualizar adicional" };
   }
 }
 
@@ -105,11 +76,9 @@ export async function toggleAddonStatus(id: string, isActive: boolean) {
   try {
     await Addon.findByIdAndUpdate(id, { isActive });
     revalidatePath("/admin/adicionales");
-    revalidatePath("/admin/productos");
     return { success: true };
   } catch (error) {
-    console.error("Error al pausar/activar adicional:", error);
-    return { success: false, error: "No se pudo cambiar el estado del adicional" };
+    return { success: false, error: "Error al cambiar estado del adicional" };
   }
 }
 

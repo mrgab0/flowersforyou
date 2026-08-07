@@ -6,18 +6,26 @@ import { useCart } from "@/components/shop/Cart/CartContext";
 import { useTranslations } from "next-intl";
 
 interface ProductCardProps {
-  id: string; // ID es necesario para el carrito
+  id: string;
   name: string;
   slug: string;
   price: number;
-  image: string;
   category: string;
   badge?: string;
+  image: string;
 }
 
-export const ProductCard = ({ id, name, slug, price, image, category, badge }: ProductCardProps) => {
+export const ProductCard: React.FC<ProductCardProps> = ({
+  id,
+  name,
+  slug,
+  price,
+  category,
+  badge,
+  image
+}) => {
   const { addToCart } = useCart();
-  const t = useTranslations("Catalog");
+  const t = useTranslations("common");
 
   return (
     <div className="group relative bg-white rounded-2xl transition-all duration-500 overflow-hidden shadow-[0px_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0px_12px_30px_rgba(0,0,0,0.08)]">
@@ -25,7 +33,7 @@ export const ProductCard = ({ id, name, slug, price, image, category, badge }: P
         {/* Contenedor de Imagen con Zoom suave */}
         <div className="relative aspect-square overflow-hidden bg-white">
           <img
-            src={image}
+            src={image || "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=800"}
             alt={name}
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />
@@ -36,7 +44,7 @@ export const ProductCard = ({ id, name, slug, price, image, category, badge }: P
             </span>
           </div>
 
-          {/* Insignia / Badge Personalizada (ej: Bestseller, Nuevo) */}
+          {/* Insignia / Badge Personalizada */}
           {badge && (
             <div className="absolute top-4 right-4">
               <span className="bg-[#1A1C1C] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
@@ -48,21 +56,14 @@ export const ProductCard = ({ id, name, slug, price, image, category, badge }: P
       </Link>
 
       <div className="p-6">
-        {/* Tipografía: Manrope para títulos */}
-        <h3 className="text-xl font-bold text-[#1A1C1C] leading-tight mb-2 tracking-tight group-hover:text-[#FF97A4] transition-colors duration-300">
-          {name}
+        <h3 className="font-serif font-bold text-lg text-[#1A1C1C] group-hover:text-[#FF97A4] transition-colors mb-2">
+          <Link href={`/productos/${slug}`}>{name}</Link>
         </h3>
-        
-        <div className="flex items-end justify-between mt-4">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">USD</span>
-            <span className="text-2xl font-extrabold text-[#FF97A4]">${price.toFixed(2)}</span>
-          </div>
-          
-          {/* Botón de acción minimalista */}
+        <div className="flex justify-between items-center mt-4">
+          <span className="text-2xl font-extrabold text-[#FF97A4]">${price.toFixed(2)}</span>
           <button 
             onClick={() => addToCart({ id, name, price, image })}
-            className="bg-[#FF97A4] text-white px-5 py-2.5 rounded-lg hover:bg-[#B0004A] active:scale-95 transition-all duration-300 font-bold text-sm shadow-md shadow-[#FF97A4]/20"
+            className="bg-[#FF97A4] text-white px-5 py-2.5 rounded-xl hover:bg-[#B0004A] active:scale-95 transition-all duration-300 font-bold text-sm shadow-md shadow-[#FF97A4]/20"
           >
             {t('addToCart')}
           </button>
@@ -71,4 +72,3 @@ export const ProductCard = ({ id, name, slug, price, image, category, badge }: P
     </div>
   );
 };
-

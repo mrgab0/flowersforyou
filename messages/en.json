@@ -15,6 +15,17 @@
     "contact": "Contact",
     "cart": "Cart"
   },
+  "nav": {
+    "home": "Home",
+    "catalog": "Catalog",
+    "about": "About Us",
+    "contact": "Contact",
+    "cart": "Cart"
+  },
+  "common": {
+    "addToCart": "Add to Cart",
+    "added": "Added!"
+  },
   "Catalog": {
     "headerBadge": "🌸 Full Catalog & Addons",
     "headerTitle": "Explore Our Entire Collection",

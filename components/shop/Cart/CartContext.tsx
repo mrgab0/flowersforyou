@@ -2,20 +2,29 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface CartItem {
+export interface AddonItemSelection {
+  addonId: string;
+  name?: string;
+  price?: number;
+  value?: string;
+  customText?: string;
+}
+
+export interface CartItem {
   id: string;
   name: string;
   price: number;
   quantity: number;
   image: string;
-  addons?: { addonId: string; value?: string }[];
+  addons?: AddonItemSelection[];
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Omit<CartItem, 'quantity'>) => void;
-  decreaseFromCart: (id: string, addons?: { addonId: string; value?: string }[]) => void;
-  removeFromCart: (id: string, addons?: { addonId: string; value?: string }[]) => void;
+  decreaseFromCart: (id: string, addons?: AddonItemSelection[]) => void;
+  removeFromCart: (id: string, addons?: AddonItemSelection[]) => void;
+  updateAddonCustomText?: (itemId: string, addonId: string, customText: string) => void;
   clearCart: () => void;
 }
 
@@ -63,10 +72,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const updateAddonCustomText = (itemId: string, addonId: string, customText: string) => {
+    setCartItems((prev) =>
+      prev.map((item) => {
+        if (item.id === itemId && item.addons) {
+          const updatedAddons = item.addons.map((ad) =>
+            ad.addonId === addonId ? { ...ad, customText } : ad
+          );
+          return { ...item, addons: updatedAddons };
+        }
+        return item;
+      })
+    );
+  };
+
   const clearCart = () => setCartItems([]);
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, decreaseFromCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cartItems, addToCart, decreaseFromCart, removeFromCart, updateAddonCustomText, clearCart }}>
       {children}
     </CartContext.Provider>
   );

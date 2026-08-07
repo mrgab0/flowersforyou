@@ -13,7 +13,7 @@ export async function createProduct(formData: FormData) {
     const price = parseFloat(formData.get("price") as string);
     const category = formData.get("category") as string;
     const description = formData.get("description") as string;
-    const images = formData.getAll("images") as string[];
+    const images = (formData.getAll("images") as string[]).filter((img) => img && typeof img === 'string' && img.trim() !== "");
     const stock = parseInt(formData.get("stock") as string) || 0;
     const sku = formData.get("sku") as string || "";
     
@@ -21,21 +21,29 @@ export async function createProduct(formData: FormData) {
     const flowerCount = parseInt(formData.get("flowerCount") as string) || 0;
     const bouquetType = formData.get("bouquetType") as string || "";
     const badge = formData.get("badge") as string || "";
-    const addons = formData.getAll("addons") as string[];
+    const addonsRaw = formData.getAll("addons") as string[];
+    const addons = addonsRaw.filter((a) => a && typeof a === 'string' && a.trim() !== "");
 
-    // Procesar características (features)
+    // Procesar características
     const featureLabels = formData.getAll("featureLabels") as string[];
     const featureValues = formData.getAll("featureValues") as string[];
     const features = featureLabels
       .map((label, index) => ({ label, value: featureValues[index] }))
       .filter(f => f.label && f.value);
 
+    // Evitar colisiones de Slug
+    const baseSlug = slugify(name);
+    const existingProduct = await Product.findOne({ slug: baseSlug });
+    const slug = existingProduct
+      ? slugify(`${name}-${Math.floor(Math.random() * 1000)}`)
+      : baseSlug;
+
     const newProduct = new Product({
       name,
       price,
       category,
       description,
-      images: images.filter(img => img !== ""), // Solo imágenes válidas
+      images,
       stock,
       sku,
       flowerCount,
@@ -43,7 +51,8 @@ export async function createProduct(formData: FormData) {
       badge,
       addons,
       features,
-      slug: slugify(name + "-" + Math.floor(Math.random() * 1000)),
+      slug,
+      isActive: true,
     });
 
     const saved = await newProduct.save();
@@ -142,8 +151,15 @@ export async function toggleProductStatus(id: string, isActive: boolean) {
 }
 
 export async function deleteProduct(id: string) {
-  await dbConnect();
-  await Product.findByIdAndDelete(id);
-  revalidatePath("/admin/productos");
-  revalidatePath("/");
+  try {
+    await dbConnect();
+    await Product.findByIdAndDelete(id);
+    revalidatePath("/", "layout");
+    revalidatePath("/admin/productos");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al eliminar producto:", error);
+    return { success: false, error: "No se pudo eliminar el producto" };
+  }
 }
+

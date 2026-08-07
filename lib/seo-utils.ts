@@ -1,20 +1,19 @@
 import { IProduct as Product } from "@/lib/models/Product";
 
 /**
- * Genera el script JSON-LD para un arreglo floral.
- * Cumple con los requisitos de Google para fragmentos enriquecidos de productos.
+ * Genera el script JSON-LD para un producto floral (Google Shopping & Rich Snippets).
  */
-export function getProductSchema(product: Product) {
+export function getProductSchema(product: Product, siteUrl: string = "https://flowersforyou.com") {
   const schema = {
     "@context": "https://schema.org/",
     "@type": "Product",
     "name": product.name,
-    "image": product.images,
+    "image": product.images || [],
     "description": product.description,
-    "sku": product._id.toString(),
+    "sku": product._id ? product._id.toString() : product.slug,
     "offers": {
       "@type": "Offer",
-      "url": `https://tuflowershop.com/product/${product.slug}`,
+      "url": `${siteUrl}/productos/${product.slug}`,
       "priceCurrency": "USD",
       "price": product.price,
       "itemCondition": "https://schema.org/NewCondition",
@@ -23,9 +22,65 @@ export function getProductSchema(product: Product) {
         : "https://schema.org/OutOfStock",
       "seller": {
         "@type": "FlowerShop",
-        "name": "Nombre de tu Floristería"
+        "name": "Flowers For You"
       }
     }
+  };
+
+  return JSON.stringify(schema);
+}
+
+/**
+ * Genera el marcado JSON-LD de Negocio Local / Floristería para Google Maps.
+ */
+export function getLocalBusinessSchema(config: any, siteUrl: string = "https://flowersforyou.com") {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FlowerShop",
+    "name": config?.businessName || "Flowers For You LLC",
+    "image": config?.ogImage || `${siteUrl}/logo.jpg`,
+    "@id": siteUrl,
+    "url": siteUrl,
+    "telephone": config?.businessPhone || "+1 (800) 555-3569",
+    "priceRange": "$$",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": config?.businessAddress || "Av. Principal Floristería #123",
+      "addressLocality": config?.businessCity || "Ciudad de México",
+      "addressCountry": "MX"
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "opens": "08:00",
+      "closes": "20:00"
+    }
+  };
+
+  return JSON.stringify(schema);
+}
+
+/**
+ * Genera el esquema de Migas de Pan (Breadcrumbs) para Google SERP.
+ */
+export function getBreadcrumbSchema(items: { name: string; url: string }[]) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "item": item.url
+    }))
   };
 
   return JSON.stringify(schema);
@@ -38,20 +93,23 @@ export function constructMetadata({
   title,
   description,
   image,
-  slug
+  slug = ""
 }: {
   title: string;
   description: string;
   image?: string;
-  slug: string;
+  slug?: string;
 }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flowersforyou.com";
+  const fullUrl = slug ? `${siteUrl}/${slug}` : siteUrl;
+
   return {
-    title: `${title} | Floristería Especializada`,
+    title: `${title} | Flowers For You`,
     description,
     openGraph: {
       title,
       description,
-      url: `https://tuflowershop.com/${slug}`,
+      url: fullUrl,
       images: image ? [{ url: image }] : [],
       type: 'website',
     },

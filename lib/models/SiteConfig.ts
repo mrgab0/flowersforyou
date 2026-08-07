@@ -18,6 +18,19 @@ export interface ISiteConfig extends Document {
   rescueOtpCode?: string;
   rescueOtpExpiresAt?: Date;
 
+  // Campos de Optimización SEO y Google Maps
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  ogImage?: string;
+  googleSiteVerification?: string;
+  bingSiteVerification?: string;
+  googleAnalyticsId?: string;
+  businessName?: string;
+  businessPhone?: string;
+  businessAddress?: string;
+  businessCity?: string;
+
   updatedAt: Date;
 }
 
@@ -37,7 +50,21 @@ const SiteConfigSchema: Schema = new Schema({
   rescueOtpCode: { type: String, default: "" },
   rescueOtpExpiresAt: { type: Date, default: null },
 
+  // Campos SEO por defecto
+  seoTitle: { type: String, default: "Flowers For You | Boutique Digital de Alta Floristería" },
+  seoDescription: { type: String, default: "Floristería exclusiva con arreglos florales de lujo, rosas y detalles personalizados a domicilio con entrega express." },
+  seoKeywords: { type: String, default: "floristeria, flores a domicilio, arreglos florales, rosas, ramos de flores, regalos" },
+  ogImage: { type: String, default: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=1200" },
+  googleSiteVerification: { type: String, default: "" },
+  bingSiteVerification: { type: String, default: "" },
+  googleAnalyticsId: { type: String, default: "" },
+  businessName: { type: String, default: "Flowers For You LLC" },
+  businessPhone: { type: String, default: "+1 (800) 555-3569" },
+  businessAddress: { type: String, default: "Av. Principal Floristería #123" },
+  businessCity: { type: String, default: "Ciudad de México" },
+
   updatedAt: { type: Date, default: Date.now }
 });
 
 export const SiteConfig = mongoose.models.SiteConfig || mongoose.model<ISiteConfig>("SiteConfig", SiteConfigSchema);
+

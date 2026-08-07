@@ -6,10 +6,10 @@ import { LanguageSwitcher } from "@/components/shop/LanguageSwitcher";
 import { ThemeToggle } from "@/components/shop/ThemeToggle";
 import { useTranslations } from "next-intl";
 
-export const StickyNav = () => {
+export function StickyNav() {
   const [isSticky, setIsSticky] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const t = useTranslations("Nav");
+  const t = useTranslations("nav");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,6 +55,7 @@ export const StickyNav = () => {
         >
           <Link href="/" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">{t('home')}</Link>
           <Link href="/productos" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">{t('catalog')}</Link>
+          <Link href="/rastreo" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">📦 Rastreo</Link>
           <Link href="/nosotros" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">{t('about')}</Link>
           <Link href="/contacto" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">{t('contact')}</Link>
           <Link href="/checkout" className="px-6 py-4 hover:bg-[#FF97A4]/20 transition-colors">{t('cart')}</Link>
@@ -68,4 +69,4 @@ export const StickyNav = () => {
       </div>
     </nav>
   );
-};
+}

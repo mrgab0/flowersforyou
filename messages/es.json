@@ -15,6 +15,17 @@
     "contact": "Contacto",
     "cart": "Carrito"
   },
+  "nav": {
+    "home": "Inicio",
+    "catalog": "Catálogo",
+    "about": "Nosotros",
+    "contact": "Contacto",
+    "cart": "Carrito"
+  },
+  "common": {
+    "addToCart": "Añadir al Carrito",
+    "added": "¡Añadido!"
+  },
   "Catalog": {
     "headerBadge": "🌸 Catálogo Completo & Adicionales",
     "headerTitle": "Explora Toda Nuestra Colección",

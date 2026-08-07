@@ -17,31 +17,6 @@ export default function CrearProductoPage() {
   const [initialData, setInitialData] = useState<any>(null);
   const searchParams = useSearchParams();
   const duplicateId = searchParams.get("duplicate");
-
-  useEffect(() => {
-    async function fetchAddons() {
-      const { data } = await getAddons();
-      if (data) setAddons(data);
-    }
-    fetchAddons();
-  }, []);
-
-  useEffect(() => {
-    async function loadDuplicateData() {
-      if (duplicateId) {
-        const { data } = await getProductById(duplicateId);
-        if (data) {
-          setInitialData({
-            ...data,
-            name: `${data.name} (Copia)`,
-            sku: `${data.sku || 'SKU'}-COPY`,
-          });
-        }
-      }
-    }
-    loadDuplicateData();
-  }, [duplicateId]);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -240,10 +215,12 @@ export default function CrearProductoPage() {
           {/* SECCIÓN 5: Adicionales Compatibles */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <AdminAddonManager
-              availableAddons={addons}
-              initialAddons={initialData?.addons || []}
+              addons={addons}
+              selectedIds={initialData?.addons || []}
+              onChange={() => {}}
             />
           </div>
+
 
           {/* Botones de Acción */}
           <div className="flex gap-4 pt-4">

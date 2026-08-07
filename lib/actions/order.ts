@@ -142,16 +142,26 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
               ` : ''}
             </div>
 
-            <h3 style="color: #1A1C1C; border-bottom: 2px solid #FF97A4; padding-bottom: 5px;">Detalle de Productos:</h3>
+            <h3 style="color: #1A1C1C; border-bottom: 2px solid #FF97A4; padding-bottom: 5px;">Detalle de Productos & Adicionales:</h3>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
               ${savedOrder.items.map((item: any) => `
                 <tr>
                   <td style="padding: 10px; border-bottom: 1px solid #eee;">
                     <strong>${item.name}</strong><br>
                     <small>Cantidad: ${item.quantity}</small>
-                    ${item.addons && item.addons.length > 0 ? `<br><small style="color: #FF97A4; font-weight: bold;">+ Adicionales: ${item.addons.map((a: any) => `${a.name || a.value} ${a.price ? `(+$${a.price.toFixed(2)})` : ''}`).join(', ')}</small>` : ''}
+                    ${item.addons && item.addons.length > 0 ? `
+                      <div style="margin-top: 6px; padding: 8px; background: #fff0f3; border-left: 3px solid #ff97a4; border-radius: 4px;">
+                        <strong style="color: #b0004a; font-size: 11px;">Adicionales Seleccionados:</strong><br>
+                        ${item.addons.map((a: any) => `
+                          <div style="font-size: 11px; margin-top: 3px; color: #333;">
+                            ✨ <strong>${a.name || a.value}</strong> ${a.price ? `(+$${a.price.toFixed(2)})` : ''}
+                            ${a.customText ? `<div style="color: #d81b60; font-style: italic; font-weight: bold; margin-left: 10px;">💬 Texto / Dedicatoria: "${a.customText}"</div>` : ''}
+                          </div>
+                        `).join('')}
+                      </div>
+                    ` : ''}
                   </td>
-                  <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">$${(item.price * item.quantity).toFixed(2)} USD</td>
+                  <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold; vertical-align: top;">$${(item.price * item.quantity).toFixed(2)} USD</td>
                 </tr>
               `).join('')}
             </table>
@@ -210,12 +220,63 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
       });
 
       console.log("Email enviado con éxito a", toEmails, "MessageId:", info.messageId);
-
-      console.log("Email enviado con éxito por SMTP. MessageId:", info.messageId);
     }
   } catch (error) {
     console.error("Error enviando email SMTP:", error);
   }
 
   return { success: true, orderId: savedOrder.orderId };
+}
+
+export async function getOrderById(orderIdOrPhone: string) {
+  try {
+    await dbConnect();
+    const query = orderIdOrPhone.trim();
+
+    const order = await Order.findOne({
+      $or: [
+        { orderId: query },
+        { customerPhone: { $regex: query, $options: "i" } },
+        { customerName: { $regex: query, $options: "i" } }
+      ]
+    }).lean();
+
+    if (!order) {
+      return { success: false, error: "Pedido no encontrado." };
+    }
+
+    return { success: true, data: JSON.parse(JSON.stringify(order)) };
+  } catch (error) {
+    console.error("Error al buscar pedido:", error);
+    return { success: false, error: "Error al buscar el pedido." };
+  }
+}
+
+export async function updateOrderStatusAction(orderId: string, status: string) {
+  try {
+    await dbConnect();
+    const updated = await Order.findOneAndUpdate(
+      { orderId },
+      { status },
+      { new: true }
+    );
+    if (!updated) {
+      return { success: false, error: "Pedido no encontrado." };
+    }
+    return { success: true, data: JSON.parse(JSON.stringify(updated)) };
+  } catch (error) {
+    console.error("Error actualizando estado del pedido:", error);
+    return { success: false, error: "Error al actualizar el estado del pedido." };
+  }
+}
+
+export async function getAllOrdersAction() {
+  try {
+    await dbConnect();
+    const orders = await Order.find({}).sort({ createdAt: -1 }).limit(100).lean();
+    return { success: true, data: JSON.parse(JSON.stringify(orders)) };
+  } catch (error) {
+    console.error("Error obteniendo lista de órdenes:", error);
+    return { success: false, error: "No se pudieron obtener las órdenes." };
+  }
 }

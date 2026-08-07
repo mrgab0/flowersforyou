@@ -62,3 +62,47 @@ export async function updateSiteConfig(formData: FormData) {
     return { success: false, error: "No se pudieron guardar los lemas del sitio." };
   }
 }
+
+export async function updateSeoConfig(formData: FormData) {
+  await dbConnect();
+  try {
+    const seoTitle = formData.get("seoTitle") as string || "";
+    const seoDescription = formData.get("seoDescription") as string || "";
+    const seoKeywords = formData.get("seoKeywords") as string || "";
+    const ogImage = formData.get("ogImage") as string || "";
+    const googleSiteVerification = formData.get("googleSiteVerification") as string || "";
+    const bingSiteVerification = formData.get("bingSiteVerification") as string || "";
+    const googleAnalyticsId = formData.get("googleAnalyticsId") as string || "";
+    const businessName = formData.get("businessName") as string || "";
+    const businessPhone = formData.get("businessPhone") as string || "";
+    const businessAddress = formData.get("businessAddress") as string || "";
+    const businessCity = formData.get("businessCity") as string || "";
+
+    await SiteConfig.findOneAndUpdate(
+      { key: "global" },
+      {
+        seoTitle,
+        seoDescription,
+        seoKeywords,
+        ogImage,
+        googleSiteVerification,
+        bingSiteVerification,
+        googleAnalyticsId,
+        businessName,
+        businessPhone,
+        businessAddress,
+        businessCity,
+        updatedAt: new Date()
+      },
+      { upsert: true, new: true }
+    );
+
+    revalidatePath("/");
+    revalidatePath("/admin/seo");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al actualizar configuración SEO:", error);
+    return { success: false, error: "No se pudieron guardar las configuraciones de SEO." };
+  }
+}
+

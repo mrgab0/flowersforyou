@@ -10,7 +10,8 @@ import { getDeliveryOptions } from "@/lib/actions/delivery";
 import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
 import { logAnalyticsEventAction } from "@/lib/actions/analytics";
-import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart } from "lucide-react";
+import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
+import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart, Fingerprint } from "lucide-react";
 
 
 const PaymentLogos = {
@@ -40,6 +41,7 @@ export default function CheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState("");
   const [deliveryOptionsList, setDeliveryOptionsList] = useState<DeliveryOption[]>(DEFAULT_DELIVERY_OPTIONS);
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
+  const [isBioModalOpen, setIsBioModalOpen] = useState(false);
 
   // Estado de Ubicación y Distancia por Millas
   const [deliveryLocation, setDeliveryLocation] = useState<{
@@ -272,11 +274,22 @@ export default function CheckoutPage() {
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 
-                {/* 1. Datos de Contacto */}
+                {/* 1. Datos de Contacto + Acceso Biométrico */}
                 <div className="space-y-4">
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 border-b pb-2">
-                    1. Información del Cliente
-                  </h2>
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500">
+                      1. Información del Cliente
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setIsBioModalOpen(true)}
+                      className="bg-pink-50 hover:bg-pink-100 text-[#FF97A4] border border-pink-200 px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                    >
+                      <Fingerprint size={14} />
+                      <span>Ingresar con Huella 👆</span>
+                    </button>
+                  </div>
+
                   <div className="space-y-3">
                     <input 
                       name="name" 
@@ -656,6 +669,17 @@ export default function CheckoutPage() {
           </div>
         </div>
       </main>
+
+      {/* Modal Biométrico de Huella / Passkeys para el Cliente */}
+      <CustomerBiometricModal
+        isOpen={isBioModalOpen}
+        onClose={() => setIsBioModalOpen(false)}
+        onSuccess={(cust) => {
+          if (cust.email) setEmail(cust.email);
+          if (cust.name) setName(cust.name);
+          if (cust.phone) setPhone(cust.phone);
+        }}
+      />
     </div>
   );
 }

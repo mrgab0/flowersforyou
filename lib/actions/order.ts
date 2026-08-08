@@ -3,6 +3,8 @@
 import dbConnect from "@/lib/db";
 import { Order } from "@/lib/models/Order";
 import nodemailer from "nodemailer";
+import path from "path";
+import fs from "fs";
 
 function getTransporter() {
   const host = process.env.SMTP_HOST;
@@ -103,7 +105,12 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
       const itemsSubtotal = (savedOrder.items || []).reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flowersforyou.vercel.app";
-      const logoUrl = `${siteUrl.replace(/\/$/, "")}/logo.jpg`;
+      const fallbackLogoUrl = `${siteUrl.replace(/\/$/, "")}/logo.jpg`;
+
+      // Comprobar archivo del logo en el servidor de forma local para adjuntarlo inline (CID)
+      const logoPath = path.join(process.cwd(), "public", "logo.jpg");
+      const hasLogoFile = fs.existsSync(logoPath);
+      const logoSrc = hasLogoFile ? "cid:logo_image@flowersforyou" : fallbackLogoUrl;
 
       const emailContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background: #ffffff;">
@@ -111,7 +118,7 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
             <table role="presentation" style="margin: 0 auto; border-collapse: collapse;">
               <tr>
                 <td style="vertical-align: middle; padding-right: 14px;">
-                  <img src="${logoUrl}" alt="Flowers For You Logo" style="width: 46px; height: 46px; border-radius: 50%; border: 2px solid #ffffff; display: block; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+                  <img src="${logoSrc}" alt="Flowers For You Logo" style="width: 46px; height: 46px; border-radius: 50%; border: 2px solid #ffffff; display: block; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
                 </td>
                 <td style="vertical-align: middle; text-align: left;">
                   <h1 style="color: #ffffff; margin: 0; font-family: Georgia, serif; font-size: 24px; font-weight: bold; line-height: 1.1;">Flowers For You LLC</h1>
@@ -221,12 +228,24 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
         </div>
       `;
 
-      const info = await transporter.sendMail({
+      const mailOptions: any = {
         from: sender,
         to: toEmails,
         subject: `Factura / Confirmación de Pedido: ${savedOrder.orderId}`,
         html: emailContent,
-      });
+      };
+
+      if (hasLogoFile) {
+        mailOptions.attachments = [
+          {
+            filename: "logo.jpg",
+            path: logoPath,
+            cid: "logo_image@flowersforyou",
+          },
+        ];
+      }
+
+      const info = await transporter.sendMail(mailOptions);
 
       console.log("Email enviado con éxito a", toEmails, "MessageId:", info.messageId);
     }

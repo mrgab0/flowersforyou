@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapPin, Navigation, Search, CheckCircle2, AlertCircle, Compass } from "lucide-react";
 
 interface DeliveryMapPickerProps {
@@ -47,13 +47,14 @@ export function DeliveryMapPicker({
   onLocationChange,
 }: DeliveryMapPickerProps) {
   const [addressInput, setAddressInput] = useState(initialAddress || "");
-  const [lat, setLat] = useState<number>(DEFAULT_STORE_LAT + 0.05); // Inicialmente a pocas millas
+  const [lat, setLat] = useState<number>(DEFAULT_STORE_LAT + 0.05);
   const [lng, setLng] = useState<number>(DEFAULT_STORE_LNG + 0.05);
   
   const [searching, setSearching] = useState(false);
   const [geocodedSuccess, setGeocodedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [distanceMiles, setDistanceMiles] = useState<number>(0);
+  const lastGeocodedRef = useRef<string>("");
 
   useEffect(() => {
     if (initialAddress && initialAddress !== addressInput) {
@@ -61,6 +62,18 @@ export function DeliveryMapPicker({
       geocodeAddress(initialAddress);
     }
   }, [initialAddress]);
+
+  // Geocodificación Automática Debounced mientras el cliente escribe o pega la dirección
+  useEffect(() => {
+    if (!addressInput || addressInput.trim().length < 5) return;
+    if (addressInput.trim() === lastGeocodedRef.current) return;
+
+    const timer = setTimeout(() => {
+      geocodeAddress(addressInput);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [addressInput]);
 
   const updateParent = (newAddress: string, newLat: number, newLng: number) => {
     const miles = calculateHaversineMiles(storeLat, storeLng, newLat, newLng);
@@ -76,57 +89,78 @@ export function DeliveryMapPicker({
     });
   };
 
-  // Buscar coordenadas a partir del texto ingresado (Geocoding optimizado con delimitación en Houston TX)
+  // Geocoding multinivel con fallbacks inteligentes para Houston, TX y Zip Codes
   const geocodeAddress = async (queryText?: string) => {
     const rawText = queryText || addressInput;
-    if (!rawText.trim()) return;
+    if (!rawText || !rawText.trim()) return;
 
-    // Sanitizar texto para Nominatim (reemplazar "EE. UU" o "EEUU" por "USA")
-    let cleanText = rawText
+    const cleanInput = rawText
       .replace(/EE\.?\s*UU\.?/gi, "USA")
       .replace(/EEUU/gi, "USA")
       .trim();
 
-    // Si el texto no especifica Houston, asegurar delimitación en Houston TX
-    if (!cleanText.toLowerCase().includes("houston")) {
-      cleanText += ", Houston, TX";
-    }
-
+    lastGeocodedRef.current = rawText.trim();
     setSearching(true);
     setErrorMsg("");
     setGeocodedSuccess(false);
 
+    // Preparar variaciones de búsqueda de más específica a más general
+    const searchQueries: string[] = [];
+
+    // Variación 1: Dirección completa con Houston, TX
+    if (!cleanInput.toLowerCase().includes("houston")) {
+      searchQueries.push(`${cleanInput}, Houston, TX, USA`);
+    } else {
+      searchQueries.push(`${cleanInput}, USA`);
+    }
+
+    // Variación 2: Sin número de casa si el número no figura aún en OpenStreetMap (ej: "Kyler Oaks Pl, 77043, Houston, TX")
+    const withoutHouseNum = cleanInput.replace(/^\d+\s+/, "");
+    if (withoutHouseNum !== cleanInput) {
+      searchQueries.push(`${withoutHouseNum}, Houston, TX, USA`);
+    }
+
+    // Variación 3: Extraer Código Postal ZIP si está presente (ej: "77043, Houston, TX")
+    const zipMatch = cleanInput.match(/\b(77\d{3})\b/);
+    if (zipMatch) {
+      searchQueries.push(`${zipMatch[1]}, Houston, TX, USA`);
+    }
+
     try {
-      // Delimitación espacial viewbox alrededor de la tienda en Houston TX (29.7027, -95.2936)
-      const viewboxStr = `${storeLng - 0.8},${storeLat + 0.8},${storeLng + 0.8},${storeLat - 0.8}`;
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          cleanText
-        )}&limit=1&viewbox=${viewboxStr}`,
-        {
-          headers: {
-            "Accept-Language": "es,en",
-          },
+      const viewboxStr = `${storeLng - 1.2},${storeLat + 1.2},${storeLng + 1.2},${storeLat - 1.2}`;
+      let foundData: any = null;
+
+      for (const query of searchQueries) {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            query
+          )}&limit=1&viewbox=${viewboxStr}`,
+          {
+            headers: {
+              "Accept-Language": "es,en",
+            },
+          }
+        );
+        const data = await res.json();
+        if (data && data.length > 0) {
+          foundData = data[0];
+          break;
         }
-      );
-      const data = await res.json();
+      }
 
-      if (data && data.length > 0) {
-        let foundLat = parseFloat(data[0].lat);
-        let foundLng = parseFloat(data[0].lon);
-
+      if (foundData) {
+        let foundLat = parseFloat(foundData.lat);
+        let foundLng = parseFloat(foundData.lon);
         let miles = calculateHaversineMiles(storeLat, storeLng, foundLat, foundLng);
 
-        // Si la distancia supera 100 millas (por error de Nominatim ubicando otra ciudad/estado), forzar búsqueda estricta en Houston TX
-        if (miles > 100) {
+        // Si la distancia supera 120 millas por desvío fuera de Houston, forzar delimitación estricta
+        if (miles > 120) {
           const strictRes = await fetch(
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-              cleanText + ", Houston, TX, USA"
+              cleanInput + ", Houston, TX"
             )}&limit=1&viewbox=${viewboxStr}&bounded=1`,
             {
-              headers: {
-                "Accept-Language": "es,en",
-              },
+              headers: { "Accept-Language": "es,en" },
             }
           );
           const strictData = await strictRes.json();
@@ -142,11 +176,12 @@ export function DeliveryMapPicker({
         setGeocodedSuccess(true);
         updateParent(rawText, foundLat, foundLng);
       } else {
-        // Fallback a coordenadas de la tienda si no hay coincidencia
+        // Si no se pudo ubicar en el mapa, establecer una estimación aproximada por defecto en el área metropolitana
+        setErrorMsg("No encontramos la dirección exacta en el GPS. Por favor revisa el texto o usa 'Usar Mi Ubicación Actual'.");
         updateParent(rawText, storeLat, storeLng);
       }
     } catch (err) {
-      console.error("Geocoding error:", err);
+      console.error("Error geocodificando dirección:", err);
       updateParent(rawText, storeLat, storeLng);
     } finally {
       setSearching(false);
@@ -170,7 +205,6 @@ export function DeliveryMapPicker({
         setLat(userLat);
         setLng(userLng);
 
-        // Reverse Geocoding para obtener la dirección en texto
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}`
@@ -196,7 +230,6 @@ export function DeliveryMapPicker({
     );
   };
 
-  // URL del mapa iframe embebido (OpenStreetMap con marcador interactivo)
   const mapIframeUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.03}%2C${lat - 0.03}%2C${lng + 0.03}%2C${lat + 0.03}&layer=mapnik&marker=${lat}%2C${lng}`;
 
   return (
@@ -217,7 +250,7 @@ export function DeliveryMapPicker({
         </button>
       </div>
 
-      {/* Campo de texto de Dirección */}
+      {/* Campo de texto de Dirección con Geocodificación Automática */}
       <div className="space-y-1.5">
         <div className="relative">
           <input
@@ -226,10 +259,9 @@ export function DeliveryMapPicker({
             value={addressInput}
             onChange={(e) => {
               setAddressInput(e.target.value);
-              updateParent(e.target.value, lat, lng);
             }}
             onBlur={() => geocodeAddress()}
-            placeholder="Ej: 6705 Fairway Dr, Houston, TX 77087"
+            placeholder="Ej: 10827 Kyler Oaks Pl, Houston, TX 77043"
             className="w-full p-3.5 pr-24 border rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] dark:bg-gray-900 dark:text-white"
             required
           />
@@ -240,14 +272,19 @@ export function DeliveryMapPicker({
             className="absolute right-2 top-2 bottom-2 px-3 bg-[#1A1C1C] text-white rounded-xl text-xs font-bold hover:bg-black transition-colors flex items-center gap-1"
           >
             <Search size={14} />
-            {searching ? "Buscando..." : "Ubicar"}
+            {searching ? "Buscando..." : "Ubicar GPS"}
           </button>
         </div>
 
         {geocodedSuccess && (
-          <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 pt-0.5">
-            <CheckCircle2 size={13} /> ¡Dirección localizada en el mapa! Distancia estimada: <strong>{distanceMiles} millas</strong>
-          </p>
+          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900/50 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+            <span className="flex items-center gap-1">
+              <CheckCircle2 size={14} className="text-emerald-600" /> Dirección localizada en mapa de Houston
+            </span>
+            <span className="bg-emerald-600 text-white px-2.5 py-0.5 rounded-full text-[10px]">
+              📍 {distanceMiles} Millas desde Boutique
+            </span>
+          </div>
         )}
 
         {errorMsg && (
@@ -273,12 +310,12 @@ export function DeliveryMapPicker({
           {/* Badge flotante de millas sobre el mapa */}
           <div className="absolute top-3 right-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-md flex items-center gap-1.5 text-xs font-black">
             <Compass size={14} className="text-[#FF97A4]" />
-            <span>{distanceMiles > 0 ? `📍 ${distanceMiles} Millas desde Boutique` : "📍 Ubica tu dirección para calcular millas"}</span>
+            <span>{distanceMiles > 0 ? `📍 ${distanceMiles} Millas desde Boutique` : "📍 Escribe la dirección para calcular millas"}</span>
           </div>
         </div>
 
         <p className="text-[11px] text-gray-500 dark:text-gray-400 italic">
-          💡 El pin del mapa se envía a nuestros repartidores en su factura para navegación GPS en tiempo real.
+          💡 Las millas calculadas se aplican automáticamente al costo de entrega según la opción elegida.
         </p>
       </div>
     </div>

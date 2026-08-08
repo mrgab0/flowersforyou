@@ -56,11 +56,11 @@ export const ShopHeader = () => {
             {/* Botón de Acceso Biométrico / Passkeys con Huella */}
             <button
               onClick={() => setIsBioModalOpen(true)}
-              className="flex items-center gap-1.5 bg-pink-50 dark:bg-pink-950/60 text-[#FF97A4] border border-pink-200 dark:border-pink-900 px-3 py-2 rounded-xl text-xs font-extrabold hover:bg-pink-100 dark:hover:bg-pink-900 transition-colors"
+              className="flex items-center gap-1.5 bg-pink-50 dark:bg-pink-950/60 text-[#FF97A4] border border-pink-200 dark:border-pink-900 px-3 py-2 rounded-xl text-xs font-extrabold hover:bg-pink-100 dark:hover:bg-pink-900 transition-colors shadow-sm"
               title="Acceso con Huella / Face ID"
             >
               <Fingerprint size={16} />
-              <span className="hidden sm:inline">Huella / Passkey</span>
+              <span className="inline text-[11px]">Huella 👆</span>
             </button>
 
             <ThemeToggle />

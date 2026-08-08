@@ -10,7 +10,7 @@ import { getDeliveryOptions } from "@/lib/actions/delivery";
 import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
 import { logAnalyticsEventAction } from "@/lib/actions/analytics";
-import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare } from "lucide-react";
+import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart } from "lucide-react";
 
 
 const PaymentLogos = {
@@ -39,7 +39,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [deliveryOptionsList, setDeliveryOptionsList] = useState<DeliveryOption[]>(DEFAULT_DELIVERY_OPTIONS);
-  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null); // Por defecto nada seleccionado (Total $0.00)
+  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
 
   // Estado de Ubicación y Distancia por Millas
   const [deliveryLocation, setDeliveryLocation] = useState<{
@@ -63,6 +63,7 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [cardMessage, setCardMessage] = useState("");
 
   // Estados para Cupones y Pagos
   const [couponInput, setCouponInput] = useState("");
@@ -71,7 +72,7 @@ export default function CheckoutPage() {
   const [couponSuccess, setCouponSuccess] = useState("");
   const [autoLaunchInfo, setAutoLaunchInfo] = useState<{ isAvailable: boolean; orderIndex?: number; coupon?: any } | null>(null);
   
-  // Datos de Configuración de Cuentas de Pago (Zelle, CashApp, PayPal, Square, Efectivo)
+  // Datos de Configuración de Cuentas de Pago
   const [paymentConfigs, setPaymentConfigs] = useState<Record<string, any>>({});
   const [copiedText, setCopiedText] = useState("");
 
@@ -82,13 +83,11 @@ export default function CheckoutPage() {
         setDeliveryOptionsList(data);
       }
 
-      // Cargar credenciales y QR de pago
       const payRes = await getPaymentConfigs();
       if (payRes.success && payRes.data) {
         setPaymentConfigs(payRes.data);
       }
 
-      // Verificar cupón de lanzamiento automático (Primeros N clientes)
       const autoRes = await checkAutoLaunchCoupon();
       if (autoRes.success && autoRes.isAutoAvailable && autoRes.coupon) {
         setAutoLaunchInfo({
@@ -134,22 +133,6 @@ export default function CheckoutPage() {
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  
-  // Cálculo dinámico de tarifa por milla según la opción seleccionada
-  const calcOptionFee = (opt: DeliveryOption) => {
-    if (opt.id === "pickup") return 0;
-    const miles = deliveryLocation?.distanceMiles || 0;
-    const perMile = opt.pricePerMile || 0;
-    const base = opt.extraPrice || 0;
-    
-    // Si la opción requiere millas y aún no se ha obtenido la ubicación (miles === 0), retorna base
-    if (perMile > 0 && miles === 0) return base;
-
-    const totalFee = perMile > 0 ? (miles * perMile) + base : base;
-    return Math.round(totalFee * 100) / 100;
-  };
-
-  const deliveryFee = selectedDelivery ? calcOptionFee(selectedDelivery) : 0;
 
   // Cálculo del Descuento del Cupón
   let discountAmount = 0;
@@ -161,7 +144,29 @@ export default function CheckoutPage() {
     }
   }
 
-  const finalTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
+  // Subtotal Imponible tras Descuento
+  const taxableSubtotal = Math.max(0, subtotal - discountAmount);
+
+  // Impuestos de Ley (Sales Tax 8.25%) sumados Adicionalmente al Subtotal Imponible
+  const taxAmount = Math.round(taxableSubtotal * 0.0825 * 100) / 100;
+
+  // Cálculo dinámico de tarifa por milla según la opción seleccionada
+  const calcOptionFee = (opt: DeliveryOption) => {
+    if (opt.id === "pickup") return 0;
+    const miles = deliveryLocation?.distanceMiles || 0;
+    const perMile = opt.pricePerMile || 0;
+    const base = opt.extraPrice || 0;
+    
+    if (perMile > 0 && miles === 0) return base;
+
+    const totalFee = perMile > 0 ? (miles * perMile) + base : base;
+    return Math.round(totalFee * 100) / 100;
+  };
+
+  const deliveryFee = selectedDelivery ? calcOptionFee(selectedDelivery) : 0;
+
+  // Total Final = Subtotal Imponible + Sales Tax (8.25%) + Envío
+  const finalTotal = taxableSubtotal + taxAmount + deliveryFee;
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,6 +222,8 @@ export default function CheckoutPage() {
       deliveryFee: deliveryFee,
       couponCode: appliedCoupon ? appliedCoupon.code : "",
       discountAmount: discountAmount,
+      taxAmount: taxAmount,
+      cardMessage: data.get("cardMessage")?.toString() || cardMessage || "",
       paymentMethod: data.get("paymentMethod")?.toString() || "",
       paymentRef: data.get("paymentRef")?.toString() || "N/A",
       items: cartItems,
@@ -243,7 +250,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#F9F9F9] flex flex-col">
-      {/* Header Visible con Logo real y Carrito */}
       <ShopHeader />
 
       <main className="flex-1 py-10 md:py-16">
@@ -255,13 +261,13 @@ export default function CheckoutPage() {
               <p className="text-xs text-gray-400">Selecciona tu método de entrega y completa tus datos</p>
             </div>
             <span className="bg-green-50 text-green-700 text-xs font-bold px-3.5 py-1.5 rounded-full border border-green-200 flex items-center gap-1.5">
-              <ShieldCheck size={16} /> Pago Seguro Encripado
+              <ShieldCheck size={16} /> Pago Seguro Encriptado
             </span>
           </div>
           
           <div className="grid md:grid-cols-12 gap-8">
             
-            {/* FORMULARIO DE DATOS Y SELECCIÓN DE ENTREGA (7 Opciones) */}
+            {/* FORMULARIO DE DATOS Y SELECCIÓN DE ENTREGA */}
             <div className="md:col-span-7 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 space-y-8">
               
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -307,7 +313,29 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* 2. Selector de 7 Opciones de Entrega */}
+                {/* 1.5 Mensaje para la Tarjeta de Dedicatoria Incluida */}
+                <div className="space-y-3 bg-pink-50/60 p-4 rounded-2xl border border-pink-100/80">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-[#FF97A4] flex items-center gap-1.5">
+                      <Heart size={14} className="text-[#FF97A4] fill-[#FF97A4]" /> Tarjeta de Dedicatoria Impresa (Gratis Incluida)
+                    </h2>
+                    <span className="bg-[#FF97A4] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">
+                      Incluido 🎁
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                    Escribe a continuación el mensaje especial que deseas que imprimamos en la tarjeta de regalo de tu arreglo floral:
+                  </p>
+                  <textarea
+                    name="cardMessage"
+                    value={cardMessage}
+                    onChange={(e) => setCardMessage(e.target.value)}
+                    placeholder="Ej: ¡Feliz Cumpleaños María! Deseo que este día esté lleno de amor y alegría. Con todo mi cariño, Carlos. ❤️"
+                    className="w-full p-3.5 border border-pink-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] h-24 bg-white text-gray-800"
+                  />
+                </div>
+
+                {/* 2. Selector de Opciones de Entrega */}
                 <div className="space-y-4 pt-2">
                   <div className="flex justify-between items-center border-b pb-2">
                     <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500">
@@ -436,7 +464,6 @@ export default function CheckoutPage() {
                               )}
                             </div>
 
-                            {/* Mostrar Imagen de Código QR si existe */}
                             {cfg.qrImage && (
                               <div className="flex flex-col items-center justify-center p-3 bg-white rounded-2xl border w-fit mx-auto shadow-sm">
                                 <img src={cfg.qrImage} alt={`QR ${cfg.title}`} className="w-44 h-44 object-contain rounded-xl" />
@@ -446,7 +473,6 @@ export default function CheckoutPage() {
                               </div>
                             )}
 
-                            {/* Enlace Directo (Square / Paypal.me) */}
                             {cfg.linkUrl && (
                               <div className="text-center pt-1">
                                 <a
@@ -461,14 +487,12 @@ export default function CheckoutPage() {
                               </div>
                             )}
 
-                            {/* Detalle o Correo a Copiar */}
                             {cfg.accountDetail && (
                               <div className="bg-white p-3 rounded-xl border text-center font-mono font-extrabold text-sm text-[#1A1C1C]">
                                 {cfg.accountDetail}
                               </div>
                             )}
 
-                            {/* Nota o Instrucciones Paso a Paso */}
                             {cfg.instructions && (
                               <div className="text-xs text-gray-700 bg-white p-3.5 rounded-xl border border-gray-100 space-y-1 shadow-sm">
                                 <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider block mb-1">
@@ -506,7 +530,7 @@ export default function CheckoutPage() {
               </form>
             </div>
 
-            {/* RESUMEN DE COMPRA CON DESGLOSE DINÁMICO DE PRODUCTOS Y ADICIONALES */}
+            {/* RESUMEN DE COMPRA CON DESGLOSE DINÁMICO */}
             <div className="md:col-span-5 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 h-fit space-y-6">
               <h2 className="text-xl font-serif font-black text-[#1A1C1C] border-b pb-3">Resumen de Tu Pedido</h2>
               
@@ -592,31 +616,11 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Desglose de Totales */}
+              {/* DESGLOSE TRANSPARENTE DE TOTALES */}
               <div className="space-y-2.5 pt-4 border-t border-gray-100 text-sm">
-                {(() => {
-                  const taxAmount = finalTotal * 0.0825;
-                  const netSubtotal = Math.max(0, finalTotal - taxAmount - deliveryFee + discountAmount);
-                  return (
-                    <>
-                      <div className="flex justify-between text-gray-500">
-                        <span>Subtotal Arreglos (Base)</span>
-                        <span className="font-bold text-gray-800">${netSubtotal.toFixed(2)}</span>
-                      </div>
-                      
-                      <div className="flex justify-between text-gray-500">
-                        <span>Impuestos / Taxes (8.25% incl.)</span>
-                        <span className="font-bold text-gray-800">${taxAmount.toFixed(2)}</span>
-                      </div>
-                    </>
-                  );
-                })()}
-
-                <div className="flex justify-between text-gray-500">
-                  <span>Entrega {selectedDelivery ? `(${selectedDelivery.title})` : "(Por seleccionar)"}</span>
-                  <span className={`font-bold ${deliveryFee > 0 ? "text-[#FF97A4]" : "text-gray-800"}`}>
-                    {selectedDelivery ? (deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : "Gratis") : "$0.00"}
-                  </span>
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Subtotal Arreglos & Adicionales</span>
+                  <span className="font-bold text-gray-800">${subtotal.toFixed(2)}</span>
                 </div>
 
                 {appliedCoupon && (
@@ -627,6 +631,20 @@ export default function CheckoutPage() {
                     <span>-${discountAmount.toFixed(2)} USD</span>
                   </div>
                 )}
+
+                <div className="flex justify-between text-purple-700 font-medium bg-purple-50 p-2.5 rounded-xl border border-purple-100">
+                  <span className="font-bold flex items-center gap-1 text-xs">
+                    🏛️ Impuestos de Ley (Sales Tax 8.25%)
+                  </span>
+                  <span className="font-extrabold text-purple-800">+${taxAmount.toFixed(2)} USD</span>
+                </div>
+
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Entrega {selectedDelivery ? `(${selectedDelivery.title})` : "(Por seleccionar)"}</span>
+                  <span className={`font-bold ${deliveryFee > 0 ? "text-[#FF97A4]" : "text-gray-800"}`}>
+                    {selectedDelivery ? (deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : "Gratis") : "$0.00"}
+                  </span>
+                </div>
 
                 <div className="border-t pt-3 flex justify-between font-extrabold text-xl text-[#1A1C1C]">
                   <span>Total Final</span>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllOrdersAction, updateOrderStatusAction } from "@/lib/actions/order";
-import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare, Heart } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminOrdenesPage() {
@@ -224,9 +224,9 @@ export default function AdminOrdenesPage() {
                   </div>
                 </div>
 
-                {/* Fila 2: Dirección y Arreglos Florales */}
+                {/* Fila 2: Dirección, Tarjeta de Dedicatoria y Arreglos Florales */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  {/* Dirección / GPS */}
+                  {/* Dirección / GPS / Tarjeta de Dedicatoria */}
                   <div className="p-3.5 bg-gray-50 dark:bg-gray-900/60 rounded-2xl space-y-2 border border-gray-100 dark:border-gray-800">
                     <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider block">
                       {isPickup ? "Método: Retiro en Boutique" : "Dirección de Entrega:"}
@@ -247,13 +247,31 @@ export default function AdminOrdenesPage() {
                         <span>Abrir en Google Maps GPS</span>
                       </a>
                     )}
+
+                    {order.cardMessage && (
+                      <div className="bg-pink-50 dark:bg-pink-950/40 p-2.5 rounded-xl border border-pink-200 dark:border-pink-900/50 text-[11px] space-y-0.5 mt-2">
+                        <span className="font-extrabold text-[#FF97A4] flex items-center gap-1">
+                          <Heart size={12} className="fill-[#FF97A4]" /> Tarjeta de Dedicatoria Impresa:
+                        </span>
+                        <p className="font-semibold text-gray-800 dark:text-gray-200 italic">
+                          "{order.cardMessage}"
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Arreglos de la Orden con Adicionales y Dedicatorias Resaltadas */}
+                  {/* Arreglos de la Orden con Adicionales y Tax Resaltado */}
                   <div className="p-3.5 bg-gray-50 dark:bg-gray-900/60 rounded-2xl space-y-2 border border-gray-100 dark:border-gray-800">
                     <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-400 tracking-wider">
-                      <span>Arreglos Florales & Adicionales ({order.items?.length || 0})</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs">${(order.total || 0).toFixed(2)} USD</span>
+                      <span>Arreglos Florales ({order.items?.length || 0})</span>
+                      <div className="text-right">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs block">${(order.total || 0).toFixed(2)} USD</span>
+                        {order.taxAmount ? (
+                          <span className="text-[9px] text-purple-600 dark:text-purple-400 font-semibold block">
+                            (Sales Tax: +${order.taxAmount.toFixed(2)})
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     
                     <div className="space-y-2 font-medium text-gray-700 dark:text-gray-300">

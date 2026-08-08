@@ -98,7 +98,9 @@ export default function CheckoutPage() {
     }
   }
 
-  const finalTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
+  const taxableSubtotal = Math.max(0, subtotal - discountAmount);
+  const taxAmount = Math.round(taxableSubtotal * 0.0825 * 100) / 100;
+  const finalTotal = taxableSubtotal + taxAmount + deliveryFee;
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +140,7 @@ export default function CheckoutPage() {
       deliveryFee: deliveryFee,
       couponCode: appliedCoupon ? appliedCoupon.code : "",
       discountAmount: discountAmount,
+      taxAmount: taxAmount,
       paymentMethod: data.get("paymentMethod")?.toString() || "",
       paymentRef: data.get("paymentRef")?.toString() || "N/A",
       items: cartItems,
@@ -456,16 +459,9 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-2.5 pt-4 border-t border-gray-100 text-sm">
-                <div className="flex justify-between text-gray-500">
-                  <span>Subtotal Arreglos</span>
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Subtotal Arreglos & Adicionales</span>
                   <span className="font-bold text-gray-800">${subtotal.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between text-gray-500">
-                  <span>Entrega ({selectedDelivery.title})</span>
-                  <span className="font-bold text-[#FF97A4]">
-                    {deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : "GRATIS"}
-                  </span>
                 </div>
 
                 {appliedCoupon && (
@@ -476,6 +472,20 @@ export default function CheckoutPage() {
                     <span>-${discountAmount.toFixed(2)} USD</span>
                   </div>
                 )}
+
+                <div className="flex justify-between text-purple-700 font-medium bg-purple-50 p-2.5 rounded-xl border border-purple-100">
+                  <span className="font-bold flex items-center gap-1 text-xs">
+                    🏛️ Impuestos de Ley (Sales Tax 8.25%)
+                  </span>
+                  <span className="font-extrabold text-purple-800">+${taxAmount.toFixed(2)} USD</span>
+                </div>
+                
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Entrega ({selectedDelivery.title})</span>
+                  <span className="font-bold text-[#FF97A4]">
+                    {deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : "GRATIS"}
+                  </span>
+                </div>
 
                 <div className="border-t pt-3 flex justify-between font-extrabold text-xl text-[#1A1C1C]">
                   <span>Total Final</span>

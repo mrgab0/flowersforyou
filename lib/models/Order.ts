@@ -14,6 +14,8 @@ export interface IOrder extends Document {
   deliveryFee?: number;
   couponCode?: string;
   discountAmount?: number;
+  taxAmount?: number;
+  cardMessage?: string;
   items: Array<{ id: string; name: string; price: number; quantity: number; addons?: any[] }>;
   total: number;
   paymentMethod: string;
@@ -36,6 +38,8 @@ const OrderSchema: Schema = new Schema({
   deliveryFee: { type: Number, default: 0 },
   couponCode: { type: String, default: "" },
   discountAmount: { type: Number, default: 0 },
+  taxAmount: { type: Number, default: 0 },
+  cardMessage: { type: String, default: "" },
   items: [{ id: String, name: String, price: Number, quantity: Number, addons: Schema.Types.Mixed }],
   total: { type: Number, required: true },
   paymentMethod: { type: String, required: true },

@@ -96,10 +96,11 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
       const waLink = cleanPhoneDigits ? `https://wa.me/${cleanPhoneDigits.length === 10 ? '1' + cleanPhoneDigits : cleanPhoneDigits}` : "https://wa.me/16576988586";
 
       const orderTotal = savedOrder.total || 0;
-      const taxAmount = orderTotal * 0.0825;
       const deliveryFee = savedOrder.deliveryFee || 0;
       const discountAmount = savedOrder.discountAmount || 0;
-      const netSubtotal = Math.max(0, orderTotal - taxAmount - deliveryFee + discountAmount);
+      const taxAmount = savedOrder.taxAmount || 0;
+
+      const itemsSubtotal = (savedOrder.items || []).reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flowersforyou.vercel.app";
       const logoUrl = `${siteUrl.replace(/\/$/, "")}/logo.jpg`;
@@ -131,6 +132,14 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
               <p style="margin: 5px 0;"><strong>Opción de Entrega:</strong> ${savedOrder.deliveryMethod || orderData.deliveryMethod || "Envío a Domicilio"}</p>
               <p style="margin: 5px 0;"><strong>Dirección de Entrega:</strong> ${savedOrder.address}</p>
               ${savedOrder.distanceMiles ? `<p style="margin: 5px 0; color: #6b21a8; font-weight: bold;"><strong>📍 Distancia Calculada desde Boutique:</strong> ${savedOrder.distanceMiles} Millas</p>` : ''}
+              
+              ${savedOrder.cardMessage ? `
+                <div style="margin-top: 12px; padding: 12px; background-color: #fff0f3; border-left: 4px solid #ff97a4; border-radius: 6px;">
+                  <strong style="color: #b0004a; font-size: 13px;">💌 Tarjeta de Dedicatoria Impresa Incluida:</strong><br>
+                  <em style="color: #333333; font-size: 13px; display: block; margin-top: 4px;">"${savedOrder.cardMessage}"</em>
+                </div>
+              ` : ''}
+
               ${savedOrder.googleMapsUrl ? `
                 <div style="margin-top: 10px;">
                   <a href="${savedOrder.googleMapsUrl}" 
@@ -166,26 +175,26 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
               `).join('')}
             </table>
 
-            {/* Desglose Fiscal e Impuestos */}
+            {/* Desglose Fiscal e Impuestos Transparente */}
             <div style="background-color: #fafafa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span>Subtotal Base (sin impuestos):</span>
-                <strong>$${netSubtotal.toFixed(2)} USD</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span>Impuestos de Ley / Taxes (8.25% incl.):</span>
-                <strong>$${taxAmount.toFixed(2)} USD</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span>Costo de Envío:</span>
-                <strong style="color: #FF97A4;">${deliveryFee > 0 ? `$${deliveryFee.toFixed(2)} USD` : "Gratis / Incluido"}</strong>
+                <span>Subtotal Arreglos & Adicionales:</span>
+                <strong>$${itemsSubtotal.toFixed(2)} USD</strong>
               </div>
               ${savedOrder.couponCode ? `
                 <div style="display: flex; justify-content: space-between; color: #22C55E; margin-bottom: 5px;">
-                  <span>Cupón Aplicado (${savedOrder.couponCode}):</span>
+                  <span>Descuento Cupón (${savedOrder.couponCode}):</span>
                   <strong>-$${discountAmount.toFixed(2)} USD</strong>
                 </div>
               ` : ''}
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #6b21a8;">
+                <span>🏛️ Impuestos de Ley / Sales Tax (8.25%):</span>
+                <strong>+$${taxAmount.toFixed(2)} USD</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>Costo de Envío:</span>
+                <strong style="color: #FF97A4;">${deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)} USD` : "Gratis / Incluido"}</strong>
+              </div>
               <div style="border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; font-size: 16px;">
                 <strong>TOTAL FINAL PAGADO:</strong>
                 <strong style="color: #FF97A4;">$${orderTotal.toFixed(2)} USD</strong>

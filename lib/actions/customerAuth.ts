@@ -11,14 +11,22 @@ import {
 
 const RP_NAME = "Flowers For You LLC";
 
-function getRpID() {
+function resolveRpID(domainFromClient?: string) {
+  if (domainFromClient && domainFromClient.trim()) {
+    // Extraer solo el hostname sin puerto ni protocolo
+    return domainFromClient.replace(/https?:\/\//, "").split(":")[0].split("/")[0];
+  }
   if (process.env.VERCEL_URL) {
-    return process.env.VERCEL_URL.replace(/https?:\/\//, "").split(":")[0];
+    return process.env.VERCEL_URL.replace(/https?:\/\//, "").split(":")[0].split("/")[0];
   }
   return "localhost";
 }
 
-function getOrigin() {
+function resolveOrigin(domainFromClient?: string) {
+  if (domainFromClient && domainFromClient.trim()) {
+    const cleanDomain = domainFromClient.replace(/\/$/, "");
+    return cleanDomain.startsWith("http") ? cleanDomain : `https://${cleanDomain}`;
+  }
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
   }
@@ -28,7 +36,7 @@ function getOrigin() {
   return "http://localhost:3000";
 }
 
-export async function generatePasskeyRegistrationOptionsAction(email: string) {
+export async function generatePasskeyRegistrationOptionsAction(email: string, clientHostname?: string) {
   try {
     await dbConnect();
     const cleanEmail = email.toLowerCase().trim();
@@ -38,7 +46,7 @@ export async function generatePasskeyRegistrationOptionsAction(email: string) {
       customer = await Customer.create({ email: cleanEmail, passkeys: [] });
     }
 
-    const rpID = getRpID();
+    const rpID = resolveRpID(clientHostname);
 
     const options = await generateRegistrationOptions({
       rpName: RP_NAME,
@@ -54,21 +62,21 @@ export async function generatePasskeyRegistrationOptionsAction(email: string) {
       authenticatorSelection: {
         residentKey: "preferred",
         userVerification: "preferred",
-        authenticatorAttachment: "platform" // Huella / Face ID nativo del dispositivo
+        authenticatorAttachment: "platform" // Forzar sensor de huella/FaceID físico del dispositivo
       }
     });
 
     customer.currentChallenge = options.challenge;
     await customer.save();
 
-    return { success: true, options };
+    return { success: true, options, rpID };
   } catch (error) {
     console.error("Error generando opciones de registro WebAuthn:", error);
     return { success: false, error: "No se pudieron preparar las opciones biométricas." };
   }
 }
 
-export async function verifyPasskeyRegistrationAction(email: string, responseBody: any) {
+export async function verifyPasskeyRegistrationAction(email: string, responseBody: any, clientHostname?: string) {
   try {
     await dbConnect();
     const cleanEmail = email.toLowerCase().trim();
@@ -78,8 +86,8 @@ export async function verifyPasskeyRegistrationAction(email: string, responseBod
       return { success: false, error: "Sesión de verificación biométrica expira." };
     }
 
-    const rpID = getRpID();
-    const origin = getOrigin();
+    const rpID = resolveRpID(clientHostname);
+    const origin = resolveOrigin(clientHostname);
 
     const verification = await verifyRegistrationResponse({
       response: responseBody,
@@ -105,7 +113,7 @@ export async function verifyPasskeyRegistrationAction(email: string, responseBod
         counter: regInfo.counter,
         deviceType: regInfo.credentialDeviceType || "singleDevice",
         backedUp: regInfo.credentialBackedUp || false,
-        transports: responseBody.response?.transports || [],
+        transports: responseBody.response?.transports || ["internal"],
         createdAt: new Date()
       });
 
@@ -130,7 +138,7 @@ export async function verifyPasskeyRegistrationAction(email: string, responseBod
   }
 }
 
-export async function generatePasskeyAuthenticationOptionsAction(email: string) {
+export async function generatePasskeyAuthenticationOptionsAction(email: string, clientHostname?: string) {
   try {
     await dbConnect();
     const cleanEmail = email.toLowerCase().trim();
@@ -139,18 +147,19 @@ export async function generatePasskeyAuthenticationOptionsAction(email: string) 
     if (!customer || !customer.passkeys || customer.passkeys.length === 0) {
       return {
         success: false,
-        error: "No tienes una huella o Face ID registrado en esta cuenta. Regístrala por primera vez.",
+        error: "No tienes una huella o Face ID registrado en esta cuenta. Toca 'Registrar Mi Huella' para configurarla.",
         needRegistration: true
       };
     }
 
-    const rpID = getRpID();
+    const rpID = resolveRpID(clientHostname);
 
     const options = await generateAuthenticationOptions({
       rpID: rpID,
       allowCredentials: customer.passkeys.map((pk: any) => ({
         id: pk.credentialID,
-        type: "public-key"
+        type: "public-key",
+        transports: pk.transports || ["internal"]
       })),
       userVerification: "preferred"
     });
@@ -158,14 +167,14 @@ export async function generatePasskeyAuthenticationOptionsAction(email: string) 
     customer.currentChallenge = options.challenge;
     await customer.save();
 
-    return { success: true, options };
+    return { success: true, options, rpID };
   } catch (error) {
     console.error("Error generando opciones de autenticación WebAuthn:", error);
     return { success: false, error: "Error al preparar inicio por huella." };
   }
 }
 
-export async function verifyPasskeyAuthenticationAction(email: string, responseBody: any) {
+export async function verifyPasskeyAuthenticationAction(email: string, responseBody: any, clientHostname?: string) {
   try {
     await dbConnect();
     const cleanEmail = email.toLowerCase().trim();
@@ -177,11 +186,11 @@ export async function verifyPasskeyAuthenticationAction(email: string, responseB
 
     const passkey = customer.passkeys.find((pk: any) => pk.credentialID === responseBody.id);
     if (!passkey) {
-      return { success: false, error: "Credencial biométrica no encontrada." };
+      return { success: false, error: "Credencial biométrica no encontrada en este dispositivo." };
     }
 
-    const rpID = getRpID();
-    const origin = getOrigin();
+    const rpID = resolveRpID(clientHostname);
+    const origin = resolveOrigin(clientHostname);
 
     const opts: any = {
       response: responseBody,

@@ -27,31 +27,51 @@ function getTransporter() {
 export async function createOrder(orderData: any, existingOrderId?: string) {
   await dbConnect();
   let savedOrder: any;
+  let originalOrder: any = null;
+  let isConsolidatedWithin2Hours = false;
+  let minutesElapsed = 0;
 
   if (existingOrderId) {
-    const originalOrder = await Order.findOne({ orderId: existingOrderId });
+    originalOrder = await Order.findOne({ orderId: existingOrderId });
     
-    if (originalOrder) {
-      const parts = existingOrderId.split('-');
-      const baseId = `${parts[0]}-${parts[1]}`;
-      const currentVersion = parseInt(parts[2]) || 1;
-      const newVersion = currentVersion + 1;
-      const newOrderId = `${baseId}-${newVersion}`;
+    if (originalOrder && originalOrder.createdAt) {
+      const diffMs = Date.now() - new Date(originalOrder.createdAt).getTime();
+      minutesElapsed = Math.floor(diffMs / (1000 * 60));
+      const hoursElapsed = diffMs / (1000 * 60 * 60);
 
-      savedOrder = await Order.create({
-        ...orderData,
-        orderId: newOrderId,
-        items: [...originalOrder.items, ...orderData.items],
-        total: originalOrder.total + orderData.total,
-        createdAt: new Date(),
-      });
+      const statusLower = (originalOrder.status || "").toLowerCase();
+      // Solo agrupar si han pasado menos de 2 horas Y el pedido no ha sido enviado aún
+      const isNotDispatched = !statusLower.includes("camino") && !statusLower.includes("entregado") && !statusLower.includes("retirado");
+
+      if (hoursElapsed <= 2 && isNotDispatched) {
+        isConsolidatedWithin2Hours = true;
+      }
     }
+  }
+
+  if (isConsolidatedWithin2Hours && originalOrder && existingOrderId) {
+    const parts = existingOrderId.split('-');
+    const baseId = `${parts[0]}-${parts[1]}`;
+    const currentVersion = parseInt(parts[2]) || 1;
+    const newVersion = currentVersion + 1;
+    const newOrderId = `${baseId}-${newVersion}`;
+
+    savedOrder = await Order.create({
+      ...orderData,
+      orderId: newOrderId,
+      // Se guardan ÚNICAMENTE los ítems y total de ESTA nueva transacción (Factura Limpia)
+      items: orderData.items,
+      total: orderData.total,
+      createdAt: new Date(),
+    });
   }
 
   if (!savedOrder) {
     savedOrder = new Order({
       ...orderData,
       orderId: "FFY-" + Math.floor(Math.random() * 100000) + "-1",
+      items: orderData.items,
+      total: orderData.total,
       createdAt: new Date(),
     });
     await savedOrder.save();
@@ -130,6 +150,15 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
           
           <div style="padding: 25px;">
             <h2 style="color: #1A1C1C;">¡Comprobante de Pedido / Receipt! 🌸</h2>
+
+            ${isConsolidatedWithin2Hours && originalOrder ? `
+              <div style="margin-bottom: 20px; padding: 14px; background-color: #f3e8ff; border-left: 4px solid #9333ea; border-radius: 8px;">
+                <strong style="color: #6b21a8; font-size: 13px;">📦 Nota de Envío Agrupado / Consolidado (< 2 horas):</strong><br>
+                <span style="font-size: 12px; color: #4c1d95; display: block; margin-top: 4px;">
+                  Esta compra fue realizada <strong>${minutesElapsed} min</strong> después de tu pedido previo (<strong>#${originalOrder.orderId}</strong>). Como tu primer pedido aún está en diseño en boutique, nuestros repartidores agruparán ambos paquetes en la misma ruta de entrega a tu ubicación.
+                </span>
+              </div>
+            ` : ''}
             
             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
               <p style="margin: 5px 0;"><strong>ID Pedido:</strong> ${savedOrder.orderId}</p>
@@ -158,7 +187,7 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
               ` : ''}
             </div>
 
-            <h3 style="color: #1A1C1C; border-bottom: 2px solid #FF97A4; padding-bottom: 5px;">Detalle de Productos & Adicionales:</h3>
+            <h3 style="color: #1A1C1C; border-bottom: 2px solid #FF97A4; padding-bottom: 5px;">Detalle de Productos & Adicionales de esta Compra:</h3>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
               ${savedOrder.items.map((item: any) => `
                 <tr>
@@ -203,7 +232,7 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
                 <strong style="color: #FF97A4;">${deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)} USD` : "Gratis / Incluido"}</strong>
               </div>
               <div style="border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; font-size: 16px;">
-                <strong>TOTAL FINAL PAGADO:</strong>
+                <strong>TOTAL FINAL PAGADO EN ESTA ORDEN:</strong>
                 <strong style="color: #FF97A4;">$${orderTotal.toFixed(2)} USD</strong>
               </div>
             </div>

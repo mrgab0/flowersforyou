@@ -17,6 +17,24 @@ export default function CrearProductoPage() {
   const [initialData, setInitialData] = useState<any>(null);
   const searchParams = useSearchParams();
   const duplicateId = searchParams.get("duplicate");
+
+  useEffect(() => {
+    async function loadData() {
+      const addonsRes = await getAddons();
+      if (addonsRes.success && addonsRes.data) {
+        setAddons(addonsRes.data);
+      }
+
+      if (duplicateId) {
+        const prodRes = await getProductById(duplicateId);
+        if (prodRes.success && prodRes.data) {
+          setInitialData(prodRes.data);
+        }
+      }
+    }
+    loadData();
+  }, [duplicateId]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -147,6 +165,7 @@ export default function CrearProductoPage() {
                     type="number"
                     step="0.01"
                     placeholder="85.00"
+                    defaultValue={initialData?.price || ""}
                     className="p-3 pl-8 border rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-bold text-gray-800"
                     required
                   />
@@ -159,7 +178,7 @@ export default function CrearProductoPage() {
                   name="stock"
                   type="number"
                   placeholder="10"
-                  defaultValue="10"
+                  defaultValue={initialData?.stock || "10"}
                   className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
                   required
                 />
@@ -172,7 +191,7 @@ export default function CrearProductoPage() {
             <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2 border-b pb-3">
               <ImageIcon size={18} className="text-[#FF97A4]" /> Galería de Imágenes (ImageKit)
             </h2>
-            <ImageUploader maxImages={7} />
+            <ImageUploader defaultImages={initialData?.images || []} maxImages={7} />
           </div>
 
           {/* SECCIÓN 4: Especificaciones Florales */}
@@ -217,10 +236,8 @@ export default function CrearProductoPage() {
             <AdminAddonManager
               addons={addons}
               selectedIds={initialData?.addons || []}
-              onChange={() => {}}
             />
           </div>
-
 
           {/* Botones de Acción */}
           <div className="flex gap-4 pt-4">
@@ -286,6 +303,3 @@ export default function CrearProductoPage() {
     </div>
   );
 }
-
-
-

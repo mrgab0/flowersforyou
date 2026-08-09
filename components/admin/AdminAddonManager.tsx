@@ -1,21 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IAddon } from "@/lib/models/Addon";
-import { Sparkles, Check, Layers, CheckSquare, Square } from "lucide-react";
+import { Layers, CheckSquare, Square } from "lucide-react";
 
 interface AdminAddonManagerProps {
   addons: IAddon[];
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
+  selectedIds?: string[];
+  onChange?: (ids: string[]) => void;
 }
 
-export function AdminAddonManager({ addons, selectedIds, onChange }: AdminAddonManagerProps) {
+export function AdminAddonManager({ addons, selectedIds = [], onChange }: AdminAddonManagerProps) {
+  const [selected, setSelected] = useState<string[]>(selectedIds);
+
+  useEffect(() => {
+    if (selectedIds) {
+      setSelected(selectedIds);
+    }
+  }, [JSON.stringify(selectedIds)]);
+
   const toggleAddon = (id: string) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter((item) => item !== id));
+    let updated: string[];
+    if (selected.includes(id)) {
+      updated = selected.filter((item) => item !== id);
     } else {
-      onChange([...selectedIds, id]);
+      updated = [...selected, id];
+    }
+    setSelected(updated);
+    if (onChange) {
+      onChange(updated);
     }
   };
 
@@ -26,13 +39,19 @@ export function AdminAddonManager({ addons, selectedIds, onChange }: AdminAddonM
         <span>Adicionales / Complementos disponibles</span>
       </div>
 
+      {/* Renderizar inputs ocultos name="addons" para cada adicional seleccionado en el formulario */}
+      {selected.map((addonId) => (
+        <input key={addonId} type="hidden" name="addons" value={addonId} />
+      ))}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1">
         {addons.map((addon) => {
-          const isSelected = selectedIds.includes(addon._id.toString());
+          const addonIdStr = addon._id ? addon._id.toString() : "";
+          const isSelected = selected.includes(addonIdStr);
           return (
             <div
-              key={addon._id.toString()}
-              onClick={() => toggleAddon(addon._id.toString())}
+              key={addonIdStr || addon.name}
+              onClick={() => toggleAddon(addonIdStr)}
               className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-center justify-between text-xs ${
                 isSelected
                   ? "bg-pink-50 dark:bg-pink-950/40 border-[#FF97A4] text-[#1A1C1C] dark:text-white"

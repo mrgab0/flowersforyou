@@ -67,12 +67,12 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
   const handleAuthenticate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setMessage({ type: "error", text: "Ingresa tu correo electrónico." });
+      setMessage({ type: "error", text: "Por favor ingresa tu correo electrónico." });
       return;
     }
 
     setLoading(true);
-    setMessage({ type: "info", text: "Touch ID / Lector de Huella activado. Toca el sensor en tu dispositivo..." });
+    setMessage({ type: "info", text: "Activando lector de huella dactilar de tu teléfono..." });
 
     try {
       const clientHost = getClientHostname();
@@ -82,7 +82,7 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
         if (resOptions.needRegistration) {
           setMessage({
             type: "info",
-            text: "No tienes una huella registrada aún en este dispositivo. Toca 'Registrar Mi Huella' para configurarla."
+            text: "Aún no tienes activada tu huella en este correo. Toca '✨ Activar mi Huella en este Celular'."
           });
         } else {
           setMessage({ type: "error", text: resOptions.error || "Error al preparar sensor biométrico." });
@@ -91,7 +91,6 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
         return;
       }
 
-      // Invoca el diálogo nativo directo de huella dactilar/Face ID
       const authResp = await startAuthentication(resOptions.options as any);
       const verifyRes = await verifyPasskeyAuthenticationAction(email.trim(), authResp, clientHost);
       setLoading(false);
@@ -115,7 +114,7 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
       if (err.name === "NotAllowedError") {
         setMessage({ type: "error", text: "Verificación de huella cancelada." });
       } else {
-        setMessage({ type: "error", text: "Usa 'Autocompletar Mis Datos' para ingresar directamente." });
+        setMessage({ type: "error", text: "Si es tu primera vez, presiona '✨ Activar mi Huella en este Celular'." });
       }
     }
   };
@@ -123,7 +122,7 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
   // 2. Registrar Huella / Face ID por Primera Vez
   const handleRegister = async () => {
     if (!email.trim()) {
-      setMessage({ type: "error", text: "Ingresa tu correo para registrar tu huella." });
+      setMessage({ type: "error", text: "Ingresa tu correo para activar tu huella." });
       return;
     }
 
@@ -145,7 +144,7 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
       setLoading(false);
 
       if (verifyRes.success && verifyRes.customer) {
-        setMessage({ type: "success", text: "¡Huella registrada con éxito! Tus compras ahora serán de 1 segundo." });
+        setMessage({ type: "success", text: "¡Huella registrada con éxito! Tus futuras compras serán de 1 segundo." });
         localStorage.setItem("customerEmail", verifyRes.customer.email);
 
         setTimeout(() => {
@@ -160,7 +159,6 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
       if (err.name === "NotAllowedError") {
         setMessage({ type: "error", text: "Registro biométrico cancelado." });
       } else {
-        // Fallback a autocompletado en 1 Tap si la biometría nativa es bloqueada por el navegador
         handleQuickAutocomplete();
       }
     }
@@ -225,10 +223,10 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
 
         {!isSupported ? (
           <div className="p-4 bg-amber-50 text-amber-800 text-xs font-bold rounded-2xl border border-amber-200 text-center">
-            Tu navegador actual prefiere autocompletado en 1 Tap. Presiona el botón verde de arriba.
+            Tu navegador prefiere autocompletado en 1 Tap. Presiona el botón verde de arriba.
           </div>
         ) : (
-          <form onSubmit={handleAuthenticate} className="space-y-4">
+          <form onSubmit={handleAuthenticate} className="space-y-3.5">
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-500 dark:text-gray-400">
                 Tu Correo Electrónico:
@@ -243,32 +241,32 @@ export function CustomerBiometricModal({ isOpen, onClose, onSuccess }: Biometric
               />
             </div>
 
-            {/* Botón Principal: Entrar con Huella Directa */}
+            {/* Botón Principal: Escanear Huella */}
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-[#FF97A4] hover:bg-[#B0004A] text-white py-3.5 rounded-2xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 disabled:bg-gray-300"
             >
               <Fingerprint size={20} />
-              <span>{loading ? "Activando Sensor..." : "Ingresar con Huella 👆"}</span>
+              <span>{loading ? "Activando Sensor..." : "👆 Escanear Huella e Ingresar"}</span>
             </button>
 
-            {/* Botón Secundario: Registrar Huella por primera vez */}
+            {/* Botón Secundario: Activar Huella en este Celular */}
             <button
               type="button"
               onClick={handleRegister}
               disabled={loading}
-              className="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-3 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+              className="w-full bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900/50 py-3 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
             >
-              <Sparkles size={14} className="text-[#FF97A4]" />
-              <span>Registrar Lector de Huella en mi Celular</span>
+              <Sparkles size={14} className="text-purple-600 dark:text-purple-400" />
+              <span>✨ Activar mi Huella en este Celular (Primera Vez)</span>
             </button>
           </form>
         )}
 
         <div className="pt-2 text-center border-t border-gray-100 dark:border-gray-800">
           <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center justify-center gap-1">
-            <ShieldCheck size={12} className="text-emerald-500" /> Autenticación Rápida & Encripada en Tu Dispositivo
+            <ShieldCheck size={12} className="text-emerald-500" /> Autenticación Rápida & Encriptada en Tu Dispositivo
           </span>
         </div>
       </div>

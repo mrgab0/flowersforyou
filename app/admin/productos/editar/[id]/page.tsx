@@ -1,26 +1,25 @@
 import dbConnect from "@/lib/db";
 import { Product, IProduct } from "@/lib/models/Product";
 import { Addon } from "@/lib/models/Addon";
-import { updateProduct } from "@/lib/actions/product";
-import { redirect } from "next/navigation";
+import { updateProductFormAction } from "@/lib/actions/product";
 import Link from "next/link";
 import { ArrowLeft, Package, Tag, DollarSign, Image as ImageIcon, Flower2, Save } from "lucide-react";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { FeatureListBuilder } from "@/components/admin/FeatureListBuilder";
 import { AdminAddonManager } from "@/components/admin/AdminAddonManager";
+import mongoose from "mongoose";
 
 export default async function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
   
   const resolvedParams = await params;
-  const product = (await Product.findById(resolvedParams.id).populate('addons').lean()) as IProduct | null;
-  const allAddons = await Addon.find({ isActive: true }).lean();
 
-  if (!product) {
+  // Validación de ObjectId seguro para evitar CastError 500 en Vercel
+  if (!resolvedParams.id || !mongoose.Types.ObjectId.isValid(resolvedParams.id)) {
     return (
-      <div className="max-w-2xl mx-auto p-12 bg-white rounded-2xl border text-center space-y-4 my-8">
-        <h2 className="text-xl font-bold text-gray-800">Producto No Encontrado</h2>
-        <p className="text-sm text-gray-500">El producto solicitado no existe o fue eliminado.</p>
+      <div className="max-w-2xl mx-auto p-12 bg-white dark:bg-[#12131A] rounded-2xl border border-gray-100 dark:border-gray-800 text-center space-y-4 my-8 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">ID de Producto Inválido</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">El identificador proporcionado no es un código válido.</p>
         <Link href="/admin/productos" className="inline-block bg-[#FF97A4] text-white px-6 py-2.5 rounded-full font-bold text-sm">
           Volver a la lista
         </Link>
@@ -28,15 +27,30 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
     );
   }
 
-  const updateProductWithId = async (formData: FormData) => {
-    'use server';
-    const res = await updateProduct(product._id.toString(), formData);
-    if (res.success) {
-      redirect("/admin/productos");
-    }
-  };
+  const product = (await Product.findById(resolvedParams.id).populate('addons').lean()) as IProduct | null;
+  const allAddons = await Addon.find({ isActive: true }).lean();
+
+  if (!product) {
+    return (
+      <div className="max-w-2xl mx-auto p-12 bg-white dark:bg-[#12131A] rounded-2xl border border-gray-100 dark:border-gray-800 text-center space-y-4 my-8 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">Producto No Encontrado</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">El producto solicitado no existe o fue eliminado.</p>
+        <Link href="/admin/productos" className="inline-block bg-[#FF97A4] text-white px-6 py-2.5 rounded-full font-bold text-sm">
+          Volver a la lista
+        </Link>
+      </div>
+    );
+  }
 
   const selectedAddonIds = product.addons ? product.addons.map((a: any) => a._id ? a._id.toString() : a.toString()) : [];
+
+  // Sanitización pura de características para evitar transmisión de Mongoose ObjectIds a Client Components
+  const plainFeatures = product.features 
+    ? JSON.parse(JSON.stringify(product.features)).map((f: any) => ({
+        label: String(f.label || ""),
+        value: String(f.value || "")
+      }))
+    : [];
 
   return (
     <div className="max-w-3xl mx-auto pb-12">
@@ -51,7 +65,9 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
         </div>
       </div>
 
-      <form action={updateProductWithId} className="space-y-6">
+      <form action={updateProductFormAction} className="space-y-6">
+        <input type="hidden" name="id" value={product._id.toString()} />
+
         {/* SECCIÓN 1: Información Básica */}
         <div className="bg-white dark:bg-[#12131A] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2 border-b pb-3 border-gray-100 dark:border-gray-800">
@@ -197,13 +213,13 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
             </div>
           </div>
 
-          {/* Constructor de Viñetas / Puntos Clave */}
-          <FeatureListBuilder initialFeatures={product.features || []} />
+          {/* Constructor de Viñetas / Puntos Clave Sanitizados */}
+          <FeatureListBuilder initialFeatures={plainFeatures} />
         </div>
 
-        {/* Admin Addon Manager */}
+        {/* Admin Addon Manager sin event handlers en props de RSC */}
         <div className="bg-white dark:bg-[#12131A] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
-          <AdminAddonManager addons={JSON.parse(JSON.stringify(allAddons))} selectedIds={selectedAddonIds} onChange={() => {}} />
+          <AdminAddonManager addons={JSON.parse(JSON.stringify(allAddons))} selectedIds={selectedAddonIds} />
         </div>
         
         {/* Botones de Acción */}

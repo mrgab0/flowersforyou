@@ -3,6 +3,7 @@
 import dbConnect from "@/lib/db";
 import { Addon } from "@/lib/models/Addon";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function getAddons() {
   await dbConnect();
@@ -69,6 +70,13 @@ export async function updateAddon(id: string, formData: FormData) {
   } catch (error) {
     return { success: false, error: "Error al actualizar adicional" };
   }
+}
+
+export async function updateAddonFormAction(formData: FormData): Promise<void> {
+  const id = formData.get("id") as string;
+  if (!id) return;
+  await updateAddon(id, formData);
+  redirect("/admin/adicionales");
 }
 
 export async function toggleAddonStatus(id: string, isActive: boolean) {

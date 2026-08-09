@@ -3,6 +3,7 @@
 import dbConnect from "@/lib/db";
 import { Product, slugify } from "@/lib/models/Product";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // --- PRODUCT ACTIONS ---
 
@@ -126,6 +127,15 @@ export async function updateProduct(id: string, formData: FormData) {
   }
 }
 
+export async function updateProductFormAction(formData: FormData): Promise<void> {
+  const id = formData.get("id") as string;
+  if (!id) return;
+  const res = await updateProduct(id, formData);
+  if (res.success) {
+    redirect("/admin/productos");
+  }
+}
+
 export async function getProductById(id: string) {
   try {
     await dbConnect();
@@ -162,4 +172,3 @@ export async function deleteProduct(id: string) {
     return { success: false, error: "No se pudo eliminar el producto" };
   }
 }
-

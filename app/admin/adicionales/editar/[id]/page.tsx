@@ -1,15 +1,29 @@
 import dbConnect from "@/lib/db";
 import { Addon, IAddon } from "@/lib/models/Addon";
-import { updateAddon } from "@/lib/actions/addon";
+import { updateAddonFormAction } from "@/lib/actions/addon";
 import { SingleImageUploader } from "@/components/admin/SingleImageUploader";
 import { ArrowLeft, Sparkles, Save, Layers } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import mongoose from "mongoose";
 
 export default async function EditarAdicionalPage({ params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
   
   const resolvedParams = await params;
+
+  // Validación de ObjectId seguro para evitar CastError 500 en Vercel
+  if (!resolvedParams.id || !mongoose.Types.ObjectId.isValid(resolvedParams.id)) {
+    return (
+      <div className="max-w-2xl mx-auto p-12 bg-white rounded-2xl border text-center space-y-4 my-8">
+        <h2 className="text-xl font-bold text-gray-800">ID de Adicional Inválido</h2>
+        <p className="text-sm text-gray-500">El identificador proporcionado no es un código válido.</p>
+        <Link href="/admin/adicionales" className="inline-block bg-purple-600 text-white px-6 py-2.5 rounded-full font-bold text-sm">
+          Volver a la lista
+        </Link>
+      </div>
+    );
+  }
+
   const addon = (await Addon.findById(resolvedParams.id).lean()) as IAddon | null;
 
   if (!addon) {
@@ -24,12 +38,6 @@ export default async function EditarAdicionalPage({ params }: { params: Promise<
     );
   }
 
-  const updateAddonWithId = async (formData: FormData) => {
-    'use server';
-    await updateAddon(addon._id.toString(), formData);
-    redirect("/admin/adicionales");
-  };
-
   return (
     <div className="max-w-2xl mx-auto pb-12">
       {/* Header */}
@@ -43,7 +51,9 @@ export default async function EditarAdicionalPage({ params }: { params: Promise<
         </div>
       </div>
 
-      <form action={updateAddonWithId} className="space-y-6">
+      <form action={updateAddonFormAction} className="space-y-6">
+        <input type="hidden" name="id" value={addon._id.toString()} />
+
         {/* SECCIÓN 1: Información Básica */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2 border-b pb-3">

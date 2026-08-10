@@ -40,7 +40,5 @@ const CustomerSchema: Schema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-CustomerSchema.index({ email: 1 });
-
 export const Customer =
   mongoose.models.Customer || mongoose.model<ICustomer>("Customer", CustomerSchema);

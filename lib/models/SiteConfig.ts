@@ -9,8 +9,46 @@ export interface ISiteConfig extends Document {
   footerSlogan: string;
   footerCopyright: string;
 
+  // Personalización del Home & Cuadrícula de Productos
+  productColumnsDesktop?: number; // 3, 4, o 5 columnas
+  productColumnsMobile?: number;  // 1 o 2 columnas
+
+  // Identidad de Marca y Menú de Navegación
+  logoUrl?: string;
+  brandSlogan?: string;
+  menuHomeLabel?: string;
+  menuCatalogLabel?: string;
+  menuTrackingLabel?: string;
+  menuAboutLabel?: string;
+  menuContactLabel?: string;
+  primaryColor?: string;
+
+  // Redes Sociales en Cabecera
+  enableHeaderSocials?: boolean;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  whatsappUrl?: string;
+
+  // Módulo Social de Instagram / TikTok (Pre-Footer)
+  enableSocialFeed?: boolean;
+  socialFeedTitle?: string;
+  socialEmbedHtml?: string;
+
+  // Módulo de Reseñas / Opiniones & Trustpilot (Pre-Footer)
+  enableReviewsSection?: boolean;
+  reviewsTitle?: string;
+  reviewsRatingScore?: string;
+  reviewsCountText?: string;
+  trustpilotWidgetHtml?: string;
+
+  // Módulo de iFrames / Widgets Personalizados
+  enableCustomIframe?: boolean;
+  customIframeTitle?: string;
+  customIframeHtml?: string;
+
   // Campos de 2FA (Seguridad de Dos Factores)
-  twoFactorMode?: "none" | "pin" | "totp"; // "none" (desactivado), "pin" (PIN de 6 dígitos), "totp" (App Autenticadora)
+  twoFactorMode?: "none" | "pin" | "totp";
   twoFactorPin?: string;
   twoFactorSecret?: string;
 
@@ -43,6 +81,44 @@ const SiteConfigSchema: Schema = new Schema({
   footerSlogan: { type: String, default: "Boutique Digital de Alta Floristería • Entregas a Domicilio" },
   footerCopyright: { type: String, default: "© 2026 Flowers For You LLC. Todos los derechos reservados." },
 
+  // Personalización del Home & Cuadrícula (Por defecto 3 columnas en escritorio = Preservación 100%)
+  productColumnsDesktop: { type: Number, default: 3 },
+  productColumnsMobile: { type: Number, default: 2 },
+
+  // Identidad de Marca y Menú
+  logoUrl: { type: String, default: "/logo.jpg" },
+  brandSlogan: { type: String, default: "Boutique Floral Digital • Houston, Texas" },
+  menuHomeLabel: { type: String, default: "Inicio" },
+  menuCatalogLabel: { type: String, default: "Colección" },
+  menuTrackingLabel: { type: String, default: "📦 Rastreo" },
+  menuAboutLabel: { type: String, default: "Nosotros" },
+  menuContactLabel: { type: String, default: "Contacto" },
+  primaryColor: { type: String, default: "#FF97A4" },
+
+  // Redes Sociales en Cabecera
+  enableHeaderSocials: { type: Boolean, default: true },
+  facebookUrl: { type: String, default: "https://facebook.com" },
+  instagramUrl: { type: String, default: "https://instagram.com" },
+  tiktokUrl: { type: String, default: "https://tiktok.com" },
+  whatsappUrl: { type: String, default: "https://wa.me/16576988586" },
+
+  // Módulo Social Pre-Footer (Incrustados Instagram/TikTok)
+  enableSocialFeed: { type: Boolean, default: false },
+  socialFeedTitle: { type: String, default: "Síguenos en Instagram & TikTok 📸" },
+  socialEmbedHtml: { type: String, default: "" },
+
+  // Módulo de Reseñas / Opiniones & Trustpilot (Pre-Footer)
+  enableReviewsSection: { type: Boolean, default: true },
+  reviewsTitle: { type: String, default: "Lo que dicen nuestros clientes en Houston ⭐⭐⭐⭐⭐" },
+  reviewsRatingScore: { type: String, default: "4.9 / 5.0" },
+  reviewsCountText: { type: String, default: "+180 Opiniones Verificadas" },
+  trustpilotWidgetHtml: { type: String, default: "" },
+
+  // Módulo de iFrames Personalizados
+  enableCustomIframe: { type: Boolean, default: false },
+  customIframeTitle: { type: String, default: "Ubicación & Promociones Destacadas" },
+  customIframeHtml: { type: String, default: "" },
+
   twoFactorMode: { type: String, default: "none" },
   twoFactorPin: { type: String, default: "" },
   twoFactorSecret: { type: String, default: "" },
@@ -60,11 +136,10 @@ const SiteConfigSchema: Schema = new Schema({
   googleAnalyticsId: { type: String, default: "" },
   businessName: { type: String, default: "Flowers For You LLC" },
   businessPhone: { type: String, default: "+1 (800) 555-3569" },
-  businessAddress: { type: String, default: "Av. Principal Floristería #123" },
-  businessCity: { type: String, default: "Ciudad de México" },
+  businessAddress: { type: String, default: "6705 Fairway Dr" },
+  businessCity: { type: String, default: "Houston, TX 77087" },
 
   updatedAt: { type: Date, default: Date.now }
 });
 
 export const SiteConfig = mongoose.models.SiteConfig || mongoose.model<ISiteConfig>("SiteConfig", SiteConfigSchema);
-

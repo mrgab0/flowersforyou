@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { getSiteConfig, updateSiteConfig } from "@/lib/actions/siteConfig";
 import { generateTotpSecretAction, getOrCreateTotpSecretAction, update2FASettingsAction, test2FACodeAction } from "@/lib/actions/admin2fa";
-import { Sparkles, Save, CheckCircle2, ArrowLeft, Layout, AlignLeft, Type, Footprints, ShieldCheck, Key, Smartphone, QrCode, RefreshCw, Lock, AlertTriangle, Check } from "lucide-react";
+import { Sparkles, Save, CheckCircle2, ArrowLeft, Layout, AlignLeft, Type, Footprints, ShieldCheck, Key, Smartphone, QrCode, RefreshCw, Lock, AlertTriangle, Check, Grid, Image as ImageIcon, Menu, Share2, Globe, Eye, Palette, Sliders, Star } from "lucide-react";
 import Link from "next/link";
+import { SingleImageUploader } from "@/components/admin/SingleImageUploader";
 
 export default function AdminConfiguracionPage() {
   const [config, setConfig] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<"grid" | "branding" | "social" | "reviews" | "iframe" | "security">("grid");
 
   useEffect(() => {
     loadConfig();
@@ -32,163 +34,675 @@ export default function AdminConfiguracionPage() {
 
     if (result.success) {
       setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
+      setTimeout(() => setSavedSuccess(false), 3500);
       loadConfig();
     } else {
-      alert("Error al actualizar los lemas del sitio.");
+      alert("Error al guardar la configuración del sitio.");
     }
   }
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-gray-500 font-bold animate-pulse">
-        Cargando configuración de lemas...
+      <div className="p-12 text-center text-gray-500 font-bold animate-pulse">
+        Cargando Editor Global del Home & Tienda...
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      {/* Header Admin */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#12131A] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-pink-50 dark:bg-pink-950/60 text-[#FF97A4] rounded-2xl border border-pink-100 dark:border-pink-900/50">
-            <Sparkles size={24} />
+    <div className="max-w-5xl mx-auto space-y-6 pb-16">
+      {/* Header del Editor Global */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#12131A] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="p-3.5 bg-gradient-to-tr from-pink-500 to-[#FF97A4] text-white rounded-2xl shadow-md shadow-pink-500/20">
+            <Sliders size={26} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#1A1C1C] dark:text-white">Edición de Lemas y Textos del Sitio</h1>
-            <p className="text-xs text-gray-400">Personaliza el lema de portada (Home) y la información del Footer</p>
+            <h1 className="text-2xl font-serif font-black text-[#1A1C1C] dark:text-white">Editor Global del Home & Tienda</h1>
+            <p className="text-xs text-gray-400">Personaliza columnas, logo, menú, reseñas, redes sociales e iFrames con interruptores ON/OFF</p>
           </div>
         </div>
-        <Link
-          href="/admin"
-          className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-5 py-2.5 rounded-full font-bold text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-        >
-          <ArrowLeft size={14} /> Volver al Panel
-        </Link>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            target="_blank"
+            className="bg-pink-50 dark:bg-pink-950/60 text-[#FF97A4] border border-pink-200 dark:border-pink-900/50 px-4 py-2.5 rounded-full font-bold text-xs hover:bg-pink-100 transition-colors flex items-center gap-1.5"
+          >
+            <Eye size={14} /> Vista Previa Tienda
+          </Link>
+          <Link
+            href="/admin"
+            className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-4 py-2.5 rounded-full font-bold text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+          >
+            <ArrowLeft size={14} /> Volver al Panel
+          </Link>
+        </div>
       </div>
 
+      {/* Pestañas de Navegación del Editor */}
+      <div className="flex overflow-x-auto gap-2 bg-white dark:bg-[#12131A] p-2 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm [&::-webkit-scrollbar]:hidden">
+        <button
+          type="button"
+          onClick={() => setActiveTab("grid")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "grid"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Grid size={16} /> Cuadrícula de Productos (3, 4, 5 Cols)
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("branding")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "branding"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <ImageIcon size={16} /> Logo, Lemas & Menú
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("reviews")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "reviews"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Star size={16} /> Reseñas ⭐ & Trustpilot
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("social")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "social"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Share2 size={16} /> Redes Sociales & Feed
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("iframe")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "iframe"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Globe size={16} /> Módulo iFrames / Widgets
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("security")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "security"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <ShieldCheck size={16} /> Seguridad 2FA
+        </button>
+      </div>
+
+      {/* Formulario Principal de Configuración */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Sección Lema de Portada (Home Hero) */}
-        <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
-          <div className="flex items-center gap-2.5 border-b pb-3 border-gray-100 dark:border-gray-800">
-            <Layout size={20} className="text-[#FF97A4]" />
-            <h2 className="font-bold text-base text-[#1A1C1C] dark:text-white">Lema y Encabezado Principal (Home)</h2>
+
+        {/* PESTAÑA 1: Cuadrícula de Productos */}
+        {activeTab === "grid" && (
+          <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2.5">
+                <Grid size={22} className="text-[#FF97A4]" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                  Distribución de Productos en Escritorio
+                </h2>
+              </div>
+              <span className="text-[11px] font-bold text-gray-400">Por defecto: 3 Columnas</span>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Elige cómo deseas que se organicen las tarjetas de flores en la portada. Puedes mantener la vista estándar de 3 columnas o ampliarla a 4 o 5 columnas para abarcar todo el ancho de pantalla.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              {/* Opción 3 Columnas */}
+              <label
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4 ${
+                  (config.productColumnsDesktop || 3) === 3
+                    ? "border-[#FF97A4] bg-pink-50/30 dark:bg-pink-950/30 shadow-sm"
+                    : "border-gray-200 dark:border-gray-800 hover:border-pink-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-sm text-[#1A1C1C] dark:text-white">3 Columnas (Estándar)</span>
+                  <input
+                    type="radio"
+                    name="productColumnsDesktop"
+                    value="3"
+                    defaultChecked={(config.productColumnsDesktop || 3) === 3}
+                    onChange={() => setConfig({ ...config, productColumnsDesktop: 3 })}
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 h-12 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                </div>
+                <span className="text-[11px] text-gray-400 font-medium">Diseño tradicional amplio. Recomiendo para fotos grandes.</span>
+              </label>
+
+              {/* Opción 4 Columnas */}
+              <label
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4 ${
+                  config.productColumnsDesktop === 4
+                    ? "border-[#FF97A4] bg-pink-50/30 dark:bg-pink-950/30 shadow-sm"
+                    : "border-gray-200 dark:border-gray-800 hover:border-pink-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-sm text-[#1A1C1C] dark:text-white">4 Columnas (Compacto)</span>
+                  <input
+                    type="radio"
+                    name="productColumnsDesktop"
+                    value="4"
+                    defaultChecked={config.productColumnsDesktop === 4}
+                    onChange={() => setConfig({ ...config, productColumnsDesktop: 4 })}
+                  />
+                </div>
+                <div className="grid grid-cols-4 gap-1 h-12 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                </div>
+                <span className="text-[11px] text-gray-400 font-medium">Permite mostrar más productos por fila en pantallas de laptop.</span>
+              </label>
+
+              {/* Opción 5 Columnas */}
+              <label
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4 ${
+                  config.productColumnsDesktop === 5
+                    ? "border-[#FF97A4] bg-pink-50/30 dark:bg-pink-950/30 shadow-sm"
+                    : "border-gray-200 dark:border-gray-800 hover:border-pink-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-sm text-[#1A1C1C] dark:text-white">5 Columnas (Panorámico)</span>
+                  <input
+                    type="radio"
+                    name="productColumnsDesktop"
+                    value="5"
+                    defaultChecked={config.productColumnsDesktop === 5}
+                    onChange={() => setConfig({ ...config, productColumnsDesktop: 5 })}
+                  />
+                </div>
+                <div className="grid grid-cols-5 gap-1 h-12 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                  <div className="bg-[#FF97A4]/60 rounded-lg"></div>
+                </div>
+                <span className="text-[11px] text-gray-400 font-medium">Abarca todo el ancho de pantalla para catálogos muy extensos.</span>
+              </label>
+            </div>
           </div>
+        )}
 
-          <div className="space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                <Type size={14} className="text-gray-400" /> Título Principal de la Boutique
-              </label>
-              <input
-                name="heroTitle"
-                defaultValue={config.heroTitle || "Flowers For You"}
-                placeholder="Ej: Flowers For You"
-                className="p-3.5 border rounded-2xl text-sm font-bold text-[#1A1C1C] dark:text-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
-                required
+        {/* PESTAÑA 2: Logo, Lemas & Menú */}
+        {activeTab === "branding" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Sección Logo & Subida de Imagen */}
+            <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+              <div className="flex items-center gap-2.5 border-b pb-3 border-gray-100 dark:border-gray-800">
+                <ImageIcon size={20} className="text-[#FF97A4]" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">Imagen del Logo Principal</h2>
+              </div>
+              <SingleImageUploader
+                currentImage={config.logoUrl || "/logo.jpg"}
+                label="Logo de Flowers For You (Boutique Floral)"
               />
+              <input type="hidden" name="logoUrl" value={config.logoUrl || "/logo.jpg"} />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                <AlignLeft size={14} className="text-gray-400" /> Lema / Eslogan del Home (Subtítulo)
-              </label>
-              <textarea
-                name="heroSlogan"
-                defaultValue={config.heroSlogan || ""}
-                placeholder="Ej: Arreglos florales exclusivos y detalles de lujo diseñados para sorprender a quien más amas."
-                className="p-3.5 border rounded-2xl text-xs h-24 font-medium text-gray-800 dark:text-gray-200 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
-                required
-              />
+            {/* Sección Lemas del Home & Footer */}
+            <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
+              <div className="flex items-center gap-2.5 border-b pb-3 border-gray-100 dark:border-gray-800">
+                <Type size={20} className="text-[#FF97A4]" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">Lemas y Encabezados de la Boutique</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Título Principal en Portada</label>
+                  <input
+                    name="heroTitle"
+                    defaultValue={config.heroTitle || "Flowers For You LLC"}
+                    className="p-3.5 border rounded-2xl text-sm font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Lema Secundario de Cabecera</label>
+                  <input
+                    name="brandSlogan"
+                    defaultValue={config.brandSlogan || "Boutique Floral Digital • Houston, Texas"}
+                    className="p-3.5 border rounded-2xl text-sm font-medium dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Eslogan del Home (Párrafo Hero)</label>
+                <textarea
+                  name="heroSlogan"
+                  defaultValue={config.heroSlogan || "Arreglos florales exclusivos y detalles de lujo diseñados para sorprender a quien más amas."}
+                  className="p-3.5 border rounded-2xl text-xs h-20 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Texto del Botón Hero (CTA)</label>
+                  <input
+                    name="heroButtonText"
+                    defaultValue={config.heroButtonText || "Explorar Colección"}
+                    className="p-3.5 border rounded-2xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Nombre en Pie de Página (Footer)</label>
+                  <input
+                    name="footerTitle"
+                    defaultValue={config.footerTitle || "Flowers For You LLC"}
+                    className="p-3.5 border rounded-2xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Lema del Footer</label>
+                <input
+                  name="footerSlogan"
+                  defaultValue={config.footerSlogan || "Boutique Digital de Alta Floristería • Entregas a Domicilio"}
+                  className="p-3.5 border rounded-2xl text-xs font-medium dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Texto de Derechos Reservados (Copyright)</label>
+                <input
+                  name="footerCopyright"
+                  defaultValue={config.footerCopyright || "© 2026 Flowers For You LLC. Todos los derechos reservados."}
+                  className="p-3.5 border rounded-2xl text-xs font-medium dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  required
+                />
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                Texto del Botón Principal (CTA)
-              </label>
-              <input
-                name="heroButtonText"
-                defaultValue={config.heroButtonText || "Explorar Colección"}
-                placeholder="Ej: Explorar Colección"
-                className="p-3.5 border rounded-2xl text-xs font-bold text-gray-800 dark:text-gray-200 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
-                required
-              />
+            {/* Sección Etiquetas de Menú de Navegación */}
+            <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+              <div className="flex items-center gap-2.5 border-b pb-3 border-gray-100 dark:border-gray-800">
+                <Menu size={20} className="text-[#FF97A4]" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">Nombres del Menú de Navegación</h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-gray-500">Menú 1</label>
+                  <input
+                    name="menuHomeLabel"
+                    defaultValue={config.menuHomeLabel || "Inicio"}
+                    className="p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-gray-500">Menú 2</label>
+                  <input
+                    name="menuCatalogLabel"
+                    defaultValue={config.menuCatalogLabel || "Colección"}
+                    className="p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-gray-500">Menú 3</label>
+                  <input
+                    name="menuTrackingLabel"
+                    defaultValue={config.menuTrackingLabel || "📦 Rastreo"}
+                    className="p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-gray-500">Menú 4</label>
+                  <input
+                    name="menuAboutLabel"
+                    defaultValue={config.menuAboutLabel || "Nosotros"}
+                    className="p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-gray-500">Menú 5</label>
+                  <input
+                    name="menuContactLabel"
+                    defaultValue={config.menuContactLabel || "Contacto"}
+                    className="p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Sección Footer */}
-        <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
-          <div className="flex items-center gap-2.5 border-b pb-3 border-gray-100 dark:border-gray-800">
-            <Footprints size={20} className="text-[#FF97A4]" />
-            <h2 className="font-bold text-base text-[#1A1C1C] dark:text-white">Lema y Pie de Página (Footer)</h2>
+        {/* PESTAÑA 3: Reseñas & Trustpilot */}
+        {activeTab === "reviews" && (
+          <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2.5">
+                <Star size={22} className="text-amber-400 fill-amber-400" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                  Módulo de Reseñas, Calificaciones & Trustpilot
+                </h2>
+              </div>
+
+              {/* Interruptor Toggle ON/OFF */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs font-extrabold text-gray-600 dark:text-gray-300">
+                  {config.enableReviewsSection !== false ? "ACTIVADO [ON]" : "DESACTIVADO [OFF]"}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={config.enableReviewsSection !== false}
+                  onChange={(e) => setConfig({ ...config, enableReviewsSection: e.target.checked })}
+                  className="w-5 h-5 accent-[#FF97A4] rounded cursor-pointer"
+                />
+                <input type="hidden" name="enableReviewsSection" value={config.enableReviewsSection !== false ? "true" : "false"} />
+              </label>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Muestra opiniones reales ⭐⭐⭐⭐⭐ de clientes satisfechos con insignia de "Compra Verificada". Además, si cuentas con un widget incrustado de <strong>Trustpilot</strong> o <strong>Google Reviews</strong>, puedes pegar el código abajo sin costo adicional.
+            </p>
+
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Título del Bloque de Reseñas</label>
+                <input
+                  name="reviewsTitle"
+                  defaultValue={config.reviewsTitle || "Lo que dicen nuestros clientes en Houston ⭐⭐⭐⭐⭐"}
+                  className="p-3.5 border rounded-2xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Puntuación Destacada (Estrellas)</label>
+                  <input
+                    name="reviewsRatingScore"
+                    defaultValue={config.reviewsRatingScore || "4.9 / 5.0"}
+                    placeholder="Ej: 4.9 / 5.0"
+                    className="p-3.5 border rounded-2xl text-xs font-extrabold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Texto de Total de Opiniones</label>
+                  <input
+                    name="reviewsCountText"
+                    defaultValue={config.reviewsCountText || "+180 Opiniones Verificadas"}
+                    placeholder="Ej: +180 Opiniones Verificadas"
+                    className="p-3.5 border rounded-2xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5 pt-2">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                  <Globe size={14} className="text-emerald-500" /> Código de Widget Opcional (Trustpilot / Google Reviews)
+                </label>
+                <textarea
+                  name="trustpilotWidgetHtml"
+                  defaultValue={config.trustpilotWidgetHtml || ""}
+                  placeholder='Pega aquí el código HTML del Widget / Trustbox de Trustpilot o Google Reviews si dispones de él...'
+                  className="p-3.5 border rounded-2xl text-xs font-mono h-28 dark:bg-gray-900 dark:text-white"
+                />
+                <span className="text-[11px] text-gray-400">
+                  💡 Si lo dejas vacío, la tienda mostrará el elegante diseño nativo de reseñas verificadas con 5 estrellas sin costo.
+                </span>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                Nombre de la Empresa en Footer
-              </label>
-              <input
-                name="footerTitle"
-                defaultValue={config.footerTitle || "Flowers For You LLC"}
-                placeholder="Ej: Flowers For You LLC"
-                className="p-3.5 border rounded-2xl text-xs font-bold text-gray-800 dark:text-gray-200 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
-                required
-              />
+        {/* PESTAÑA 4: Redes Sociales & Feed Social */}
+        {activeTab === "social" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Redes Sociales en la Cabecera (Toggle ON/OFF) */}
+            <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-2.5">
+                  <Share2 size={20} className="text-[#FF97A4]" />
+                  <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                    Íconos de Redes Sociales en Cabecera
+                  </h2>
+                </div>
+
+                {/* Interruptor Toggle ON/OFF */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs font-extrabold text-gray-600 dark:text-gray-300">
+                    {config.enableHeaderSocials !== false ? "ACTIVADO [ON]" : "DESACTIVADO [OFF]"}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={config.enableHeaderSocials !== false}
+                    onChange={(e) => setConfig({ ...config, enableHeaderSocials: e.target.checked })}
+                    className="w-5 h-5 accent-[#FF97A4] rounded cursor-pointer"
+                  />
+                  <input type="hidden" name="enableHeaderSocials" value={config.enableHeaderSocials !== false ? "true" : "false"} />
+                </label>
+              </div>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Al activar este módulo, se renderizarán los íconos directos de tus redes sociales a la izquierda del menú flotante.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">URL de Instagram</label>
+                  <input
+                    name="instagramUrl"
+                    defaultValue={config.instagramUrl || "https://instagram.com"}
+                    placeholder="https://instagram.com/flowersforyou"
+                    className="p-3 border rounded-xl text-xs font-medium dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">URL de Facebook</label>
+                  <input
+                    name="facebookUrl"
+                    defaultValue={config.facebookUrl || "https://facebook.com"}
+                    placeholder="https://facebook.com/flowersforyou"
+                    className="p-3 border rounded-xl text-xs font-medium dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">URL de TikTok</label>
+                  <input
+                    name="tiktokUrl"
+                    defaultValue={config.tiktokUrl || "https://tiktok.com"}
+                    placeholder="https://tiktok.com/@flowersforyou"
+                    className="p-3 border rounded-xl text-xs font-medium dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">WhatsApp Directo</label>
+                  <input
+                    name="whatsappUrl"
+                    defaultValue={config.whatsappUrl || "https://wa.me/16576988586"}
+                    placeholder="https://wa.me/16576988586"
+                    className="p-3 border rounded-xl text-xs font-medium dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                Lema / Descripción del Footer
-              </label>
-              <input
-                name="footerSlogan"
-                defaultValue={config.footerSlogan || ""}
-                placeholder="Ej: Boutique Digital de Alta Floristería • Entregas a Domicilio"
-                className="p-3.5 border rounded-2xl text-xs font-medium text-gray-800 dark:text-gray-200 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
-                required
-              />
-            </div>
+            {/* Módulo Social Pre-Footer Instagram / TikTok (Toggle ON/OFF) */}
+            <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles size={20} className="text-[#FF97A4]" />
+                  <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                    Publicaciones Incrustadas de Instagram / TikTok (Pre-Footer)
+                  </h2>
+                </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                Texto de Derechos Reservados (Copyright)
-              </label>
-              <input
-                name="footerCopyright"
-                defaultValue={config.footerCopyright || ""}
-                placeholder="Ej: © 2026 Flowers For You LLC. Todos los derechos reservados."
-                className="p-3.5 border rounded-2xl text-xs font-medium text-gray-800 dark:text-gray-200 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
-                required
-              />
+                {/* Interruptor Toggle ON/OFF */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs font-extrabold text-gray-600 dark:text-gray-300">
+                    {config.enableSocialFeed ? "ACTIVADO [ON]" : "DESACTIVADO [OFF]"}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={!!config.enableSocialFeed}
+                    onChange={(e) => setConfig({ ...config, enableSocialFeed: e.target.checked })}
+                    className="w-5 h-5 accent-[#FF97A4] rounded cursor-pointer"
+                  />
+                  <input type="hidden" name="enableSocialFeed" value={config.enableSocialFeed ? "true" : "false"} />
+                </label>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Título de la Sección Social</label>
+                  <input
+                    name="socialFeedTitle"
+                    defaultValue={config.socialFeedTitle || "Síguenos en Instagram & TikTok 📸"}
+                    className="p-3.5 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                    Código Incrustado (Embed Code HTML de Instagram / TikTok)
+                  </label>
+                  <textarea
+                    name="socialEmbedHtml"
+                    defaultValue={config.socialEmbedHtml || ""}
+                    placeholder='Pega aquí el código <blockquote class="instagram-media">... o <iframe src="..."> de tu publicación'
+                    className="p-3.5 border rounded-2xl text-xs font-mono h-32 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Sección de Seguridad y Autenticación de Dos Factores (2FA) */}
-        <TwoFactorConfigSection config={config} onSaveSuccess={loadConfig} />
+        {/* PESTAÑA 5: Módulo de iFrames / Widgets */}
+        {activeTab === "iframe" && (
+          <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2.5">
+                <Globe size={20} className="text-[#FF97A4]" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                  Módulo de iFrames / Widgets Externos
+                </h2>
+              </div>
 
-        {/* Botón Guardar Cambios Generales */}
-        <div className="flex justify-between items-center bg-white dark:bg-[#12131A] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          {savedSuccess ? (
-            <span className="text-xs font-bold text-green-600 flex items-center gap-1.5 animate-in fade-in">
-              <CheckCircle2 size={16} /> ¡Lemas y textos del sitio actualizados correctamente!
-            </span>
-          ) : (
-            <span className="text-xs text-gray-400 font-medium">Los cambios se reflejan inmediatamente en la portada y footer.</span>
-          )}
+              {/* Interruptor Toggle ON/OFF */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs font-extrabold text-gray-600 dark:text-gray-300">
+                  {config.enableCustomIframe ? "ACTIVADO [ON]" : "DESACTIVADO [OFF]"}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={!!config.enableCustomIframe}
+                  onChange={(e) => setConfig({ ...config, enableCustomIframe: e.target.checked })}
+                  className="w-5 h-5 accent-[#FF97A4] rounded cursor-pointer"
+                />
+                <input type="hidden" name="enableCustomIframe" value={config.enableCustomIframe ? "true" : "false"} />
+              </label>
+            </div>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-[#FF97A4] text-white px-8 py-3 rounded-full text-xs font-bold hover:bg-[#B0004A] transition-colors shadow-md disabled:bg-gray-400 flex items-center gap-2 ml-auto"
-          >
-            <Save size={16} />
-            {saving ? "Guardando..." : "Guardar Lemas"}
-          </button>
-        </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Usa este módulo si el jefe o administrador desea integrar mapas interactivos de Google Maps, sistemas de reservación, videos promocionales de YouTube/Vimeo o widgets externos directamente en la portada.
+            </p>
+
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Título de la Sección del Widget</label>
+                <input
+                  name="customIframeTitle"
+                  defaultValue={config.customIframeTitle || "Ubicación & Promociones Destacadas"}
+                  className="p-3.5 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Código HTML / iFrame del Widget
+                </label>
+                <textarea
+                  name="customIframeHtml"
+                  defaultValue={config.customIframeHtml || ""}
+                  placeholder='Pega aquí el código <iframe src="https://www.google.com/maps/embed?..." width="100%" height="450"></iframe>'
+                  className="p-3.5 border rounded-2xl text-xs font-mono h-36 dark:bg-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PESTAÑA 6: Seguridad 2FA */}
+        {activeTab === "security" && (
+          <div className="animate-in fade-in duration-200">
+            <TwoFactorConfigSection config={config} onSaveSuccess={loadConfig} />
+          </div>
+        )}
+
+        {/* Botón Flotante para Guardar Cambios del Editor Global */}
+        {activeTab !== "security" && (
+          <div className="sticky bottom-4 z-30 flex justify-between items-center bg-white/95 dark:bg-[#12131A]/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl">
+            {savedSuccess ? (
+              <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5 animate-in fade-in">
+                <CheckCircle2 size={16} /> ¡Configuración del Home actualizada correctamente!
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400 font-medium">Los cambios se aplican al instante en la tienda sin romper nada.</span>
+            )}
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="bg-[#FF97A4] text-white px-8 py-3.5 rounded-full text-xs font-black hover:bg-[#B0004A] transition-all shadow-lg shadow-pink-500/20 disabled:bg-gray-400 flex items-center gap-2 ml-auto hover:scale-105 active:scale-95"
+            >
+              <Save size={16} />
+              {saving ? "Guardando Cambios..." : "Guardar Configuración del Home"}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
@@ -493,4 +1007,3 @@ function TwoFactorConfigSection({ config, onSaveSuccess }: { config: any; onSave
     </div>
   );
 }
-

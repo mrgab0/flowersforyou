@@ -41,13 +41,13 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
 
         <div className="container mx-auto px-6 text-center z-10 pt-8 pb-8">
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif font-black text-[#1A1C1C] dark:text-white mb-4 tracking-tighter">
-            {siteConfig?.heroTitle || t('Index.title')}
+            {locale === 'en' ? t('Index.title') : (siteConfig?.heroTitle || t('Index.title'))}
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-gray-500 dark:text-gray-300 max-w-3xl mx-auto mb-8 font-medium leading-relaxed">
-            {siteConfig?.heroSlogan || t('Index.description')}
+            {locale === 'en' ? t('Index.description') : (siteConfig?.heroSlogan || t('Index.description'))}
           </p>
           <a href="/productos" className="inline-block bg-[#FF97A4] text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-[#B0004A] transition-all shadow-xl shadow-[#FF97A4]/20 hover:scale-105 active:scale-95">
-            {siteConfig?.heroButtonText || t('Index.exploreButton')}
+            {locale === 'en' ? t('Index.exploreButton') : (siteConfig?.heroButtonText || t('Index.exploreButton'))}
           </a>
         </div>
       </section>
@@ -97,12 +97,12 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
         </div>
       </section>
 
-      {/* Módulo de Reseñas / Calificaciones de Clientes & Trustpilot */}
+      {/* Módulo de Reseñas / Calificaciones de Clientes & Trustpilot (Multilenguaje) */}
       {siteConfig?.enableReviewsSection !== false && (
         <ReviewsSection
-          title={siteConfig?.reviewsTitle}
-          ratingScore={siteConfig?.reviewsRatingScore}
-          countText={siteConfig?.reviewsCountText}
+          title={locale === 'en' ? undefined : siteConfig?.reviewsTitle}
+          ratingScore={locale === 'en' ? undefined : siteConfig?.reviewsRatingScore}
+          countText={locale === 'en' ? undefined : siteConfig?.reviewsCountText}
           trustpilotWidgetHtml={siteConfig?.trustpilotWidgetHtml}
         />
       )}

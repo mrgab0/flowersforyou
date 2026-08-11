@@ -91,6 +91,25 @@
     "placeOrder": "Confirm & Place Order",
     "manualVerificationNote": "Manual payment verification. Upon confirmation, you will see payment instructions on screen & WhatsApp."
   },
+  "Reviews": {
+    "badge": "100% Verified Reviews",
+    "title": "What Our Houston Customers Say ⭐⭐⭐⭐⭐",
+    "score": "4.9 / 5.0",
+    "countText": "+180 Verified Reviews",
+    "verifiedPurchase": "Verified Purchase",
+    "rev1": "Simply spectacular! The bouquet of red roses arrived flawless in under 45 minutes. My husband was thrilled with the custom printed card.",
+    "rev1Name": "Carolina M.",
+    "rev1Location": "Houston, TX (77087)",
+    "rev1Date": "2 days ago",
+    "rev2": "Same-day delivery service was outstanding. The app autocompleted my address in 1 second using fingerprint. Highly recommended!",
+    "rev2Name": "Alejandro V.",
+    "rev2Location": "Katy / West Houston",
+    "rev2Date": "4 days ago",
+    "rev3": "Top quality fresh flowers and the presentation in the boutique pink box looks super elegant. The best flower delivery service in Houston.",
+    "rev3Name": "Mariana R.",
+    "rev3Location": "The Woodlands, TX",
+    "rev3Date": "1 week ago"
+  },
   "Footer": {
     "address1": "6705 Fairway Dr.",
     "address2": "Houston Texas 77087",

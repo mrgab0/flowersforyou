@@ -1,6 +1,8 @@
 "use client";
 
-import { Star, ShieldCheck, CheckCircle2, Quote, Sparkles } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Star, ShieldCheck, CheckCircle2, Quote } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface ReviewsSectionProps {
   title?: string;
@@ -9,42 +11,63 @@ interface ReviewsSectionProps {
   trustpilotWidgetHtml?: string;
 }
 
-const DEFAULT_REVIEWS = [
-  {
-    id: 1,
-    name: "Carolina M.",
-    location: "Houston, TX (77087)",
-    rating: 5,
-    date: "Hace 2 días",
-    comment: "¡Simplemente espectacular! El ramo de rosas rojas llegó impecable en menos de 45 minutos. Mi esposo quedó encantado con la tarjeta impresa.",
-    verified: true,
-  },
-  {
-    id: 2,
-    name: "Alejandro V.",
-    location: "Katy / West Houston",
-    rating: 5,
-    date: "Hace 4 días",
-    comment: "Excelente servicio de entrega el mismo día. La app autocompletó mi dirección en 1 segundo con la huella. Totalmente recomendado.",
-    verified: true,
-  },
-  {
-    id: 3,
-    name: "Mariana R.",
-    location: "The Woodlands, TX",
-    rating: 5,
-    date: "Hace 1 semana",
-    comment: "Flores frescas de altísima calidad y la presentación en la caja rosa de boutique luce súper elegante. El mejor servicio de flores en Houston.",
-    verified: true,
-  },
-];
-
 export function ReviewsSection({
-  title = "Lo que dicen nuestros clientes en Houston ⭐⭐⭐⭐⭐",
-  ratingScore = "4.9 / 5.0",
-  countText = "+180 Opiniones Verificadas",
+  title,
+  ratingScore,
+  countText,
   trustpilotWidgetHtml,
 }: ReviewsSectionProps) {
+  const t = useTranslations("Reviews");
+  const widgetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!trustpilotWidgetHtml || !widgetRef.current) return;
+
+    // Ejecutar de forma segura scripts incrustados de Trustpilot en React / Next.js
+    const container = widgetRef.current;
+    container.innerHTML = trustpilotWidgetHtml;
+
+    const scripts = Array.from(container.querySelectorAll("script"));
+    scripts.forEach((oldScript) => {
+      const newScript = document.createElement("script");
+      Array.from(oldScript.attributes).forEach((attr) => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+      oldScript.parentNode?.replaceChild(newScript, oldScript);
+    });
+  }, [trustpilotWidgetHtml]);
+
+  const reviewsList = [
+    {
+      id: 1,
+      name: t("rev1Name"),
+      location: t("rev1Location"),
+      rating: 5,
+      date: t("rev1Date"),
+      comment: t("rev1"),
+      verified: true,
+    },
+    {
+      id: 2,
+      name: t("rev2Name"),
+      location: t("rev2Location"),
+      rating: 5,
+      date: t("rev2Date"),
+      comment: t("rev2"),
+      verified: true,
+    },
+    {
+      id: 3,
+      name: t("rev3Name"),
+      location: t("rev3Location"),
+      rating: 5,
+      date: t("rev3Date"),
+      comment: t("rev3"),
+      verified: true,
+    },
+  ];
+
   return (
     <section className="py-16 bg-white dark:bg-[#12131A] border-t border-gray-100 dark:border-gray-800 transition-colors duration-300">
       <div className="container mx-auto px-4 max-w-6xl space-y-10">
@@ -53,11 +76,11 @@ export function ReviewsSection({
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-pink-50 dark:bg-pink-950/60 text-[#FF97A4] border border-pink-200 dark:border-pink-900/50 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-sm">
             <ShieldCheck size={14} className="text-emerald-500" />
-            <span>Reseñas 100% Verificadas</span>
+            <span>{t("badge")}</span>
           </div>
 
           <h2 className="text-2xl sm:text-4xl font-serif font-black text-[#1A1C1C] dark:text-white tracking-tight">
-            {title}
+            {title || t("title")}
           </h2>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
@@ -66,10 +89,10 @@ export function ReviewsSection({
                 <Star key={i} size={20} fill="currentColor" stroke="none" />
               ))}
             </div>
-            <span className="text-base font-extrabold text-[#1A1C1C] dark:text-white">{ratingScore}</span>
+            <span className="text-base font-extrabold text-[#1A1C1C] dark:text-white">{ratingScore || t("score")}</span>
             <span className="text-xs font-bold text-gray-400">•</span>
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-900/50">
-              {countText}
+              {countText || t("countText")}
             </span>
           </div>
         </div>
@@ -78,15 +101,15 @@ export function ReviewsSection({
         {trustpilotWidgetHtml && trustpilotWidgetHtml.trim() ? (
           <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-inner flex justify-center">
             <div
+              ref={widgetRef}
               className="w-full flex justify-center [&>iframe]:max-w-full"
-              dangerouslySetInnerHTML={{ __html: trustpilotWidgetHtml }}
             />
           </div>
         ) : null}
 
         {/* Tarjetas de Testimonios Verificados de Clientes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {DEFAULT_REVIEWS.map((rev) => (
+          {reviewsList.map((rev) => (
             <div
               key={rev.id}
               className="bg-[#F9F9F9] dark:bg-gray-900/70 p-6 rounded-3xl border border-gray-200/80 dark:border-gray-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 relative"
@@ -111,7 +134,7 @@ export function ReviewsSection({
                     {rev.name}
                     {rev.verified && (
                       <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                        <CheckCircle2 size={10} /> Compra Verificada
+                        <CheckCircle2 size={10} /> {t("verifiedPurchase")}
                       </span>
                     )}
                   </h4>

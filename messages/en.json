@@ -10,17 +10,21 @@
   },
   "Nav": {
     "home": "Home",
-    "catalog": "Catalog",
+    "catalog": "Collection",
+    "tracking": "📦 Track Order",
     "about": "About Us",
     "contact": "Contact",
-    "cart": "Cart"
+    "cart": "Cart",
+    "fingerprint": "Fingerprint 👆"
   },
   "nav": {
     "home": "Home",
-    "catalog": "Catalog",
+    "catalog": "Collection",
+    "tracking": "📦 Track Order",
     "about": "About Us",
     "contact": "Contact",
-    "cart": "Cart"
+    "cart": "Cart",
+    "fingerprint": "Fingerprint 👆"
   },
   "common": {
     "addToCart": "Add to Cart",
@@ -102,7 +106,7 @@
     "rev1Location": "Houston, TX (77087)",
     "rev1Date": "2 days ago",
     "rev2": "Same-day delivery service was outstanding. The app autocompleted my address in 1 second using fingerprint. Highly recommended!",
-    "rev2Name": "Alejandro V.",
+    "rev2Name": "Alejandro Viloria.",
     "rev2Location": "Katy / West Houston",
     "rev2Date": "4 days ago",
     "rev3": "Top quality fresh flowers and the presentation in the boutique pink box looks super elegant. The best flower delivery service in Houston.",
@@ -111,16 +115,29 @@
     "rev3Date": "1 week ago"
   },
   "Footer": {
+    "slogan": "Digital High Floristry Boutique • Home Delivery",
     "address1": "6705 Fairway Dr.",
     "address2": "Houston Texas 77087",
     "boutique": "Digital Boutique",
-    "copyright": "© 2026 Flowers For You. Created with passion by Alonso de los Ríos.",
+    "copyright": "© 2026 FLOWERS FOR YOU LLC. ALL RIGHTS RESERVED.",
+    "acceptedMethods": "ACCEPTED METHODS:",
     "accept": "We accept:",
     "cards": "Visa • MC • Amex • Discover"
   },
   "WhatsApp": {
-    "message": "Hi! I'd like more information.",
-    "vip": "VIP Support",
+    "message": "Hello! 🌸 I would like personalized consultation to choose the ideal floral arrangement. Can you help me?",
+    "vip": "VIP SUPPORT",
     "consultation": "Floral Consultation"
+  },
+  "Biometric": {
+    "title": "Quick Fingerprint Access",
+    "subtitle": "Complete your purchase instantly on Android, iPhone & Browsers",
+    "emailLabel": "Your Email Address:",
+    "emailPlaceholder": "example@email.com",
+    "scanButton": "👆 Scan Fingerprint & Enter",
+    "scanning": "Verifying fingerprint...",
+    "success": "Fingerprint successfully verified! 👆 VIP Benefits activated.",
+    "enterEmailError": "Please enter your email address.",
+    "footerNote": "Fast & Encrypted Device Authentication"
   }
 }

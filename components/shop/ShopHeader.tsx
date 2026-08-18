@@ -7,11 +7,13 @@ import { useCart } from "@/components/shop/Cart/CartContext";
 import { LanguageSwitcher } from "@/components/shop/LanguageSwitcher";
 import { ThemeToggle } from "@/components/shop/ThemeToggle";
 import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
+import { useTranslations } from "next-intl";
 
 export const ShopHeader = () => {
   const { cartItems } = useCart();
   const totalCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
+  const t = useTranslations("nav");
 
   return (
     <>
@@ -35,19 +37,19 @@ export const ShopHeader = () => {
           {/* Navegación Central */}
           <nav className="hidden md:flex items-center gap-8 font-bold text-xs uppercase tracking-widest text-gray-600 dark:text-gray-300">
             <Link href="/" className="hover:text-[#FF97A4] transition-colors">
-              Inicio
+              {t('home')}
             </Link>
             <Link href="/productos" className="hover:text-[#FF97A4] transition-colors">
-              Colección
+              {t('catalog')}
             </Link>
             <Link href="/rastreo" className="hover:text-[#FF97A4] transition-colors">
-              Rastreo
+              {t('tracking')}
             </Link>
             <Link href="/nosotros" className="hover:text-[#FF97A4] transition-colors">
-              Nosotros
+              {t('about')}
             </Link>
             <Link href="/contacto" className="hover:text-[#FF97A4] transition-colors">
-              Contacto
+              {t('contact')}
             </Link>
           </nav>
 
@@ -60,7 +62,7 @@ export const ShopHeader = () => {
               title="Acceso con Huella / Face ID"
             >
               <Fingerprint size={16} />
-              <span className="inline text-[11px]">Huella 👆</span>
+              <span className="inline text-[11px]">{t('fingerprint')}</span>
             </button>
 
             <ThemeToggle />
@@ -73,7 +75,7 @@ export const ShopHeader = () => {
                 className="flex items-center gap-2 bg-[#FF97A4] text-white px-5 py-2.5 rounded-full font-bold text-xs hover:bg-[#B0004A] transition-all shadow-md shadow-[#FF97A4]/20"
               >
                 <ShoppingCart size={18} />
-                <span className="hidden sm:inline">Carrito</span>
+                <span className="hidden sm:inline">{t('cart')}</span>
                 {totalCount > 0 && (
                   <span className="bg-[#1A1C1C] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                     {totalCount}

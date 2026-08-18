@@ -6,7 +6,7 @@ import { LanguageSwitcher } from "@/components/shop/LanguageSwitcher";
 import { ThemeToggle } from "@/components/shop/ThemeToggle";
 import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
 import { Fingerprint, Instagram, Facebook, MessageCircle } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 interface StickyNavProps {
   siteConfig?: any;
@@ -17,6 +17,8 @@ export function StickyNav({ siteConfig }: StickyNavProps) {
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("nav");
+  const locale = useLocale();
+  const isEn = locale === "en";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -119,19 +121,19 @@ export function StickyNav({ siteConfig }: StickyNavProps) {
             style={{ fontWeight: 800 }}
           >
             <Link href="/" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">
-              {siteConfig?.menuHomeLabel || t('home')}
+              {isEn ? t('home') : (siteConfig?.menuHomeLabel || t('home'))}
             </Link>
             <Link href="/productos" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">
-              {siteConfig?.menuCatalogLabel || t('catalog')}
+              {isEn ? t('catalog') : (siteConfig?.menuCatalogLabel || t('catalog'))}
             </Link>
             <Link href="/rastreo" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">
-              {siteConfig?.menuTrackingLabel || "📦 Rastreo"}
+              {isEn ? t('tracking') : (siteConfig?.menuTrackingLabel || t('tracking'))}
             </Link>
             <Link href="/nosotros" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">
-              {siteConfig?.menuAboutLabel || t('about')}
+              {isEn ? t('about') : (siteConfig?.menuAboutLabel || t('about'))}
             </Link>
             <Link href="/contacto" className="px-6 py-4 border-r-2 border-[#FF97A4] hover:bg-[#FF97A4]/20 transition-colors">
-              {siteConfig?.menuContactLabel || t('contact')}
+              {isEn ? t('contact') : (siteConfig?.menuContactLabel || t('contact'))}
             </Link>
             <Link href="/checkout" className="px-6 py-4 hover:bg-[#FF97A4]/20 transition-colors">
               {t('cart')}
@@ -146,7 +148,7 @@ export function StickyNav({ siteConfig }: StickyNavProps) {
               title="Acceso con Huella / Face ID (Passkeys)"
             >
               <Fingerprint size={16} />
-              <span className="inline text-[11px]">Huella 👆</span>
+              <span className="inline text-[11px]">{t('fingerprint')}</span>
             </button>
 
             <ThemeToggle />

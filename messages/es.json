@@ -10,17 +10,21 @@
   },
   "Nav": {
     "home": "Inicio",
-    "catalog": "Catálogo",
+    "catalog": "Colección",
+    "tracking": "📦 Rastreo",
     "about": "Nosotros",
     "contact": "Contacto",
-    "cart": "Carrito"
+    "cart": "Carrito",
+    "fingerprint": "Huella 👆"
   },
   "nav": {
     "home": "Inicio",
-    "catalog": "Catálogo",
+    "catalog": "Colección",
+    "tracking": "📦 Rastreo",
     "about": "Nosotros",
     "contact": "Contacto",
-    "cart": "Carrito"
+    "cart": "Carrito",
+    "fingerprint": "Huella 👆"
   },
   "common": {
     "addToCart": "Añadir al Carrito",
@@ -102,7 +106,7 @@
     "rev1Location": "Houston, TX (77087)",
     "rev1Date": "Hace 2 días",
     "rev2": "Excelente servicio de entrega el mismo día. La app autocompletó mi dirección en 1 segundo con la huella. Totalmente recomendado.",
-    "rev2Name": "Alejandro V.",
+    "rev2Name": "Alejandro Viloria.",
     "rev2Location": "Katy / West Houston",
     "rev2Date": "Hace 4 días",
     "rev3": "Flores frescas de altísima calidad y la presentación en la caja rosa de boutique luce súper elegante. El mejor servicio de flores en Houston.",
@@ -111,16 +115,29 @@
     "rev3Date": "Hace 1 semana"
   },
   "Footer": {
+    "slogan": "Boutique Digital de Alta Floristería • Entregas a Domicilio",
     "address1": "6705 Fairway Dr.",
     "address2": "Houston Texas 77087",
     "boutique": "Boutique Digital",
-    "copyright": "© 2026 Flowers For You. Creado con pasión por Alonso de los Ríos.",
+    "copyright": "© 2026 FLOWERS FOR YOU LLC. TODOS LOS DERECHOS RESERVADOS.",
+    "acceptedMethods": "MÉTODOS ACEPTADOS:",
     "accept": "Aceptamos:",
     "cards": "Visa • MC • Amex • Discover"
   },
   "WhatsApp": {
-    "message": "¡Hola! Me gustaría más información.",
-    "vip": "Atención VIP",
+    "message": "¡Hola! 🌸 Me gustaría recibir asesoría personalizada para elegir el arreglo floral ideal. ¿Me podrían ayudar?",
+    "vip": "ASESORÍA VIP",
     "consultation": "Consulta Floral"
+  },
+  "Biometric": {
+    "title": "Acceso Rápido con Huella",
+    "subtitle": "Completa tu compra de inmediato en Android, iPhone y Navegadores",
+    "emailLabel": "Tu Correo Electrónico:",
+    "emailPlaceholder": "ejemplo@correo.com",
+    "scanButton": "👆 Escanear Huella e Ingresar",
+    "scanning": "Verificando huella dactilar...",
+    "success": "¡Huella dactilar verificada con éxito! 👆 Beneficios VIP activados.",
+    "enterEmailError": "Por favor ingresa tu correo electrónico.",
+    "footerNote": "Autenticación Rápida & Encriptada en Tu Dispositivo"
   }
 }

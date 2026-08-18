@@ -1,10 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface FooterProps {
   siteConfig?: any;
 }
 
 export function Footer({ siteConfig }: FooterProps) {
+  const t = useTranslations("Footer");
+
   return (
     <footer className="bg-[#1A1C1C] text-gray-200 py-14 border-t border-gray-800">
       <div className="container mx-auto px-6">
@@ -14,26 +18,26 @@ export function Footer({ siteConfig }: FooterProps) {
               {siteConfig?.footerTitle || "Flowers For You LLC"}
             </h3>
             <p className="text-xs text-[#FF97A4] font-medium mt-1">
-              {siteConfig?.footerSlogan || "Boutique Floral Digital • Houston, Texas"}
+              {siteConfig?.footerSlogan || t('slogan')}
             </p>
           </div>
           
           <div className="flex flex-wrap justify-center gap-6 text-xs font-extrabold tracking-widest text-gray-300 uppercase">
             <span>6705 Fairway Dr.</span>
             <span>Houston, Texas 77087</span>
-            <span>Boutique Digital</span>
+            <span>{t('boutique')}</span>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <p className="text-gray-400 font-bold text-xs uppercase tracking-widest">
-            {siteConfig?.footerCopyright || `© ${new Date().getFullYear()} Flowers For You LLC. Todos los derechos reservados.`}
+            {siteConfig?.footerCopyright || t('copyright')}
           </p>
 
           {/* Logotipos Full Color de Métodos de Pago Aceptados */}
           <div className="flex flex-wrap items-center justify-center md:justify-end gap-3">
             <span className="text-xs font-bold uppercase tracking-widest text-gray-400 mr-1">
-              Métodos Aceptados:
+              {t('acceptedMethods')}
             </span>
             
             <div className="flex items-center gap-2.5">

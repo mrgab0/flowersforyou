@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
+import { useTranslations } from "next-intl";
 
 interface WhatsAppButtonProps {
   phoneNumber?: string;
@@ -10,10 +11,12 @@ interface WhatsAppButtonProps {
 
 export const WhatsAppButton = ({
   phoneNumber = "16576988586",
-  message = "¡Hola! 🌸 Me gustaría recibir asesoría personalizada para elegir el arreglo floral ideal. ¿Me podrían ayudar?",
+  message,
 }: WhatsAppButtonProps) => {
+  const t = useTranslations("WhatsApp");
+  const defaultMessage = message || t('message');
   const cleanPhone = phoneNumber.replace(/[^\d]/g, "");
-  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(defaultMessage)}`;
 
   return (
     <a
@@ -31,8 +34,8 @@ export const WhatsAppButton = ({
         </span>
       </div>
       <div className="flex flex-col items-start leading-tight">
-        <span className="text-[9px] uppercase font-black tracking-widest opacity-90">ASESORÍA VIP</span>
-        <span className="text-sm font-extrabold">Consulta Floral</span>
+        <span className="text-[9px] uppercase font-black tracking-widest opacity-90">{t('vip')}</span>
+        <span className="text-sm font-extrabold">{t('consultation')}</span>
       </div>
     </a>
   );

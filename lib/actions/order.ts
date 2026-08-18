@@ -105,7 +105,7 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
       console.error("Error enviando email SMTP: No se encontraron destinatarios válidos en ADMIN_EMAILS ni SMTP_USER.");
     } else {
       const transporter = getTransporter();
-      const sender = process.env.SMTP_USER ? `"Flowers For You" <${process.env.SMTP_USER}>` : '"Flowers For You"';
+      const sender = process.env.SMTP_FROM || (process.env.SMTP_USER ? `"Flowers For You" <${process.env.SMTP_USER}>` : '"Flowers For You"');
 
       // Destinatarios: Administradores y opcionalmente el cliente
       const recipients = [...adminEmails];

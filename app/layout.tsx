@@ -6,7 +6,7 @@ import esMessages from '@/messages/es.json';
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { AnalyticsTracker } from "@/components/analytics/AnalyticsTracker";
-import Script from "next/script";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Flowers For You LLC",
@@ -54,6 +54,7 @@ export default function RootLayout({
             <CartProvider>
               {children}
               <AnalyticsTracker />
+              <Analytics />
               <InstallPrompt />
             </CartProvider>
           </NextIntlClientProvider>

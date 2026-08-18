@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Flowers For You",
+    "slug": "flowers-for-you",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "../public/logo.jpg",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "../public/logo.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.flowersforyou.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "../public/logo.jpg",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.flowersforyou.app"
+    },
+    "web": {
+      "favicon": "../public/logo.jpg"
+    }
+  }
+}

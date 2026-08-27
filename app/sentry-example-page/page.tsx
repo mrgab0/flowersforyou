@@ -53,7 +53,7 @@ export default function Page() {
           <a
             target="_blank"
             rel="noopener"
-            href="https://alonsoriosdev.sentry.io/issues/?project=4511979489329152"
+            href="https://alonsoriosdev-yb.sentry.io/issues/?project=servers_sentry_status_vercel"
           >
             Issues Page
           </a>

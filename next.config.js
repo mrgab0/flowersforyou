@@ -70,8 +70,8 @@ module.exports = withNextIntl(nextConfig);
 const { withSentryConfig } = require("@sentry/nextjs");
 
 module.exports = withSentryConfig(module.exports, {
-  org: "alonsoriosdev",
-  project: "javascript-nextjs",
+  org: "alonsoriosdev-yb",
+  project: "servers_sentry_status_vercel",
   silent: true,
   telemetry: false,
   sourcemaps: {

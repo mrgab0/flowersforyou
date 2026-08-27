@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Order } from "@/lib/models/Order";
 import dbConnect from "@/lib/db";
 import Link from "next/link";

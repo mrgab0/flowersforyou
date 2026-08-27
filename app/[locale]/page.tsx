@@ -108,10 +108,14 @@ export default async function Home({params}: {params: Promise<{locale: string}>}
       )}
 
       {/* Módulo Social Instagram / TikTok (si está activo en el Editor del Home) */}
-      {siteConfig?.enableSocialFeed && (
+      {(siteConfig?.enableSocialFeed || siteConfig?.enableInstagramFeed || siteConfig?.enableTiktokFeed) && (
         <SocialFeedSection
           title={siteConfig.socialFeedTitle}
           embedHtml={siteConfig.socialEmbedHtml}
+          instagramEmbedHtml={siteConfig.instagramEmbedHtml}
+          tiktokEmbedHtml={siteConfig.tiktokEmbedHtml}
+          enableInstagramFeed={siteConfig.enableInstagramFeed}
+          enableTiktokFeed={siteConfig.enableTiktokFeed}
         />
       )}
 

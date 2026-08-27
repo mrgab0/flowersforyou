@@ -11,8 +11,13 @@ import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
 import { logAnalyticsEventAction } from "@/lib/actions/analytics";
 import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
+import dynamic from "next/dynamic";
 import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart, Fingerprint } from "lucide-react";
 
+const DeliveryMapPicker = dynamic(
+  () => import("@/components/shop/DeliveryMapPicker").then((mod) => mod.DeliveryMapPicker),
+  { ssr: false }
+);
 
 const PaymentLogos = {
   zelle: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><path d="M0 0h38v24H0z" fill="#6d2277"/><path d="M10 5h18v3l-10 8h10v5H10v-3l10-8H10z" fill="#fff"/></svg>,
@@ -31,8 +36,6 @@ const iconMap: Record<string, any> = {
   Moon: Moon,
   Store: Store,
 };
-
-import { DeliveryMapPicker } from "@/components/shop/DeliveryMapPicker";
 
 export default function CheckoutPage() {
   const { cartItems, clearCart, updateAddonCustomText } = useCart();

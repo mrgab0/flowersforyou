@@ -34,6 +34,10 @@ export interface ISiteConfig extends Document {
   enableSocialFeed?: boolean;
   socialFeedTitle?: string;
   socialEmbedHtml?: string;
+  enableInstagramFeed?: boolean;
+  instagramEmbedHtml?: string;
+  enableTiktokFeed?: boolean;
+  tiktokEmbedHtml?: string;
 
   // Módulo de Reseñas / Opiniones & Trustpilot (Pre-Footer)
   enableReviewsSection?: boolean;
@@ -106,6 +110,10 @@ const SiteConfigSchema: Schema = new Schema({
   enableSocialFeed: { type: Boolean, default: false },
   socialFeedTitle: { type: String, default: "Síguenos en Instagram & TikTok 📸" },
   socialEmbedHtml: { type: String, default: "" },
+  enableInstagramFeed: { type: Boolean, default: true },
+  instagramEmbedHtml: { type: String, default: "" },
+  enableTiktokFeed: { type: Boolean, default: true },
+  tiktokEmbedHtml: { type: String, default: "" },
 
   // Módulo de Reseñas / Opiniones & Trustpilot (Pre-Footer)
   enableReviewsSection: { type: Boolean, default: true },

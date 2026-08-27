@@ -89,6 +89,10 @@ export async function updateSiteConfig(formData: FormData) {
     const enableSocialFeed = formData.get("enableSocialFeed") === "true";
     const socialFeedTitle = formData.get("socialFeedTitle") as string || DEFAULT_SITE_CONFIG.socialFeedTitle;
     const socialEmbedHtml = formData.get("socialEmbedHtml") as string || "";
+    const enableInstagramFeed = formData.get("enableInstagramFeed") === "true";
+    const instagramEmbedHtml = formData.get("instagramEmbedHtml") as string || "";
+    const enableTiktokFeed = formData.get("enableTiktokFeed") === "true";
+    const tiktokEmbedHtml = formData.get("tiktokEmbedHtml") as string || "";
 
     // Módulo de Reseñas / Opiniones & Trustpilot (Toggle ON/OFF)
     const enableReviewsSection = formData.get("enableReviewsSection") === "true";
@@ -129,6 +133,10 @@ export async function updateSiteConfig(formData: FormData) {
         enableSocialFeed,
         socialFeedTitle,
         socialEmbedHtml,
+        enableInstagramFeed,
+        instagramEmbedHtml,
+        enableTiktokFeed,
+        tiktokEmbedHtml,
         enableReviewsSection,
         reviewsTitle,
         reviewsRatingScore,

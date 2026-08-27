@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { getSiteConfig, updateSiteConfig } from "@/lib/actions/siteConfig";
 import { generateTotpSecretAction, getOrCreateTotpSecretAction, update2FASettingsAction, test2FACodeAction } from "@/lib/actions/admin2fa";
-import { Sparkles, Save, CheckCircle2, ArrowLeft, Layout, AlignLeft, Type, Footprints, ShieldCheck, Key, Smartphone, QrCode, RefreshCw, Lock, AlertTriangle, Check, Grid, Image as ImageIcon, Menu, Share2, Globe, Eye, Palette, Sliders, Star } from "lucide-react";
+import { sendTestCorporateEmailAction } from "@/lib/actions/emailTest";
+import { Sparkles, Save, CheckCircle2, ArrowLeft, Layout, AlignLeft, Type, Footprints, ShieldCheck, Key, Smartphone, QrCode, RefreshCw, Lock, AlertTriangle, Check, Grid, Image as ImageIcon, Menu, Share2, Globe, Eye, Palette, Sliders, Star, Mail } from "lucide-react";
 import Link from "next/link";
 import { SingleImageUploader } from "@/components/admin/SingleImageUploader";
 
@@ -12,7 +13,12 @@ export default function AdminConfiguracionPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<"grid" | "branding" | "social" | "reviews" | "iframe" | "security">("grid");
+  const [activeTab, setActiveTab] = useState<"grid" | "branding" | "social" | "reviews" | "iframe" | "security" | "email">("grid");
+
+  // Estado para prueba de Correo Corporativo
+  const [testEmailAddress, setTestEmailAddress] = useState("sales@flowersforyou.org");
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
 
   useEffect(() => {
     loadConfig();
@@ -140,6 +146,18 @@ export default function AdminConfiguracionPage() {
           }`}
         >
           <Globe size={16} /> Módulo iFrames / Widgets
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("email")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "email"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Mail size={16} /> Correo Corporativo
         </button>
 
         <button
@@ -569,17 +587,17 @@ export default function AdminConfiguracionPage() {
               </div>
             </div>
 
-            {/* Módulo Social Pre-Footer Instagram / TikTok (Toggle ON/OFF) */}
+            {/* Módulo Social Pre-Footer Instagram & TikTok Simultáneos */}
             <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
               <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-2.5">
                   <Sparkles size={20} className="text-[#FF97A4]" />
                   <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
-                    Publicaciones Incrustadas de Instagram / TikTok (Pre-Footer)
+                    Publicaciones Incrustadas de Instagram & TikTok (Pre-Footer)
                   </h2>
                 </div>
 
-                {/* Interruptor Toggle ON/OFF */}
+                {/* Interruptor Global Toggle ON/OFF */}
                 <label className="flex items-center gap-2 cursor-pointer">
                   <span className="text-xs font-extrabold text-gray-600 dark:text-gray-300">
                     {config.enableSocialFeed ? "ACTIVADO [ON]" : "DESACTIVADO [OFF]"}
@@ -594,9 +612,9 @@ export default function AdminConfiguracionPage() {
                 </label>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Título de la Sección Social</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Título Principal de la Sección Social</label>
                   <input
                     name="socialFeedTitle"
                     defaultValue={config.socialFeedTitle || "Síguenos en Instagram & TikTok 📸"}
@@ -604,17 +622,62 @@ export default function AdminConfiguracionPage() {
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                    Código Incrustado (Embed Code HTML de Instagram / TikTok)
-                  </label>
+                {/* EDITOR 1: EMBED DE INSTAGRAM */}
+                <div className="p-5 rounded-2xl border-2 border-pink-100 dark:border-pink-950/40 bg-pink-50/20 dark:bg-pink-950/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-xs text-[#E1306C] flex items-center gap-1.5 uppercase">
+                      📸 1. Feed / Publicación de Instagram
+                    </span>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-[11px] font-bold text-gray-500">
+                        {config.enableInstagramFeed !== false ? "Activo" : "Inactivo"}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={config.enableInstagramFeed !== false}
+                        onChange={(e) => setConfig({ ...config, enableInstagramFeed: e.target.checked })}
+                        className="w-4 h-4 accent-[#E1306C] rounded cursor-pointer"
+                      />
+                      <input type="hidden" name="enableInstagramFeed" value={config.enableInstagramFeed !== false ? "true" : "false"} />
+                    </label>
+                  </div>
                   <textarea
-                    name="socialEmbedHtml"
-                    defaultValue={config.socialEmbedHtml || ""}
-                    placeholder='Pega aquí el código <blockquote class="instagram-media">... o <iframe src="..."> de tu publicación'
-                    className="p-3.5 border rounded-2xl text-xs font-mono h-32 dark:bg-gray-900 dark:text-white"
+                    name="instagramEmbedHtml"
+                    defaultValue={config.instagramEmbedHtml || ""}
+                    placeholder='Pega aquí el código <blockquote class="instagram-media">... o <iframe src="..."> de Instagram'
+                    className="w-full p-3.5 border rounded-2xl text-xs font-mono h-28 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#E1306C]"
                   />
                 </div>
+
+                {/* EDITOR 2: EMBED DE TIKTOK */}
+                <div className="p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-xs text-gray-900 dark:text-white flex items-center gap-1.5 uppercase">
+                      🎵 2. Feed / Video de TikTok
+                    </span>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-[11px] font-bold text-gray-500">
+                        {config.enableTiktokFeed !== false ? "Activo" : "Inactivo"}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={config.enableTiktokFeed !== false}
+                        onChange={(e) => setConfig({ ...config, enableTiktokFeed: e.target.checked })}
+                        className="w-4 h-4 accent-black rounded cursor-pointer"
+                      />
+                      <input type="hidden" name="enableTiktokFeed" value={config.enableTiktokFeed !== false ? "true" : "false"} />
+                    </label>
+                  </div>
+                  <textarea
+                    name="tiktokEmbedHtml"
+                    defaultValue={config.tiktokEmbedHtml || ""}
+                    placeholder='Pega aquí el código <blockquote class="tiktok-embed">... o <iframe src="..."> de TikTok'
+                    className="w-full p-3.5 border rounded-2xl text-xs font-mono h-28 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-black"
+                  />
+                </div>
+
+                {/* FALLBACK LEGACY EMBED HTML */}
+                <input type="hidden" name="socialEmbedHtml" value={config.socialEmbedHtml || ""} />
               </div>
             </div>
           </div>
@@ -671,6 +734,88 @@ export default function AdminConfiguracionPage() {
                   className="p-3.5 border rounded-2xl text-xs font-mono h-36 dark:bg-gray-900 dark:text-white"
                 />
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* PESTAÑA: Correo Corporativo */}
+        {activeTab === "email" && (
+          <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2.5">
+                <Mail size={22} className="text-[#FF97A4]" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                  Servicio de Correo Corporativo (sales@flowersforyou.org)
+                </h2>
+              </div>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
+                🟢 Activo & Conectado
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              Todos los correos transaccionales (recibos de compra, notificaciones de pedidos, alertas de contacto y recuperaciones) son enviados automáticamente a través de la identidad corporativa oficial <strong>sales@flowersforyou.org</strong>.
+            </p>
+
+            {/* Tarjeta Informativa de Configuración SMTP */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl border border-pink-100 dark:border-pink-950/40 bg-pink-50/20 dark:bg-pink-950/10 space-y-2">
+                <span className="text-[11px] font-black uppercase text-[#FF97A4] tracking-wider">Remitente Corporativo Oficial</span>
+                <p className="text-sm font-extrabold text-[#1A1C1C] dark:text-white">"Flowers For You LLC" &lt;sales@flowersforyou.org&gt;</p>
+                <p className="text-[11px] text-gray-400">Dirección visible para los clientes en sus recibos e inboxes.</p>
+              </div>
+
+              <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 space-y-2">
+                <span className="text-[11px] font-black uppercase text-gray-700 dark:text-gray-300 tracking-wider">Servidor de Envíos (SMTP)</span>
+                <p className="text-sm font-extrabold text-[#1A1C1C] dark:text-white">Conectado vía Vercel / Resend / NodeMailer</p>
+                <p className="text-[11px] text-gray-400">Formato HTML responsivo con logo institucional y firma legal.</p>
+              </div>
+            </div>
+
+            {/* Módulo de Envío de Prueba en Vivo */}
+            <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/20 space-y-4">
+              <h3 className="font-serif font-black text-sm text-[#1A1C1C] dark:text-white flex items-center gap-2">
+                📨 Probar Envío de Correo Corporativo en Vivo
+              </h3>
+              <p className="text-xs text-gray-500">
+                Ingresa una dirección de correo para enviar un mensaje institucional de prueba inmediato desde <strong>sales@flowersforyou.org</strong>.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  value={testEmailAddress}
+                  onChange={(e) => setTestEmailAddress(e.target.value)}
+                  placeholder="ejemplo@dominio.com"
+                  className="flex-1 p-3.5 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setSendingTestEmail(true);
+                    setTestEmailResult(null);
+                    const res = await sendTestCorporateEmailAction(testEmailAddress);
+                    setTestEmailResult(res);
+                    setSendingTestEmail(false);
+                  }}
+                  disabled={sendingTestEmail || !testEmailAddress}
+                  className="bg-[#1A1C1C] text-white dark:bg-white dark:text-gray-900 px-6 py-3.5 rounded-xl text-xs font-black hover:bg-black dark:hover:bg-gray-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Mail size={15} />
+                  {sendingTestEmail ? "Enviando Correo..." : "Enviar Correo de Prueba 📩"}
+                </button>
+              </div>
+
+              {testEmailResult && (
+                <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                  testEmailResult.success 
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900" 
+                    : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900"
+                }`}>
+                  {testEmailResult.success ? <CheckCircle2 size={16} className="text-emerald-600" /> : <AlertTriangle size={16} className="text-red-600" />}
+                  <span>{testEmailResult.success ? testEmailResult.message : testEmailResult.error}</span>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -21,11 +21,16 @@ export const viewport: Viewport = {
   themeColor: "#be185d",
 };
 
-export default function RootLayout({
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const messages = await getMessages();
+
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -50,14 +55,16 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <CartProvider>
-            {children}
-            <AnalyticsTracker />
-            <Analytics />
-            <InstallPrompt />
-          </CartProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <CartProvider>
+              {children}
+              <AnalyticsTracker />
+              <Analytics />
+              <InstallPrompt />
+            </CartProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

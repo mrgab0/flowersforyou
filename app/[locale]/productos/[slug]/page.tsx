@@ -4,6 +4,9 @@ import "@/lib/models/Addon"; // Importación con efecto secundario para asegurar
 import { notFound } from "next/navigation";
 import { ProductDetail } from "@/components/shop/ProductDetail";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   await dbConnect();
   

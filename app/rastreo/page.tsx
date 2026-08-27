@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState } from "react";
 import { getOrderById } from "@/lib/actions/order";
 import { ShopHeader } from "@/components/shop/ShopHeader";

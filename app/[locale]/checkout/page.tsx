@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useCart } from "@/components/shop/Cart/CartContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -9,10 +11,10 @@ import { DEFAULT_DELIVERY_OPTIONS, DeliveryOption } from "@/lib/deliveryOptions"
 import { getDeliveryOptions } from "@/lib/actions/delivery";
 import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode } from "lucide-react";
 
-const DeliveryMapPicker = dynamic(
+const DeliveryMapPicker = nextDynamic(
   () => import("@/components/shop/DeliveryMapPicker").then((mod) => mod.DeliveryMapPicker),
   { ssr: false }
 );

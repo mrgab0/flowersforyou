@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useCart } from "@/components/shop/Cart/CartContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -11,10 +13,10 @@ import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
 import { logAnalyticsEventAction } from "@/lib/actions/analytics";
 import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart, Fingerprint } from "lucide-react";
 
-const DeliveryMapPicker = dynamic(
+const DeliveryMapPicker = nextDynamic(
   () => import("@/components/shop/DeliveryMapPicker").then((mod) => mod.DeliveryMapPicker),
   { ssr: false }
 );
@@ -321,7 +323,7 @@ export default function CheckoutPage() {
                     />
                     <DeliveryMapPicker
                       initialAddress={address}
-                      onLocationChange={(locData) => {
+                      onLocationChange={(locData: any) => {
                         setAddress(locData.address);
                         setDeliveryLocation(locData);
                       }}

@@ -2,6 +2,7 @@ import AdminLoginPage from "./login/page";
 import { verifyAdminSession, logoutAdminAction } from "@/lib/adminAuth";
 import { LogOut, Settings, Search, BarChart3, Package } from "lucide-react";
 import { ThemeToggle } from "@/components/shop/ThemeToggle";
+import { AdminSalesNotificationListener } from "@/components/admin/AdminSalesNotificationListener";
 
 export const runtime = 'nodejs';
 
@@ -19,6 +20,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-[#0F1015] flex flex-col text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <AdminSalesNotificationListener />
       <nav className="bg-white dark:bg-[#181922] shadow-sm px-6 py-3.5 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-300">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">

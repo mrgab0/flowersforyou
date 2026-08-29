@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllOrdersAction, updateOrderStatusAction } from "@/lib/actions/order";
-import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare, Heart } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare, Heart, Printer, ArrowUpDown, DollarSign } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminOrdenesPage() {
@@ -10,6 +10,7 @@ export default function AdminOrdenesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("date-desc");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,34 +45,61 @@ export default function AdminOrdenesPage() {
     const trackUrl = `${siteUrl}/rastreo`;
     const statusText = order.status || "En Proceso";
 
-    const msg = `¡Hola ${order.customerName}! 🌸 Te notificamos de Flowers For You que tu pedido *${order.orderId}* ha sido actualizado a estado: *${statusText}* ✨\n\nPuedes rastrear el avance en tiempo real aquí: ${trackUrl}`;
+    const msg = `¡Hola ${order.customerName}! 🌸 Te notificamos de Flowers For You que tu pedido *${order.orderId}* se encuentra en estado: *${statusText}* ✨\n\nPuedes rastrear el avance en tiempo real aquí: ${trackUrl}`;
 
     return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
   };
 
-  // Filtrado de Órdenes
+  // 1. Filtrado de Órdenes por Búsqueda y Estado
   const filteredOrders = orders.filter((order) => {
+    const term = searchTerm.toLowerCase().trim();
     const matchesSearch =
-      order.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerPhone?.toLowerCase().includes(searchTerm.toLowerCase());
+      !term ||
+      (order.orderId || "").toLowerCase().includes(term) ||
+      (order.customerName || "").toLowerCase().includes(term) ||
+      (order.customerPhone || "").toLowerCase().includes(term) ||
+      (order.customerEmail || "").toLowerCase().includes(term) ||
+      (order.address || "").toLowerCase().includes(term);
 
     if (!matchesSearch) return false;
 
     if (selectedFilter === "all") return true;
     const status = (order.status || "").toLowerCase();
-    if (selectedFilter === "espera") return status.includes("espera") || status.includes("diseño");
+    if (selectedFilter === "espera") return status.includes("espera") || status.includes("diseño") || status.includes("confirmado");
     if (selectedFilter === "camino") return status.includes("camino") || status.includes("listo");
     if (selectedFilter === "entregado") return status.includes("entregado") || status.includes("retirado");
 
     return true;
   });
 
+  // 2. Ordenamiento Avanzado Multicriterio
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    if (sortBy === "date-desc") {
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    }
+    if (sortBy === "date-asc") {
+      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+    }
+    if (sortBy === "price-desc") {
+      return (b.total || 0) - (a.total || 0);
+    }
+    if (sortBy === "price-asc") {
+      return (a.total || 0) - (b.total || 0);
+    }
+    if (sortBy === "items-desc") {
+      return (b.items?.length || 0) - (a.items?.length || 0);
+    }
+    if (sortBy === "distance-desc") {
+      return (b.distanceMiles || 0) - (a.distanceMiles || 0);
+    }
+    return 0;
+  });
+
   if (loading) {
     return (
       <div className="p-12 text-center text-gray-500 font-bold animate-pulse flex flex-col items-center justify-center gap-3">
         <RefreshCw className="animate-spin text-[#FF97A4]" size={28} />
-        <span>Cargando Módulo de Despacho & Órdenes...</span>
+        <span>Cargando Módulo de Despacho & Facturación A4...</span>
       </div>
     );
   }
@@ -86,9 +114,9 @@ export default function AdminOrdenesPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[#1A1C1C] dark:text-white flex items-center gap-2">
-              Gestor de Órdenes & Despacho
+              Gestor de Órdenes & Facturas A4
             </h1>
-            <p className="text-xs text-gray-400">Controla y actualiza los estados de envío y retiro para que tus clientes rastreen su pedido en vivo</p>
+            <p className="text-xs text-gray-400">Administra tus pedidos, filtra dinámicamente e imprime facturas A4 para tu tienda</p>
           </div>
         </div>
 
@@ -110,23 +138,45 @@ export default function AdminOrdenesPage() {
         </div>
       </div>
 
-      {/* Buscador y Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-white dark:bg-[#12131A] p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+      {/* Buscador, Selector de Ordenamiento y Filtros de Estado */}
+      <div className="flex flex-col lg:flex-row gap-3 bg-white dark:bg-[#12131A] p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+        
+        {/* Buscador Multicriterio */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-3 text-gray-400" size={16} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por ID de Pedido, Nombre o Teléfono..."
+            placeholder="Buscar por ID, Cliente, Teléfono, Correo o Dirección..."
             className="w-full pl-10 pr-4 py-2.5 border rounded-2xl text-xs font-medium dark:bg-gray-900 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl text-xs font-bold">
+        {/* Selector de Criterio de Ordenamiento */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-gray-400 flex items-center gap-1">
+            <ArrowUpDown size={14} className="text-[#FF97A4]" /> Ordenar:
+          </span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-3 py-2 text-xs font-bold text-[#1A1C1C] dark:text-white focus:ring-2 focus:ring-[#FF97A4] focus:outline-none"
+          >
+            <option value="date-desc">📅 Fecha (Más recientes primero)</option>
+            <option value="date-asc">⏳ Fecha (Más antiguas primero)</option>
+            <option value="price-desc">💰 Precio Total (Mayor a menor)</option>
+            <option value="price-asc">💵 Precio Total (Menor a mayor)</option>
+            <option value="items-desc">📦 Cantidad Productos (Mayor a menor)</option>
+            <option value="distance-desc">📍 Distancia (Mayor a menor millas)</option>
+          </select>
+        </div>
+
+        {/* Pestañas de Estado */}
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl text-xs font-bold overflow-x-auto">
           <button
             onClick={() => setSelectedFilter("all")}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
               selectedFilter === "all" ? "bg-white dark:bg-gray-900 text-[#FF97A4] shadow-sm" : "text-gray-500"
             }`}
           >
@@ -134,7 +184,7 @@ export default function AdminOrdenesPage() {
           </button>
           <button
             onClick={() => setSelectedFilter("espera")}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
               selectedFilter === "espera" ? "bg-white dark:bg-gray-900 text-[#FF97A4] shadow-sm" : "text-gray-500"
             }`}
           >
@@ -142,7 +192,7 @@ export default function AdminOrdenesPage() {
           </button>
           <button
             onClick={() => setSelectedFilter("camino")}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
               selectedFilter === "camino" ? "bg-white dark:bg-gray-900 text-[#FF97A4] shadow-sm" : "text-gray-500"
             }`}
           >
@@ -150,7 +200,7 @@ export default function AdminOrdenesPage() {
           </button>
           <button
             onClick={() => setSelectedFilter("entregado")}
-            className={`px-3 py-1.5 rounded-xl transition-all ${
+            className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
               selectedFilter === "entregado" ? "bg-white dark:bg-gray-900 text-[#FF97A4] shadow-sm" : "text-gray-500"
             }`}
           >
@@ -161,22 +211,25 @@ export default function AdminOrdenesPage() {
 
       {/* Lista de Órdenes */}
       <div className="space-y-4">
-        {filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => {
+        {sortedOrders.length > 0 ? (
+          sortedOrders.map((order) => {
             const isPickup = (order.deliveryMethod || "").toLowerCase().includes("pickup") || (order.deliveryMethod || "").toLowerCase().includes("retiro");
 
             return (
               <div
                 key={order._id || order.orderId}
-                className="bg-white dark:bg-[#12131A] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4 transition-all hover:border-gray-200 dark:hover:border-gray-700"
+                className="bg-white dark:bg-[#12131A] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4 transition-all hover:border-[#FF97A4]/50 dark:hover:border-gray-700"
               >
                 {/* Fila 1: Datos Principales */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b pb-4 border-gray-100 dark:border-gray-800">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm text-[#1A1C1C] dark:text-white">
+                      <Link
+                        href={`/admin/ordenes/${order.orderId}`}
+                        className="font-mono font-bold text-sm text-[#1A1C1C] dark:text-white hover:text-[#FF97A4] transition-colors underline"
+                      >
                         {order.orderId}
-                      </span>
+                      </Link>
                       <span className="text-xs text-gray-400 font-medium flex items-center gap-1">
                         <Calendar size={12} />
                         {new Date(order.createdAt).toLocaleString("es-MX", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -192,9 +245,19 @@ export default function AdminOrdenesPage() {
                     </div>
                   </div>
 
-                  {/* Selector de Estado + Botón Notificar WhatsApp */}
-                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                    <div className="flex items-center gap-2">
+                  {/* Acciones: Imprimir Factura A4 + Selector de Estado + WhatsApp */}
+                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+                    
+                    {/* BOTÓN DIRECTO VER FACTURA / IMPRIMIR A4 */}
+                    <Link
+                      href={`/admin/ordenes/${order.orderId}`}
+                      className="bg-pink-50 dark:bg-pink-950/60 hover:bg-pink-100 dark:hover:bg-pink-900/60 text-[#B0004A] dark:text-pink-300 border border-pink-200 dark:border-pink-800 px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <Printer size={14} />
+                      <span>Ver Factura e Imprimir A4</span>
+                    </Link>
+
+                    <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-gray-400">Estado:</span>
                       <select
                         value={order.status || (isPickup ? "En diseño" : "Confirmado")}
@@ -216,21 +279,24 @@ export default function AdminOrdenesPage() {
                       href={createWhatsAppNotifyUrl(order)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
                     >
                       <MessageCircle size={14} />
-                      <span>Notificar por WhatsApp</span>
+                      <span>WhatsApp</span>
                     </a>
                   </div>
                 </div>
 
-                {/* Fila 2: Dirección, Tarjeta de Dedicatoria y Arreglos Florales */}
+                {/* Fila 2: Dirección, Dedicatoria y Productos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   {/* Dirección / GPS / Tarjeta de Dedicatoria */}
                   <div className="p-3.5 bg-gray-50 dark:bg-gray-900/60 rounded-2xl space-y-2 border border-gray-100 dark:border-gray-800">
-                    <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider block">
-                      {isPickup ? "Método: Retiro en Boutique" : "Dirección de Entrega:"}
-                    </span>
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-400 tracking-wider">
+                      <span>{isPickup ? "Método: Retiro en Boutique" : "Dirección de Entrega:"}</span>
+                      {order.distanceMiles > 0 && (
+                        <span className="font-mono text-purple-600 dark:text-purple-400 font-bold">{order.distanceMiles} Millas</span>
+                      )}
+                    </div>
                     <p className="font-bold text-gray-800 dark:text-gray-200 flex items-start gap-1">
                       {isPickup ? <Store size={14} className="text-purple-500 flex-shrink-0 mt-0.5" /> : <MapPin size={14} className="text-[#FF97A4] flex-shrink-0 mt-0.5" />}
                       <span>{order.address}</span>
@@ -311,7 +377,7 @@ export default function AdminOrdenesPage() {
           <div className="p-12 text-center bg-white dark:bg-[#12131A] rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 space-y-2">
             <Package className="mx-auto text-gray-400" size={32} />
             <p className="text-sm font-bold text-gray-700 dark:text-gray-300">No se encontraron órdenes registradas.</p>
-            <p className="text-xs text-gray-400">Cuando los clientes realicen compras, aparecerán listadas aquí inmediatamente.</p>
+            <p className="text-xs text-gray-400">Intenta con otro término de búsqueda o cambia los filtros de fecha/estado.</p>
           </div>
         )}
       </div>

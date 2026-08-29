@@ -29,7 +29,7 @@ export async function sendContactEmail(formData: {
   try {
     const transporter = getTransporter();
     const sender = process.env.SMTP_FROM || process.env.SMTP_USER || "flowersforyou403@gmail.com";
-    const recipientEmails = (process.env.ADMIN_EMAIL || process.env.SMTP_USER || "flowersforyou403@gmail.com")
+    const recipientEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || process.env.SMTP_USER || "flowersforyou403@gmail.com")
       .split(",")
       .map(e => e.trim())
       .filter(Boolean);

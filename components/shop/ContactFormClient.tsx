@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ShopHeader } from "@/components/shop/ShopHeader";
 import { Footer } from "@/components/shop/Footer";
 import { WhatsAppButton } from "@/components/shop/WhatsAppButton/WhatsAppButton";
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageCircle, Loader2, Sparkles } from "lucide-react";
+import { MapPin, Phone, Clock, Send, CheckCircle2, MessageCircle, Loader2, Sparkles } from "lucide-react";
 import { sendContactEmail } from "@/lib/actions/contact";
 
 export function ContactFormClient() {
@@ -102,17 +102,6 @@ export function ContactFormClient() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 bg-white/10 rounded-xl text-[#FF97A4]">
-                      <Mail size={20} />
-                    </div>
-                    <div>
-                      <strong className="block text-white text-xs uppercase tracking-wider font-bold">Correo Electrónico</strong>
-                      <a href="mailto:flowersforyou403@gmail.com" className="text-gray-300 hover:text-[#FF97A4] font-medium transition-colors">
-                        flowersforyou403@gmail.com
-                      </a>
-                    </div>
-                  </div>
 
                   <div className="flex items-start gap-3.5">
                     <div className="p-2.5 bg-white/10 rounded-xl text-[#FF97A4]">
@@ -162,7 +151,7 @@ export function ContactFormClient() {
                   </div>
                   <h2 className="text-2xl font-bold text-[#1A1C1C]">¡Gracias por escribirnos!</h2>
                   <p className="text-gray-500 text-sm font-medium leading-relaxed">
-                    Tu mensaje ha sido enviado a <strong className="text-[#1A1C1C]">flowersforyou403@gmail.com</strong>. Si deseas atención inmediata, puedes chatear directo con nosotros por WhatsApp.
+                    Tu mensaje ha sido enviado a los administradores de flowers for you LLC. Si deseas atención inmediata, puedes chatear directo con nosotros por WhatsApp.
                   </p>
                   
                   <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">

@@ -71,7 +71,13 @@ export interface ISiteConfig extends Document {
   businessName?: string;
   businessPhone?: string;
   businessAddress?: string;
-  businessCity?: string;
+  // Módulo de Uber Direct (DaaS)
+  enableUberDirect?: boolean;
+  uberDirectClientId?: string;
+  uberDirectClientSecret?: string;
+  uberDirectCustomerId?: string;
+  uberDirectEnv?: "sandbox" | "production";
+  uberDirectAutoDispatch?: boolean;
 
   updatedAt: Date;
 }
@@ -146,6 +152,14 @@ const SiteConfigSchema: Schema = new Schema({
   businessPhone: { type: String, default: "+1 (800) 555-3569" },
   businessAddress: { type: String, default: "6705 Fairway Dr" },
   businessCity: { type: String, default: "Houston, TX 77087" },
+
+  // Módulo de Uber Direct (DaaS)
+  enableUberDirect: { type: Boolean, default: false },
+  uberDirectClientId: { type: String, default: "" },
+  uberDirectClientSecret: { type: String, default: "" },
+  uberDirectCustomerId: { type: String, default: "" },
+  uberDirectEnv: { type: String, default: "sandbox" },
+  uberDirectAutoDispatch: { type: Boolean, default: false },
 
   updatedAt: { type: Date, default: Date.now }
 });

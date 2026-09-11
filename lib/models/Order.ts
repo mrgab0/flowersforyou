@@ -21,6 +21,19 @@ export interface IOrder extends Document {
   paymentMethod: string;
   paymentRef: string;
   status: string;
+  // Campos de Uber Direct
+  uberDeliveryId?: string;
+  uberTrackingUrl?: string;
+  uberStatus?: string;
+  uberFee?: number;
+  uberCourier?: {
+    name?: string;
+    phone?: string;
+    vehicle?: string;
+    img?: string;
+    location?: { lat: number; lng: number };
+  };
+  uberDropoffEta?: Date;
   createdAt: Date;
 }
 
@@ -48,6 +61,22 @@ const OrderSchema: Schema = new Schema({
     type: String, 
     default: "En diseño",
   },
+  // Campos de Uber Direct
+  uberDeliveryId: { type: String, default: "" },
+  uberTrackingUrl: { type: String, default: "" },
+  uberStatus: { type: String, default: "" },
+  uberFee: { type: Number, default: 0 },
+  uberCourier: {
+    name: { type: String, default: "" },
+    phone: { type: String, default: "" },
+    vehicle: { type: String, default: "" },
+    img: { type: String, default: "" },
+    location: {
+      lat: { type: Number, default: 0 },
+      lng: { type: Number, default: 0 }
+    }
+  },
+  uberDropoffEta: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

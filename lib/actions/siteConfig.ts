@@ -37,7 +37,14 @@ const DEFAULT_SITE_CONFIG = {
   trustpilotWidgetHtml: "",
   enableCustomIframe: false,
   customIframeTitle: "Ubicación & Promociones Destacadas",
-  customIframeHtml: ""
+  customIframeHtml: "",
+  // Módulo de Uber Direct (DaaS)
+  enableUberDirect: false,
+  uberDirectClientId: "",
+  uberDirectClientSecret: "",
+  uberDirectCustomerId: "",
+  uberDirectEnv: "sandbox",
+  uberDirectAutoDispatch: false
 };
 
 export async function getSiteConfig() {
@@ -106,6 +113,16 @@ export async function updateSiteConfig(formData: FormData) {
     const customIframeTitle = formData.get("customIframeTitle") as string || DEFAULT_SITE_CONFIG.customIframeTitle;
     const customIframeHtml = formData.get("customIframeHtml") as string || "";
 
+    // Módulo de Uber Direct (DaaS)
+    const enableUberDirect = formData.has("enableUberDirect") 
+      ? formData.get("enableUberDirect") === "true" 
+      : (formData.get("uberDirectClientId") ? true : false);
+    const uberDirectClientId = formData.get("uberDirectClientId") as string || "";
+    const uberDirectClientSecret = formData.get("uberDirectClientSecret") as string || "";
+    const uberDirectCustomerId = formData.get("uberDirectCustomerId") as string || "";
+    const uberDirectEnv = (formData.get("uberDirectEnv") as string || "sandbox") as "sandbox" | "production";
+    const uberDirectAutoDispatch = formData.get("uberDirectAutoDispatch") === "true";
+
     await SiteConfig.findOneAndUpdate(
       { key: "global" },
       {
@@ -145,6 +162,12 @@ export async function updateSiteConfig(formData: FormData) {
         enableCustomIframe,
         customIframeTitle,
         customIframeHtml,
+        enableUberDirect,
+        uberDirectClientId,
+        uberDirectClientSecret,
+        uberDirectCustomerId,
+        uberDirectEnv,
+        uberDirectAutoDispatch,
         updatedAt: new Date()
       },
       { upsert: true, new: true }

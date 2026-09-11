@@ -35,20 +35,36 @@ export default async function ConfirmacionPage({
 
         {order && <OrderSummary items={order.items} />}
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
+          {order?.uberTrackingUrl && (
+            <a 
+              href={order.uberTrackingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[#FF97A4] text-white px-6 py-3.5 rounded-xl font-bold hover:bg-[#B0004A] transition-all shadow-md shadow-pink-500/20"
+            >
+              🚗 Rastrear Repartidor de Uber en Vivo
+            </a>
+          )}
+          <Link
+            href="/rastreo"
+            className="flex items-center justify-center gap-2 bg-pink-50 text-[#FF97A4] border border-pink-200 px-6 py-3 rounded-xl font-bold hover:bg-pink-100 transition-all"
+          >
+            🌸 Rastrear Estado de mi Pedido
+          </Link>
           <a 
             href={`https://wa.me/5491122334455?text=Hola!%20He%20finalizado%20mi%20pedido%20${orderId}.%20Quisiera%20confirmar%20los%20detalles.`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-green-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-600 transition-all"
+            className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all"
           >
-            <MessageCircle size={20} /> Contactar por WhatsApp
+            <MessageCircle size={18} /> Contactar por WhatsApp
           </a>
           <Link 
             href="/"
             className="flex items-center justify-center gap-2 bg-[#1A1C1C] text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all"
           >
-            <Home size={20} /> Volver al Inicio
+            <Home size={18} /> Volver al Inicio
           </Link>
         </div>
       </div>

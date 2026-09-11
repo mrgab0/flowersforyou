@@ -6,7 +6,7 @@ import { useState } from "react";
 import { getOrderById } from "@/lib/actions/order";
 import { ShopHeader } from "@/components/shop/ShopHeader";
 import { Footer } from "@/components/shop/Footer";
-import { Search, Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, AlertCircle, Sparkles, Store, Gift } from "lucide-react";
+import { Search, Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, AlertCircle, Sparkles, Store, Gift, Car, ExternalLink, Navigation, Phone } from "lucide-react";
 
 export default function RastreoPedidoPage() {
   const [query, setQuery] = useState("");
@@ -184,6 +184,55 @@ export default function RastreoPedidoPage() {
                     })}
                   </div>
                 </div>
+
+                {/* BANNER DE SEGUIMIENTO EN VIVO CON UBER DIRECT (GPS) */}
+                {order.uberTrackingUrl && (
+                  <div className="p-5 md:p-6 bg-gradient-to-r from-gray-900 via-[#1A1C1C] to-gray-900 text-white rounded-3xl border border-pink-500/30 shadow-xl shadow-pink-500/10 space-y-4 animate-in fade-in duration-300">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-3 bg-[#FF97A4] text-white rounded-2xl shadow-md">
+                          <Car size={24} />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#FF97A4] block">
+                            Seguimiento Satelital Activo
+                          </span>
+                          <h4 className="text-base font-bold text-white">
+                            Tu pedido floral está en camino con Uber Direct 🚗✨
+                          </h4>
+                        </div>
+                      </div>
+
+                      <a
+                        href={order.uberTrackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#FF97A4] hover:bg-[#B0004A] text-white px-5 py-2.5 rounded-full font-black text-xs flex items-center gap-2 shadow-lg shadow-pink-500/20 transition-all hover:scale-105 active:scale-95"
+                      >
+                        <Navigation size={15} />
+                        <span>Ver Repartidor en Vivo</span>
+                        <ExternalLink size={13} />
+                      </a>
+                    </div>
+
+                    {(order.uberCourier?.name || order.uberDropoffEta) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-800 text-xs">
+                        {order.uberCourier?.name && (
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <User size={14} className="text-[#FF97A4]" />
+                            <span>Repartidor: <strong className="text-white">{order.uberCourier.name}</strong> {order.uberCourier.vehicle ? `(${order.uberCourier.vehicle})` : ""}</span>
+                          </div>
+                        )}
+                        {order.uberDropoffEta && (
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <Clock size={14} className="text-[#FF97A4]" />
+                            <span>Hora estimada de llegada: <strong className="text-white">{new Date(order.uberDropoffEta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Detalles de la Orden y Arreglos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">

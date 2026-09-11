@@ -4,21 +4,26 @@ import { useEffect, useState } from "react";
 import { getSiteConfig, updateSiteConfig } from "@/lib/actions/siteConfig";
 import { generateTotpSecretAction, getOrCreateTotpSecretAction, update2FASettingsAction, test2FACodeAction } from "@/lib/actions/admin2fa";
 import { sendTestCorporateEmailAction } from "@/lib/actions/emailTest";
-import { Sparkles, Save, CheckCircle2, ArrowLeft, Layout, AlignLeft, Type, Footprints, ShieldCheck, Key, Smartphone, QrCode, RefreshCw, Lock, AlertTriangle, Check, Grid, Image as ImageIcon, Menu, Share2, Globe, Eye, Palette, Sliders, Star, Mail } from "lucide-react";
+import { Sparkles, Save, CheckCircle2, ArrowLeft, Layout, AlignLeft, Type, Footprints, ShieldCheck, Key, Smartphone, QrCode, RefreshCw, Lock, AlertTriangle, Check, Grid, Image as ImageIcon, Menu, Share2, Globe, Eye, Palette, Sliders, Star, Mail, Car } from "lucide-react";
 import Link from "next/link";
 import { SingleImageUploader } from "@/components/admin/SingleImageUploader";
+import { testUberDirectConnectionAction } from "@/lib/actions/uberDirect";
 
 export default function AdminConfiguracionPage() {
   const [config, setConfig] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<"grid" | "branding" | "social" | "reviews" | "iframe" | "security" | "email">("grid");
+  const [activeTab, setActiveTab] = useState<"grid" | "branding" | "social" | "reviews" | "iframe" | "security" | "email" | "uber">("grid");
 
   // Estado para prueba de Correo Corporativo
   const [testEmailAddress, setTestEmailAddress] = useState("sales@flowersforyou.org");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
+
+  // Estado para prueba de Uber Direct
+  const [testingUber, setTestingUber] = useState(false);
+  const [uberTestResult, setUberTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     loadConfig();
@@ -158,6 +163,18 @@ export default function AdminConfiguracionPage() {
           }`}
         >
           <Mail size={16} /> Correo Corporativo
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("uber")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-extrabold text-xs whitespace-nowrap transition-all ${
+            activeTab === "uber"
+              ? "bg-[#FF97A4] text-white shadow-md shadow-pink-500/20"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          <Car size={16} /> Uber Direct (DaaS) 🚗
         </button>
 
         <button
@@ -816,6 +833,185 @@ export default function AdminConfiguracionPage() {
                   <span>{testEmailResult.success ? testEmailResult.message : testEmailResult.error}</span>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* PESTAÑA: Uber Direct (DaaS) */}
+        {activeTab === "uber" && (
+          <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2.5">
+                <Car size={22} className="text-[#FF97A4]" />
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                  Uber Direct (Delivery as a Service) 🚗
+                </h2>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="enableUberDirect"
+                  value="true"
+                  defaultChecked={config.enableUberDirect ?? false}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#FF97A4]"></div>
+                <span className="ml-3 text-xs font-bold text-gray-700 dark:text-gray-300">
+                  {config.enableUberDirect ? "Activado" : "Desactivado"}
+                </span>
+              </label>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Conecta tu cuenta de <strong>Uber Direct</strong> para cotizar y solicitar repartidores express en tiempo real con 1 solo clic desde el panel de órdenes. Tus clientes recibirán un enlace con el mapa en vivo de Uber para ver al repartidor llegar con sus flores.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Entorno */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                  Ambiente de Ejecución
+                </label>
+                <select
+                  name="uberDirectEnv"
+                  defaultValue={config.uberDirectEnv || "sandbox"}
+                  onChange={(e) => setConfig({ ...config, uberDirectEnv: e.target.value })}
+                  className="w-full p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                >
+                  <option value="sandbox">🧪 Sandbox (Modo Pruebas / Simulado)</option>
+                  <option value="production">🚀 Producción (Entregas Reales)</option>
+                </select>
+                <span className="text-[10px] text-gray-400">Usa Sandbox para pruebas con repartidores simulados de Uber sin costo real.</span>
+              </div>
+
+              {/* Auto Despacho */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                  Despacho Automático al Confirmar
+                </label>
+                <select
+                  name="uberDirectAutoDispatch"
+                  defaultValue={config.uberDirectAutoDispatch ? "true" : "false"}
+                  className="w-full p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                >
+                  <option value="false">✋ Manual (Despachar con botón desde cada orden)</option>
+                  <option value="true">⚡ Automático (Solicitar Uber inmediatamente)</option>
+                </select>
+                <span className="text-[10px] text-gray-400">Recomendado Manual para validar la preparación del arreglo floral antes.</span>
+              </div>
+            </div>
+
+            {/* Credenciales de API */}
+            <div className="space-y-4 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <h3 className="text-xs font-black uppercase tracking-wider text-gray-400">Credenciales de Uber Direct API</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                    Customer ID (Organización)
+                  </label>
+                  <input
+                    type="text"
+                    name="uberDirectCustomerId"
+                    defaultValue={config.uberDirectCustomerId || ""}
+                    onChange={(e) => setConfig({ ...config, uberDirectCustomerId: e.target.value })}
+                    placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+                    className="w-full p-3 border rounded-xl text-xs font-mono dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  />
+                  <span className="text-[10px] text-gray-400">El ID de cliente provisto en el portal de Uber Direct.</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                    Client ID (OAuth 2.0)
+                  </label>
+                  <input
+                    type="text"
+                    name="uberDirectClientId"
+                    defaultValue={config.uberDirectClientId || ""}
+                    onChange={(e) => setConfig({ ...config, uberDirectClientId: e.target.value })}
+                    placeholder="e.g. your-uber-client-id"
+                    className="w-full p-3 border rounded-xl text-xs font-mono dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  />
+                  <span className="text-[10px] text-gray-400">Identificador de aplicación en Uber Developer.</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                    Client Secret (Secreto)
+                  </label>
+                  <input
+                    type="password"
+                    name="uberDirectClientSecret"
+                    defaultValue={config.uberDirectClientSecret || ""}
+                    onChange={(e) => setConfig({ ...config, uberDirectClientSecret: e.target.value })}
+                    placeholder="••••••••••••••••••••"
+                    className="w-full p-3 border rounded-xl text-xs font-mono dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  />
+                  <span className="text-[10px] text-gray-400">Clave secreta para autenticación OAuth 2.0.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Probador de Conexión en Vivo */}
+            <div className="p-5 bg-pink-50/40 dark:bg-pink-950/20 rounded-2xl border border-pink-100 dark:border-pink-900/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-[#1A1C1C] dark:text-white flex items-center gap-2">
+                    <Sparkles size={15} className="text-[#FF97A4]" />
+                    Verificación de Conexión con Uber Direct
+                  </h4>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                    Envía una solicitud de autenticación OAuth 2.0 a los servidores de Uber para validar tus credenciales.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setTestingUber(true);
+                    setUberTestResult(null);
+                    const res = await testUberDirectConnectionAction({
+                      clientId: config.uberDirectClientId,
+                      clientSecret: config.uberDirectClientSecret,
+                      customerId: config.uberDirectCustomerId,
+                      env: config.uberDirectEnv || "sandbox"
+                    });
+                    setUberTestResult(res);
+                    setTestingUber(false);
+                  }}
+                  disabled={testingUber || !config.uberDirectClientId || !config.uberDirectClientSecret}
+                  className="bg-[#1A1C1C] text-white dark:bg-white dark:text-gray-900 px-5 py-2.5 rounded-xl text-xs font-black hover:bg-black dark:hover:bg-gray-100 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Car size={15} />
+                  {testingUber ? "Verificando con Uber..." : "🧪 Probar Conexión con Uber"}
+                </button>
+              </div>
+
+              {uberTestResult && (
+                <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in ${
+                  uberTestResult.success 
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900" 
+                    : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900"
+                }`}>
+                  {uberTestResult.success ? <CheckCircle2 size={16} className="text-emerald-600" /> : <AlertTriangle size={16} className="text-red-600" />}
+                  <span>{uberTestResult.message}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Webhook Info */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-1.5">
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+                🔗 Webhook URL para eventos de repartidor en tiempo real:
+              </span>
+              <div className="flex items-center gap-2">
+                <code className="p-2 bg-white dark:bg-gray-800 rounded-lg text-xs font-mono text-[#FF97A4] font-bold border border-gray-200 dark:border-gray-700 flex-1 select-all">
+                  /api/webhooks/uber-direct
+                </code>
+              </div>
+              <p className="text-[10px] text-gray-400">
+                Configura esta URL en tu Dashboard de Desarrolladores de Uber para recibir actualizaciones de estado (repartidor asignado, recogido, entregado) automáticamente en tu base de datos.
+              </p>
             </div>
           </div>
         )}

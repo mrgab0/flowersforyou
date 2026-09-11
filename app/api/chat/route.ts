@@ -140,8 +140,14 @@ Reglas estrictas de conversación humana y corta:
       parts: [{ text: m.text }]
     }));
 
-    // 4. Llamar a la API de Gemini con modelos compatibles de Google AI
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-3.7-flash'];
+    // 4. Llamar a la API de Gemini priorizando Flash Lite por velocidad y bajo costo
+    const modelsToTry = [
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash-lite',
+      'gemini-2.0-flash-lite-preview-02-05',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash'
+    ];
     let aiResponseText = "";
 
     for (const model of modelsToTry) {

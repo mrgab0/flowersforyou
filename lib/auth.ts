@@ -3,14 +3,10 @@ import NextAuth from "next-auth"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import { authConfig } from "./auth-config"
 
-// DEBUG: Forzar validación de variables
-if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI no definida");
-if (!process.env.AUTH_SECRET) throw new Error("AUTH_SECRET no definida");
-
-const uri = process.env.MONGODB_URI!
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/flowersforyou"
 const options = {}
 
-let client
+let client: MongoClient
 let clientPromise: Promise<MongoClient>
 
 if (process.env.NODE_ENV === "development") {
@@ -20,7 +16,10 @@ if (process.env.NODE_ENV === "development") {
 
   if (!globalWithMongo._mongoClientPromise) {
     client = new MongoClient(uri, options)
-    globalWithMongo._mongoClientPromise = client.connect()
+    globalWithMongo._mongoClientPromise = client.connect().catch((err) => {
+      console.warn("MongoDB Auth Adapter connection warning:", err.message);
+      return client;
+    });
   }
   clientPromise = globalWithMongo._mongoClientPromise
 } else {

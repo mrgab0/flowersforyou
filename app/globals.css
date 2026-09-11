@@ -90,3 +90,25 @@ body {
   background-color: rgba(24, 25, 34, 0.9) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
+
+/* Chatbot Asistente Virtual: Fuentes y fondos en modo claro */
+html:not(.dark) .chatbot-bot-bubble {
+  color: #000000 !important;
+  background-color: #f1f5f9 !important;
+}
+html:not(.dark) .chatbot-chip-btn {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+html:not(.dark) .chatbot-chip-btn:hover {
+  color: #ffffff !important;
+  background-color: #8B0024 !important;
+}
+html:not(.dark) .chatbot-input {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+html:not(.dark) .chatbot-mini-preview {
+  color: #000000 !important;
+}

@@ -10,11 +10,14 @@ const intlMiddleware = createMiddleware({
 });
 
 export default function middleware(request: NextRequest) {
-  console.log('Middleware executing for:', request.nextUrl.pathname);
   return intlMiddleware(request);
 }
  
 export const config = {
-  // Match only internationalized pathnames
-  matcher: ['/', '/(en|es)/:path*']
+  // Match only internationalized pathnames, skipping api, static files, and internal next paths
+  matcher: [
+    '/',
+    '/(es|en)/:path*',
+    '/((?!api|_next|_vercel|.*\\..*).*)'
+  ]
 };

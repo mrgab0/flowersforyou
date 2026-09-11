@@ -62,26 +62,27 @@ const nextConfig = {
   },
 };
 
-module.exports = withNextIntl(nextConfig);
+const intlConfig = withNextIntl(nextConfig);
 
-
-// Injected content via Sentry wizard below
-
-const { withSentryConfig } = require("@sentry/nextjs");
-
-module.exports = withSentryConfig(module.exports, {
-  org: "alonsoriosdev-yb",
-  project: "servers_sentry_status_vercel",
-  silent: true,
-  telemetry: false,
-  sourcemaps: {
-    disable: !process.env.SENTRY_AUTH_TOKEN,
-  },
-  widenClientFileUpload: false,
-  webpack: {
-    automaticVercelMonitors: false,
-    treeshake: {
-      removeDebugLogging: true,
+// Solo activar la instrumentación pesada de Sentry en producción para ahorrar RAM y evitar OOM en local
+if (process.env.NODE_ENV === "production" && process.env.SENTRY_AUTH_TOKEN) {
+  const { withSentryConfig } = require("@sentry/nextjs");
+  module.exports = withSentryConfig(intlConfig, {
+    org: "alonsoriosdev-yb",
+    project: "servers_sentry_status_vercel",
+    silent: true,
+    telemetry: false,
+    sourcemaps: {
+      disable: !process.env.SENTRY_AUTH_TOKEN,
     },
-  },
-});
+    widenClientFileUpload: false,
+    webpack: {
+      automaticVercelMonitors: false,
+      treeshake: {
+        removeDebugLogging: true,
+      },
+    },
+  });
+} else {
+  module.exports = intlConfig;
+}

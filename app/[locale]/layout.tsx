@@ -2,9 +2,12 @@ import Link from 'next/link';
 import {NextIntlClientProvider} from 'next-intl';
 import {getMessages} from 'next-intl/server';
 import {notFound} from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { CookieConsent } from "@/components/CookieConsent";
 import { PedidoFlotante } from "@/components/shop/PedidoFlotante";
 import { ShoppingCartComponent } from "@/components/shop/Cart/ShoppingCart";
+
+const ChatbotModal = dynamic(() => import("@/components/shop/Chatbot/ChatbotModal").then((m) => m.ChatbotModal));
  
 export default async function LocaleLayout({
   children,
@@ -39,6 +42,7 @@ export default async function LocaleLayout({
         <PedidoFlotante />
         <ShoppingCartComponent />
         {children}
+        <ChatbotModal />
         <CookieConsent />
     </NextIntlClientProvider>
   );

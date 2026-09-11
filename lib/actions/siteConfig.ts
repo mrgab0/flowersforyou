@@ -41,22 +41,22 @@ const DEFAULT_SITE_CONFIG = {
 };
 
 export async function getSiteConfig() {
-  await dbConnect();
   try {
+    await dbConnect();
     let config = await SiteConfig.findOne({ key: "global" }).lean();
     if (!config) {
       config = await SiteConfig.create(DEFAULT_SITE_CONFIG);
     }
     return { success: true, data: JSON.parse(JSON.stringify(config)) };
   } catch (error) {
-    console.error("Error al obtener configuración del sitio:", error);
+    console.warn("Aviso: Conexión a MongoDB no disponible, usando configuración por defecto.");
     return { success: true, data: DEFAULT_SITE_CONFIG };
   }
 }
 
 export async function updateSiteConfig(formData: FormData) {
-  await dbConnect();
   try {
+    await dbConnect();
     const heroTitle = formData.get("heroTitle") as string || DEFAULT_SITE_CONFIG.heroTitle;
     const heroSlogan = formData.get("heroSlogan") as string || DEFAULT_SITE_CONFIG.heroSlogan;
     const heroButtonText = formData.get("heroButtonText") as string || DEFAULT_SITE_CONFIG.heroButtonText;

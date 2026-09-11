@@ -7,9 +7,14 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function LocalizedProductosCatalogPage() {
-  await dbConnect();
-  const rawProducts = await Product.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).lean();
-  const products = JSON.parse(JSON.stringify(rawProducts));
+  let products = [];
+  try {
+    await dbConnect();
+    const rawProducts = await Product.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).lean();
+    products = JSON.parse(JSON.stringify(rawProducts || []));
+  } catch (err) {
+    products = [];
+  }
 
   const addonsRes = await getAddons();
   const addons = addonsRes.success ? addonsRes.data : [];

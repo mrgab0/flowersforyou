@@ -17,8 +17,16 @@ export const revalidate = 0;
 export default async function Home({params}: {params: Promise<{locale: string}>}) {
   const {locale} = await params;
   const t = await getTranslations({locale});
-  await dbConnect();
-  const products = await Product.find({ isActive: { $ne: false } }).lean();
+  let products: any[] = [];
+  try {
+    await dbConnect();
+    const rawProducts = await Product.find({ isActive: { $ne: false } }).lean();
+    products = JSON.parse(JSON.stringify(rawProducts || []));
+  } catch (err) {
+    console.warn("MongoDB no disponible en Home, cargando catálogo fallback.");
+    products = [];
+  }
+
   const { data: siteConfig } = await getSiteConfig();
 
   const desktopCols = siteConfig?.productColumnsDesktop || 3;

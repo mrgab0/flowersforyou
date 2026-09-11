@@ -6,30 +6,28 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function getAddons() {
-  await dbConnect();
   try {
+    await dbConnect();
     const addons = await Addon.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: -1 }).lean();
     return { success: true, data: JSON.parse(JSON.stringify(addons)) };
   } catch (error) {
-    console.error("Error obteniendo adicionales:", error);
-    return { success: false, error: "Failed to fetch addons" };
+    return { success: true, data: [] };
   }
 }
 
 export async function getAllAddonsAdmin() {
-  await dbConnect();
   try {
+    await dbConnect();
     const addons = await Addon.find({}).sort({ category: 1, order: 1, createdAt: -1 }).lean();
     return { success: true, data: JSON.parse(JSON.stringify(addons)) };
   } catch (error) {
-    console.error("Error obteniendo adicionales admin:", error);
-    return { success: false, error: "Failed to fetch admin addons" };
+    return { success: true, data: [] };
   }
 }
 
 export async function getAddonById(id: string) {
-  await dbConnect();
   try {
+    await dbConnect();
     const addon = await Addon.findById(id).lean();
     if (!addon) return { success: false, error: "Adicional no encontrado" };
     return { success: true, data: JSON.parse(JSON.stringify(addon)) };

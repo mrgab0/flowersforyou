@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Sparkles, RefreshCw, PhoneCall, ExternalLink, MessageSquare } from 'lucide-react';
+import { MessageCircle, X, Send, Sparkles, RefreshCw, PhoneCall, ExternalLink, MessageSquare, ShoppingBag, Check, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
+import { useCart } from '@/components/shop/Cart/CartContext';
 
 interface Message {
   id: string;
@@ -74,11 +75,46 @@ const I18N_CONTENT = {
   }
 };
 
+interface CartProposal {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  slug?: string;
+}
+
+const parseCartItem = (rawText: string): { cleanText: string; cartProposal?: CartProposal } => {
+  if (!rawText) return { cleanText: "" };
+  const match = rawText.match(/<<<CART_ITEM:\s*(\{[\s\S]*?\})\s*>>>/);
+  if (!match) {
+    return { cleanText: rawText };
+  }
+
+  try {
+    const parsed = JSON.parse(match[1]);
+    const cleanText = rawText.replace(/<<<CART_ITEM:[\s\S]*?>>>/g, "").trim();
+    return {
+      cleanText,
+      cartProposal: {
+        id: parsed.id || parsed._id,
+        name: parsed.name,
+        price: Number(parsed.price) || 0,
+        image: parsed.image || "/logo.jpg",
+        slug: parsed.slug || ""
+      }
+    };
+  } catch (e) {
+    return { cleanText: rawText.replace(/<<<CART_ITEM:[\s\S]*?>>>/g, "").trim() };
+  }
+};
+
 const CHAT_STORAGE_KEY = "ffy_chat_history_v1";
 const CHAT_STORAGE_TTL = 24 * 60 * 60 * 1000; // 24 horas
 
 export const ChatbotModal = () => {
   const pathname = usePathname();
+  const { addToCart } = useCart();
+  const [addedCartIds, setAddedCartIds] = useState<Set<string>>(new Set());
 
   // No renderizar el chatbot en el panel de administración
   if (pathname?.startsWith("/admin")) {
@@ -104,6 +140,22 @@ export const ChatbotModal = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
   const isHydratedRef = useRef(false);
+
+  const handleConfirmAddToCart = (item: CartProposal) => {
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image
+    });
+    setAddedCartIds((prev) => new Set(prev).add(item.id));
+
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate(40);
+      } catch (e) {}
+    }
+  };
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -443,19 +495,77 @@ export const ChatbotModal = () => {
             
             {messages.map((m) => {
               const isUser = m.role === 'user';
+              const { cleanText, cartProposal } = isUser ? { cleanText: m.text, cartProposal: undefined } : parseCartItem(m.text);
+              const isAdded = cartProposal ? addedCartIds.has(cartProposal.id) : false;
+
               return (
                 <div
                   key={m.id}
                   className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm whitespace-pre-line shadow-sm ${
+                    className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm whitespace-pre-line shadow-sm ${
                       isUser
                         ? 'bg-[#8B0024] text-white rounded-br-none'
                         : 'bg-white dark:bg-[#1a1b24] text-gray-800 dark:text-gray-100 border border-gray-200/80 dark:border-gray-800 rounded-bl-none'
                     }`}
                   >
-                    {renderFormattedText(m.text)}
+                    {renderFormattedText(cleanText)}
+
+                    {cartProposal && (
+                      <div className="mt-3 bg-pink-50/70 dark:bg-[#12131A] p-3 rounded-2xl border-2 border-[#FF97A4]/50 shadow-sm space-y-2.5 text-left">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={cartProposal.image}
+                            alt={cartProposal.name}
+                            className="w-12 h-12 rounded-xl object-cover border border-pink-200 flex-shrink-0 bg-white"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/logo.jpg"; }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="font-extrabold text-xs text-[#1A1C1C] dark:text-white truncate block">
+                              {cartProposal.name}
+                            </span>
+                            <span className="text-xs font-black text-[#FF97A4] block">
+                              ${cartProposal.price.toFixed(2)} USD
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="pt-1 flex flex-col gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmAddToCart(cartProposal)}
+                            className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+                              isAdded
+                                ? "bg-emerald-600 text-white"
+                                : "bg-[#FF97A4] hover:bg-[#B0004A] text-white active:scale-95"
+                            }`}
+                          >
+                            {isAdded ? (
+                              <>
+                                <Check size={14} />
+                                <span>{currentLocale === 'en' ? "✓ Added to Cart!" : "✓ ¡Añadido al Carrito!"}</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingBag size={14} />
+                                <span>{currentLocale === 'en' ? `Confirm & Add ($${cartProposal.price})` : `Confirmar y Añadir ($${cartProposal.price})`}</span>
+                              </>
+                            )}
+                          </button>
+
+                          {isAdded && (
+                            <Link
+                              href="/checkout"
+                              onClick={() => setIsOpen(false)}
+                              className="w-full bg-[#1A1C1C] hover:bg-black text-white text-center py-1.5 px-3 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
+                            >
+                              <span>{currentLocale === 'en' ? "Proceed to Checkout →" : "Proceder al Pago / Checkout →"}</span>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <span className="text-[10px] text-gray-400 mt-1 px-1">{m.timestamp}</span>
                 </div>

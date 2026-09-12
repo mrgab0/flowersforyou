@@ -17,7 +17,8 @@ export default function AdminConfiguracionPage() {
   const [activeTab, setActiveTab] = useState<"grid" | "branding" | "social" | "reviews" | "iframe" | "security" | "email" | "uber">("grid");
 
   // Estado para prueba de Correo Corporativo
-  const [testEmailAddress, setTestEmailAddress] = useState("sales@flowersforyou.org");
+  const [testEmailAddress, setTestEmailAddress] = useState("sales@flowersforyou.com");
+  const [testEmailSenderChoice, setTestEmailSenderChoice] = useState<string>("default");
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
 
@@ -756,75 +757,250 @@ export default function AdminConfiguracionPage() {
         )}
 
         {/* PESTAÑA: Correo Corporativo */}
+        {/* PESTAÑA: Correo Corporativo (.com / .org) */}
         {activeTab === "email" && (
           <div className="bg-white dark:bg-[#12131A] p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-6 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-2.5">
-                <Mail size={22} className="text-[#FF97A4]" />
-                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
-                  Servicio de Correo Corporativo (sales@flowersforyou.org)
-                </h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-4 border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-tr from-pink-500 to-[#FF97A4] text-white rounded-2xl shadow-md shadow-pink-500/20">
+                  <Mail size={22} />
+                </div>
+                <div>
+                  <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                    Servicio de Correo Corporativo (.com / .org)
+                  </h2>
+                  <p className="text-xs text-gray-400">
+                    Gestiona el remitente oficial, dominios corporativos y servidores SMTP para facturas y notificaciones
+                  </p>
+                </div>
               </div>
-              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-                🟢 Activo & Conectado
+              <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[11px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle2 size={13} /> Activo & Conectado
               </span>
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Todos los correos transaccionales (recibos de compra, notificaciones de pedidos, alertas de contacto y recuperaciones) son enviados automáticamente a través de la identidad corporativa oficial <strong>sales@flowersforyou.org</strong>.
-            </p>
+            {/* Selector de Presets de Dominio */}
+            <div className="space-y-3">
+              <label className="text-xs font-black uppercase text-gray-400 tracking-wider block">
+                Selecciona el Dominio del Remitente Oficial:
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Opción .COM */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfig({
+                      ...config,
+                      corporateSenderEmail: "sales@flowersforyou.com",
+                      corporateReplyToEmail: "sales@flowersforyou.com",
+                      corporateSenderName: config.corporateSenderName || "Flowers For You LLC"
+                    });
+                  }}
+                  className={`p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between space-y-2 ${
+                    (config.corporateSenderEmail || "sales@flowersforyou.com").includes(".com")
+                      ? "border-[#FF97A4] bg-pink-50/20 dark:bg-pink-950/20 shadow-sm"
+                      : "border-gray-200 dark:border-gray-800 hover:border-pink-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-xs text-[#1A1C1C] dark:text-white flex items-center gap-1.5">
+                      🌟 Dominio .COM (Recomendado)
+                    </span>
+                    {(config.corporateSenderEmail || "sales@flowersforyou.com").includes(".com") && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#FF97A4]"></span>
+                    )}
+                  </div>
+                  <code className="text-xs text-[#FF97A4] font-mono font-bold">sales@flowersforyou.com</code>
+                  <span className="text-[10px] text-gray-400">Identidad principal comercial de la marca.</span>
+                </button>
 
-            {/* Tarjeta Informativa de Configuración SMTP */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl border border-pink-100 dark:border-pink-950/40 bg-pink-50/20 dark:bg-pink-950/10 space-y-2">
-                <span className="text-[11px] font-black uppercase text-[#FF97A4] tracking-wider">Remitente Corporativo Oficial</span>
-                <p className="text-sm font-extrabold text-[#1A1C1C] dark:text-white">"Flowers For You LLC" &lt;sales@flowersforyou.org&gt;</p>
-                <p className="text-[11px] text-gray-400">Dirección visible para los clientes en sus recibos e inboxes.</p>
+                {/* Opción .ORG */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfig({
+                      ...config,
+                      corporateSenderEmail: "sales@flowersforyou.org",
+                      corporateReplyToEmail: "sales@flowersforyou.org",
+                      corporateSenderName: config.corporateSenderName || "Flowers For You LLC"
+                    });
+                  }}
+                  className={`p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between space-y-2 ${
+                    (config.corporateSenderEmail || "").includes(".org")
+                      ? "border-[#FF97A4] bg-pink-50/20 dark:bg-pink-950/20 shadow-sm"
+                      : "border-gray-200 dark:border-gray-800 hover:border-pink-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-xs text-[#1A1C1C] dark:text-white flex items-center gap-1.5">
+                      🏛️ Dominio .ORG (Alternativo)
+                    </span>
+                    {(config.corporateSenderEmail || "").includes(".org") && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#FF97A4]"></span>
+                    )}
+                  </div>
+                  <code className="text-xs text-purple-500 font-mono font-bold">sales@flowersforyou.org</code>
+                  <span className="text-[10px] text-gray-400">Identidad institucional y legal registrada.</span>
+                </button>
+
+                {/* Opción Personalizada */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!config.corporateSenderEmail) {
+                      setConfig({ ...config, corporateSenderEmail: "info@flowersforyou.com" });
+                    }
+                  }}
+                  className={`p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between space-y-2 ${
+                    config.corporateSenderEmail && !config.corporateSenderEmail.includes("sales@flowersforyou.com") && !config.corporateSenderEmail.includes("sales@flowersforyou.org")
+                      ? "border-[#FF97A4] bg-pink-50/20 dark:bg-pink-950/20 shadow-sm"
+                      : "border-gray-200 dark:border-gray-800 hover:border-pink-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-xs text-[#1A1C1C] dark:text-white flex items-center gap-1.5">
+                      ✏️ Personalizado
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-600 dark:text-gray-300 font-mono font-bold truncate">
+                    {config.corporateSenderEmail || "Escribe tu dirección abajo"}
+                  </span>
+                  <span className="text-[10px] text-gray-400">Define cualquier alias o buzón especial.</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Inputs de Identidad */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Nombre Visible del Remitente:
+                </label>
+                <input
+                  type="text"
+                  name="corporateSenderName"
+                  value={config.corporateSenderName ?? "Flowers For You LLC"}
+                  onChange={(e) => setConfig({ ...config, corporateSenderName: e.target.value })}
+                  placeholder="Ej: Flowers For You LLC"
+                  className="w-full p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                />
+                <span className="text-[10px] text-gray-400">Nombre con el que los clientes ven el correo en su bandeja.</span>
               </div>
 
-              <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 space-y-2">
-                <span className="text-[11px] font-black uppercase text-gray-700 dark:text-gray-300 tracking-wider">Servidor de Envíos (SMTP)</span>
-                <p className="text-sm font-extrabold text-[#1A1C1C] dark:text-white">Conectado vía Vercel / Resend / NodeMailer</p>
-                <p className="text-[11px] text-gray-400">Formato HTML responsivo con logo institucional y firma legal.</p>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Correo Electrónico Remitente:
+                </label>
+                <input
+                  type="email"
+                  name="corporateSenderEmail"
+                  value={config.corporateSenderEmail ?? "sales@flowersforyou.com"}
+                  onChange={(e) => setConfig({ ...config, corporateSenderEmail: e.target.value })}
+                  placeholder="sales@flowersforyou.com"
+                  className="w-full p-3 border rounded-xl text-xs font-mono font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                />
+                <span className="text-[10px] text-gray-400">Dirección de correo 'From' de salida.</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Correo de Respuesta (Reply-To):
+                </label>
+                <input
+                  type="email"
+                  name="corporateReplyToEmail"
+                  value={config.corporateReplyToEmail ?? "sales@flowersforyou.com"}
+                  onChange={(e) => setConfig({ ...config, corporateReplyToEmail: e.target.value })}
+                  placeholder="sales@flowersforyou.com"
+                  className="w-full p-3 border rounded-xl text-xs font-mono font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                />
+                <span className="text-[10px] text-gray-400">Donde responden los clientes al presionar 'Responder'.</span>
+              </div>
+            </div>
+
+            {/* Guía Rápida de Configuración en Namecheap y Gmail */}
+            <div className="p-5 bg-blue-50/40 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/50 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-blue-950 dark:text-blue-200 flex items-center gap-2">
+                📋 Guía Rápida para Configurar tu Dominio .COM en Namecheap & Gmail
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-700 dark:text-gray-300">
+                <div className="space-y-1.5 p-3.5 bg-white dark:bg-gray-900 rounded-xl border border-blue-100 dark:border-blue-900/40">
+                  <strong className="text-blue-600 dark:text-blue-400 block">1. En Namecheap (Advanced DNS):</strong>
+                  <ul className="list-disc pl-4 space-y-1 text-[11px] text-gray-600 dark:text-gray-300">
+                    <li><strong>Redirección Gratuita:</strong> En <em>Mail Settings</em> elige <em>Email Forwarding</em> (<code>sales</code> ➔ tu Gmail).</li>
+                    <li><strong>Registro SPF (TXT):</strong> Host <code>@</code>, Value <code>v=spf1 include:_spf.google.com ~all</code></li>
+                    <li><strong>Registro DMARC (TXT):</strong> Host <code>_dmarc</code>, Value <code>v=DMARC1; p=none; pct=100;</code></li>
+                  </ul>
+                </div>
+
+                <div className="space-y-1.5 p-3.5 bg-white dark:bg-gray-900 rounded-xl border border-blue-100 dark:border-blue-900/40">
+                  <strong className="text-blue-600 dark:text-blue-400 block">2. En Gmail (Servidor SMTP):</strong>
+                  <ul className="list-disc pl-4 space-y-1 text-[11px] text-gray-600 dark:text-gray-300">
+                    <li>Activa <strong>2FA</strong> en tu Cuenta de Google.</li>
+                    <li>Genera una <strong>Contraseña de Aplicación</strong> de 16 caracteres para SMTP.</li>
+                    <li>En Gmail ➔ <em>Cuentas e importación ➔ Enviar como</em>, añade <code>sales@flowersforyou.com</code> usando <code>smtp.gmail.com</code> (puerto 465/587).</li>
+                  </ul>
+                </div>
               </div>
             </div>
 
             {/* Módulo de Envío de Prueba en Vivo */}
-            <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/20 space-y-4">
-              <h3 className="font-serif font-black text-sm text-[#1A1C1C] dark:text-white flex items-center gap-2">
-                📨 Probar Envío de Correo Corporativo en Vivo
-              </h3>
-              <p className="text-xs text-gray-500">
-                Ingresa una dirección de correo para enviar un mensaje institucional de prueba inmediato desde <strong>sales@flowersforyou.org</strong>.
-              </p>
+            <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <h3 className="font-serif font-black text-sm text-[#1A1C1C] dark:text-white flex items-center gap-2">
+                  📨 Probar Envío de Correo Corporativo en Vivo
+                </h3>
+                <span className="text-[11px] text-gray-400 font-medium">
+                  Envía un correo de prueba con membrete oficial a cualquier destinatario
+                </span>
+              </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="email"
-                  value={testEmailAddress}
-                  onChange={(e) => setTestEmailAddress(e.target.value)}
-                  placeholder="ejemplo@dominio.com"
-                  className="flex-1 p-3.5 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
-                />
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setSendingTestEmail(true);
-                    setTestEmailResult(null);
-                    const res = await sendTestCorporateEmailAction(testEmailAddress);
-                    setTestEmailResult(res);
-                    setSendingTestEmail(false);
-                  }}
-                  disabled={sendingTestEmail || !testEmailAddress}
-                  className="bg-[#1A1C1C] text-white dark:bg-white dark:text-gray-900 px-6 py-3.5 rounded-xl text-xs font-black hover:bg-black dark:hover:bg-gray-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <Mail size={15} />
-                  {sendingTestEmail ? "Enviando Correo..." : "Enviar Correo de Prueba 📩"}
-                </button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-1 space-y-1">
+                  <label className="text-[11px] font-bold text-gray-500 block">Remitente de la Prueba:</label>
+                  <select
+                    value={testEmailSenderChoice}
+                    onChange={(e) => setTestEmailSenderChoice(e.target.value)}
+                    className="w-full p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                  >
+                    <option value="default">✨ Remitente Activo ({config.corporateSenderEmail || "sales@flowersforyou.com"})</option>
+                    <option value='"Flowers For You LLC" <sales@flowersforyou.com>'>🌟 Forzar .COM (sales@flowersforyou.com)</option>
+                    <option value='"Flowers For You LLC" <sales@flowersforyou.org>'>🏛️ Forzar .ORG (sales@flowersforyou.org)</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="text-[11px] font-bold text-gray-500 block">Destinatario de Prueba:</label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="email"
+                      value={testEmailAddress}
+                      onChange={(e) => setTestEmailAddress(e.target.value)}
+                      placeholder="ejemplo@dominio.com"
+                      className="flex-1 p-3 border rounded-xl text-xs font-bold dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF97A4]"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setSendingTestEmail(true);
+                        setTestEmailResult(null);
+                        const senderToTest = testEmailSenderChoice === "default" ? undefined : testEmailSenderChoice;
+                        const res = await sendTestCorporateEmailAction(testEmailAddress, senderToTest);
+                        setTestEmailResult(res);
+                        setSendingTestEmail(false);
+                      }}
+                      disabled={sendingTestEmail || !testEmailAddress}
+                      className="bg-[#1A1C1C] text-white dark:bg-white dark:text-gray-900 px-6 py-3 rounded-xl text-xs font-black hover:bg-black dark:hover:bg-gray-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                      <Mail size={15} />
+                      {sendingTestEmail ? "Enviando..." : "Enviar Prueba 📩"}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {testEmailResult && (
-                <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in ${
                   testEmailResult.success 
                     ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900" 
                     : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900"

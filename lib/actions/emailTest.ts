@@ -1,13 +1,16 @@
 "use server";
 
-import { sendEmail, DEFAULT_CORPORATE_SENDER } from "@/lib/email";
+import { sendEmail, getCorporateEmailConfig } from "@/lib/email";
 
-export async function sendTestCorporateEmailAction(targetEmail: string) {
+export async function sendTestCorporateEmailAction(targetEmail: string, customSender?: string) {
   try {
     const destination = (targetEmail || "").trim();
     if (!destination || !destination.includes("@")) {
       return { success: false, error: "Por favor ingresa una dirección de correo válida." };
     }
+
+    const emailCfg = await getCorporateEmailConfig();
+    const effectiveSender = customSender?.trim() || emailCfg.senderFormatted;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background: #ffffff;">
@@ -19,17 +22,17 @@ export async function sendTestCorporateEmailAction(targetEmail: string) {
         <div style="padding: 30px; text-align: center;">
           <h2 style="color: #1A1C1C; margin-top: 0;">¡Servicio de Correo Conectado con Éxito! ✉️🌸</h2>
           <p style="color: #555555; font-size: 14px; line-height: 1.6;">
-            Este es un correo de prueba enviado desde tu servidor de <strong>Flowers For You LLC</strong> a través del remitente corporativo oficial:
+            Este es un correo de prueba enviado desde tu servidor de <strong>Flowers For You LLC</strong> a través del remitente corporativo:
           </p>
           
           <div style="background-color: #fdf2f7; border-left: 4px solid #FF97A4; padding: 15px; text-align: left; margin: 20px 0; border-radius: 6px;">
-            <p style="margin: 3px 0; font-size: 13px; color: #1A1C1C;"><strong>Remitente Oficial:</strong> ${DEFAULT_CORPORATE_SENDER}</p>
+            <p style="margin: 3px 0; font-size: 13px; color: #1A1C1C;"><strong>Remitente Oficial:</strong> ${effectiveSender}</p>
             <p style="margin: 3px 0; font-size: 13px; color: #1A1C1C;"><strong>Destinatario de Prueba:</strong> ${destination}</p>
             <p style="margin: 3px 0; font-size: 13px; color: #1A1C1C;"><strong>Fecha & Hora:</strong> ${new Date().toLocaleString("es-US", { timeZone: "America/Chicago" })} (Houston Time)</p>
           </div>
 
           <p style="color: #888888; font-size: 12px;">
-            Los recibos de compra, notificaciones de pedidos y mensajes de contacto se enviarán automáticamente con este formato corporativo.
+            Los recibos de compra, notificaciones de pedidos y mensajes de contacto se enviarán automáticamente con esta identidad.
           </p>
         </div>
 
@@ -41,13 +44,14 @@ export async function sendTestCorporateEmailAction(targetEmail: string) {
 
     const result = await sendEmail({
       to: destination,
-      subject: "🌸 Prueba de Correo Corporativo - Flowers For You LLC",
+      subject: `🌸 Prueba de Correo Corporativo - Flowers For You (${customSender ? customSender.split('@')[1]?.replace('>', '') || 'Custom' : 'Oficial'})`,
       html: htmlContent,
-      replyTo: "sales@flowersforyou.org",
+      from: effectiveSender,
+      replyTo: emailCfg.replyTo,
     });
 
     if (result.success) {
-      return { success: true, message: `Correo de prueba enviado con éxito a ${destination}` };
+      return { success: true, message: `Correo de prueba enviado con éxito a ${destination} desde ${effectiveSender}` };
     } else {
       return { success: false, error: result.error || "No se pudo entregar el correo." };
     }

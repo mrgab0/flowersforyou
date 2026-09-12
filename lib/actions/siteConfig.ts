@@ -44,7 +44,15 @@ const DEFAULT_SITE_CONFIG = {
   uberDirectClientSecret: "",
   uberDirectCustomerId: "",
   uberDirectEnv: "sandbox",
-  uberDirectAutoDispatch: false
+  uberDirectAutoDispatch: false,
+  // Correo Corporativo (.com / .org) & SMTP
+  corporateSenderEmail: "sales@flowersforyou.com",
+  corporateSenderName: "Flowers For You LLC",
+  corporateReplyToEmail: "sales@flowersforyou.com",
+  smtpHostOverride: "",
+  smtpPortOverride: 0,
+  smtpUserOverride: "",
+  smtpPassOverride: ""
 };
 
 export async function getSiteConfig() {
@@ -123,6 +131,15 @@ export async function updateSiteConfig(formData: FormData) {
     const uberDirectEnv = (formData.get("uberDirectEnv") as string || "sandbox") as "sandbox" | "production";
     const uberDirectAutoDispatch = formData.get("uberDirectAutoDispatch") === "true";
 
+    // Correo Corporativo (.com / .org) & SMTP
+    const corporateSenderEmail = (formData.get("corporateSenderEmail") as string || "sales@flowersforyou.com").trim();
+    const corporateSenderName = (formData.get("corporateSenderName") as string || "Flowers For You LLC").trim();
+    const corporateReplyToEmail = (formData.get("corporateReplyToEmail") as string || corporateSenderEmail).trim();
+    const smtpHostOverride = (formData.get("smtpHostOverride") as string || "").trim();
+    const smtpPortOverride = parseInt(formData.get("smtpPortOverride") as string || "0", 10) || 0;
+    const smtpUserOverride = (formData.get("smtpUserOverride") as string || "").trim();
+    const smtpPassOverride = (formData.get("smtpPassOverride") as string || "").trim();
+
     await SiteConfig.findOneAndUpdate(
       { key: "global" },
       {
@@ -168,6 +185,13 @@ export async function updateSiteConfig(formData: FormData) {
         uberDirectCustomerId,
         uberDirectEnv,
         uberDirectAutoDispatch,
+        corporateSenderEmail,
+        corporateSenderName,
+        corporateReplyToEmail,
+        smtpHostOverride,
+        smtpPortOverride,
+        smtpUserOverride,
+        smtpPassOverride,
         updatedAt: new Date()
       },
       { upsert: true, new: true }

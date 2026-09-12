@@ -79,6 +79,15 @@ export interface ISiteConfig extends Document {
   uberDirectEnv?: "sandbox" | "production";
   uberDirectAutoDispatch?: boolean;
 
+  // Configuración de Correo Corporativo (.com / .org) & SMTP
+  corporateSenderEmail?: string;
+  corporateSenderName?: string;
+  corporateReplyToEmail?: string;
+  smtpHostOverride?: string;
+  smtpPortOverride?: number;
+  smtpUserOverride?: string;
+  smtpPassOverride?: string;
+
   updatedAt: Date;
 }
 
@@ -160,6 +169,15 @@ const SiteConfigSchema: Schema = new Schema({
   uberDirectCustomerId: { type: String, default: "" },
   uberDirectEnv: { type: String, default: "sandbox" },
   uberDirectAutoDispatch: { type: Boolean, default: false },
+
+  // Configuración de Correo Corporativo (.com / .org) & SMTP
+  corporateSenderEmail: { type: String, default: "sales@flowersforyou.com" },
+  corporateSenderName: { type: String, default: "Flowers For You LLC" },
+  corporateReplyToEmail: { type: String, default: "sales@flowersforyou.com" },
+  smtpHostOverride: { type: String, default: "" },
+  smtpPortOverride: { type: Number, default: 0 },
+  smtpUserOverride: { type: String, default: "" },
+  smtpPassOverride: { type: String, default: "" },
 
   updatedAt: { type: Date, default: Date.now }
 });

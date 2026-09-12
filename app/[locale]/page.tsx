@@ -10,23 +10,31 @@ import dbConnect from "@/lib/db";
 import { Product } from "@/lib/models/Product";
 import { getSiteConfig } from "@/lib/actions/siteConfig";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
+
+export function generateStaticParams() {
+  return [{ locale: 'es' }, { locale: 'en' }];
+}
 
 export default async function Home({params}: {params: Promise<{locale: string}>}) {
   const {locale} = await params;
   const t = await getTranslations({locale});
+
   let products: any[] = [];
+  let siteConfig: any = null;
+
   try {
     await dbConnect();
-    const rawProducts = await Product.find({ isActive: { $ne: false } }).lean();
+    const [rawProducts, siteConfigRes] = await Promise.all([
+      Product.find({ isActive: { $ne: false } }).lean(),
+      getSiteConfig(),
+    ]);
     products = JSON.parse(JSON.stringify(rawProducts || []));
+    siteConfig = siteConfigRes?.data || null;
   } catch (err) {
     console.warn("MongoDB no disponible en Home, cargando catálogo fallback.");
     products = [];
   }
-
-  const { data: siteConfig } = await getSiteConfig();
 
   const desktopCols = siteConfig?.productColumnsDesktop || 3;
   let gridColsClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8";

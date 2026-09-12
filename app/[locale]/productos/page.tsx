@@ -3,21 +3,24 @@ import { Product } from "@/lib/models/Product";
 import { getAddons } from "@/lib/actions/addon";
 import { CatalogClient } from "@/components/shop/CatalogClient";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function LocalizedProductosCatalogPage() {
   let products = [];
+  let addons = [];
+
   try {
     await dbConnect();
-    const rawProducts = await Product.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).lean();
+    const [rawProducts, addonsRes] = await Promise.all([
+      Product.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).lean(),
+      getAddons(),
+    ]);
     products = JSON.parse(JSON.stringify(rawProducts || []));
+    addons = addonsRes.success && addonsRes.data ? addonsRes.data : [];
   } catch (err) {
     products = [];
+    addons = [];
   }
-
-  const addonsRes = await getAddons();
-  const addons = addonsRes.success ? addonsRes.data : [];
 
   return <CatalogClient initialProducts={products} initialAddons={addons} />;
 }

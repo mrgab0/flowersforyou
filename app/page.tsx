@@ -9,13 +9,15 @@ import dbConnect from "@/lib/db";
 import { Product } from "@/lib/models/Product";
 import { getSiteConfig } from "@/lib/actions/siteConfig";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function Home() {
   await dbConnect();
-  const products = await Product.find({ isActive: { $ne: false } }).lean();
-  const { data: siteConfig } = await getSiteConfig();
+  const [products, siteConfigRes] = await Promise.all([
+    Product.find({ isActive: { $ne: false } }).lean(),
+    getSiteConfig(),
+  ]);
+  const siteConfig = siteConfigRes?.data || null;
 
   const desktopCols = siteConfig?.productColumnsDesktop || 3;
   let gridColsClass = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8";

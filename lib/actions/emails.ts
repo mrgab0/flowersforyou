@@ -72,6 +72,7 @@ export async function sendCustomEmailAction(data: {
   subject: string;
   bodyHtml: string;
   bodyText?: string;
+  from?: string;
   type?: "direct_email" | "quote" | "delivery_update" | "general";
   customerName?: string;
   customerPhone?: string;
@@ -142,9 +143,10 @@ export async function sendCustomEmailAction(data: {
 
     const sendRes = await sendEmail({
       to: finalRecipients,
+      from: data.from || emailCfg.senderFormatted,
       subject: data.subject.trim(),
       html: wrappedHtml,
-      replyTo: emailCfg.replyTo,
+      replyTo: data.from ? (data.from.match(/<(.+)>/)?.[1] || data.from) : emailCfg.replyTo,
     });
 
     if (!sendRes.success) {

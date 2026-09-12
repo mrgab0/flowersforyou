@@ -53,34 +53,72 @@ interface Props {
   initialInboxCount: number;
 }
 
+export const SENDER_ALIASES = [
+  {
+    id: "sales",
+    label: "🌸 sales@flowerforyoullc.com (Ventas & Boutique)",
+    formatted: '"Flowers For You • Ventas" <sales@flowerforyoullc.com>',
+  },
+  {
+    id: "info",
+    label: "ℹ️ info@flowerforyoullc.com (Información General)",
+    formatted: '"Flowers For You • Información" <info@flowerforyoullc.com>',
+  },
+  {
+    id: "support",
+    label: "💬 support@flowerforyoullc.com (Atención al Cliente)",
+    formatted: '"Flowers For You • Atención al Cliente" <support@flowerforyoullc.com>',
+  },
+  {
+    id: "orders",
+    label: "📦 orders@flowerforyoullc.com (Gestión de Pedidos)",
+    formatted: '"Flowers For You • Pedidos" <orders@flowerforyoullc.com>',
+  },
+  {
+    id: "delivery",
+    label: "🚚 delivery@flowerforyoullc.com (Despacho & Rutas)",
+    formatted: '"Flowers For You • Despacho" <delivery@flowerforyoullc.com>',
+  },
+  {
+    id: "gerencia",
+    label: "👑 gerencia@flowerforyoullc.com (Gerencia / Dirección)",
+    formatted: '"Flowers For You • Gerencia" <gerencia@flowerforyoullc.com>',
+  },
+];
+
 const TEMPLATES = [
   {
     id: "blank",
     name: "✉️ Mensaje en Blanco (Personalizado)",
+    defaultSender: SENDER_ALIASES[0].formatted,
     subject: "Información de Flowers For You LLC",
     body: "<p>Estimado/a cliente,</p><p>Escribimos de Flowers For You LLC con respecto a...</p><p>Quedamos atentos a cualquier duda o detalle.</p><p>Saludos cordiales,<br><strong>Flowers For You LLC</strong></p>",
   },
   {
     id: "quote",
     name: "🌸 Cotización de Arreglo Floral Especial",
+    defaultSender: SENDER_ALIASES[0].formatted,
     subject: "🌸 Propuesta & Cotización Especial - Flowers For You LLC",
     body: "<p>¡Hola! 🌸 Qué gusto saludarte.</p><p>En base a tu solicitud, hemos preparado la siguiente propuesta de diseño floral:</p><ul><li><strong>Diseño:</strong> Arreglo Floral Exclusivo</li><li><strong>Flores Principales:</strong> Rosas Premium, Lilies y Follaje Especial</li><li><strong>Valor Estimado:</strong> $0.00 USD (Incluye Dedicatoria Impresa y Envoltorio de Lujo)</li></ul><p>¿Te gustaría personalizar algún color, agregar globos, chocolates o dedicatoria?</p><p>Puedes respondernos directamente a este correo o escribirnos por WhatsApp.</p>",
   },
   {
     id: "delivery",
     name: "🚚 Aviso de Entrega: Arreglo Floral en Camino",
+    defaultSender: SENDER_ALIASES[4].formatted,
     subject: "🚚 ¡Tu Arreglo Floral está en Camino! - Flowers For You LLC",
     body: "<p>¡Excelentes noticias! 🌸🚚</p><p>Queremos informarte que tu pedido floral ha salido de nuestra boutique y <strong>nuestro repartidor ya va en ruta de entrega</strong> a la dirección especificada.</p><p>Tan pronto sea entregado en manos del destinatario, nuestro equipo te lo notificará.</p><p>¡Gracias por confiar en Flowers For You LLC!</p>",
   },
   {
     id: "coupon",
     name: "🎟️ Regalo Especial: Cupón de Descuento Exclusivo",
+    defaultSender: SENDER_ALIASES[0].formatted,
     subject: "🎁 Un Regalo Especial para Ti: Descuento Exclusivo en Flowers For You",
     body: "<p>¡Hola! 🌸</p><p>Queremos agradecerte por ser parte de la familia <strong>Flowers For You LLC</strong>.</p><p>Como muestra de aprecio, te obsequiamos un <strong>10% de descuento</strong> en tu próxima compra utilizando el cupón:</p><div style='padding: 12px 20px; background: #fff0f3; border-left: 4px solid #ff97a4; font-size: 16px; font-weight: bold; color: #b0004a; margin: 15px 0;'>CUPÓN: FLOWERS10</div><p>Visita nuestro catálogo digital en <a href='https://flowerforyoullc.com' target='_blank' style='color: #FF97A4; font-weight: bold;'>flowerforyoullc.com</a> y aplícalo al finalizar tu compra.</p>",
   },
   {
     id: "thanks",
     name: "💌 Agradecimiento & Seguimiento Post-Venta",
+    defaultSender: SENDER_ALIASES[2].formatted,
     subject: "🌸 ¡Gracias por tu Compra! - Flowers For You LLC",
     body: "<p>¡Hola! 🌸</p><p>Esperamos que el arreglo floral haya llevado una gran sonrisa y un momento inolvidable.</p><p>Para nosotros cada detalle cuenta. Si tienes un minuto, nos encantaría saber si todo fue de tu total agrado.</p><p>¡Esperamos acompañarte nuevamente en tus momentos más especiales!</p>",
   },
@@ -105,6 +143,7 @@ export function EmailCenterClient({
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [composeForm, setComposeForm] = useState({
+    from: SENDER_ALIASES[0].formatted,
     to: "",
     subject: "",
     bodyHtml: TEMPLATES[0].body,
@@ -185,6 +224,7 @@ export function EmailCenterClient({
   const handleReply = (email: EmailItem) => {
     const replyTarget = email.replyTo || email.customerEmail || (email.direction === "inbound" ? email.from : email.to[0]);
     setComposeForm({
+      from: SENDER_ALIASES[0].formatted,
       to: replyTarget,
       subject: email.subject.startsWith("Re:") ? email.subject : ("Re: " + email.subject),
       bodyHtml: "<p>¡Hola " + (email.customerName || "") + "! 🌸</p><p>En respuesta a tu consulta...</p><hr style='border: 0; border-top: 1px solid #eee; margin: 15px 0;'><blockquote style='color: #666; font-size: 12px; margin: 0; padding-left: 10px; border-left: 3px solid #ff97a4;'><strong>Mensaje Previo:</strong><br>" + (email.bodyHtml || email.bodyText || "") + "</blockquote>",
@@ -201,6 +241,7 @@ export function EmailCenterClient({
     if (!tpl) return;
     setComposeForm((prev) => ({
       ...prev,
+      from: tpl.defaultSender || prev.from,
       subject: prev.subject || tpl.subject,
       bodyHtml: tpl.body,
     }));
@@ -219,6 +260,7 @@ export function EmailCenterClient({
 
     try {
       const res = await sendCustomEmailAction({
+        from: composeForm.from,
         to: composeForm.to,
         subject: composeForm.subject,
         bodyHtml: composeForm.bodyHtml,
@@ -229,11 +271,12 @@ export function EmailCenterClient({
       });
 
       if (res.success) {
-        setFeedbackMsg({ type: "success", text: "¡Correo enviado con éxito desde sales@flowerforyoullc.com!" });
+        setFeedbackMsg({ type: "success", text: "¡Correo enviado con éxito desde " + (composeForm.from.match(/<(.+)>/)?.[1] || composeForm.from) + "!" });
         setTimeout(() => {
           setIsComposeOpen(false);
           setFeedbackMsg(null);
           setComposeForm({
+            from: SENDER_ALIASES[0].formatted,
             to: "",
             subject: "",
             bodyHtml: TEMPLATES[0].body,
@@ -268,11 +311,11 @@ export function EmailCenterClient({
                 Centro de Correos & Webmail
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300">
-                sales@flowerforyoullc.com
+                @flowerforyoullc.com
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-              Administra mensajes de clientes, envía cotizaciones y supervisa el flujo de correos corporativos.
+              Envía desde múltiples alias oficiales (sales@, info@, support@, orders@, delivery@, gerencia@) y administra el inbox de clientes.
             </p>
           </div>
         </div>
@@ -281,6 +324,7 @@ export function EmailCenterClient({
           <button
             onClick={() => {
               setComposeForm({
+                from: SENDER_ALIASES[0].formatted,
                 to: "",
                 subject: "",
                 bodyHtml: TEMPLATES[0].body,
@@ -406,10 +450,10 @@ export function EmailCenterClient({
           <div className="p-3 bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-900/40 rounded-2xl text-[11px] text-gray-600 dark:text-gray-400 space-y-1">
             <div className="flex items-center gap-1.5 font-bold text-[#B0004A] dark:text-pink-300">
               <Sparkles size={13} />
-              <span>Notificación Triple Activa</span>
+              <span>Múltiples Alias Activos</span>
             </div>
             <p>
-              Toda orden y mensaje se entrega en copia simultánea a los 3 correos de administración.
+              Puedes enviar desde cualquier cuenta de @flowerforyoullc.com con copia automática a los 3 administradores.
             </p>
           </div>
         </div>
@@ -614,7 +658,7 @@ export function EmailCenterClient({
                     Redactar Correo Oficial
                   </h3>
                   <span className="text-[10px] text-gray-500 font-medium block">
-                    Remitente: &quot;Flowers For You LLC&quot; &lt;sales@flowerforyoullc.com&gt;
+                    Emite correos corporativos oficiales bajo @flowerforyoullc.com
                   </span>
                 </div>
               </div>
@@ -629,21 +673,41 @@ export function EmailCenterClient({
 
             <form onSubmit={handleSendEmail} className="p-6 space-y-4">
               
-              {/* Selector de Plantillas */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block">
-                  Plantilla Rápida
-                </label>
-                <select
-                  onChange={(e) => handleApplyTemplate(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
-                >
-                  {TEMPLATES.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Selector de Remitente (De:) */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block">
+                    Remitente Oficial (De:) *
+                  </label>
+                  <select
+                    value={composeForm.from}
+                    onChange={(e) => setComposeForm({ ...composeForm, from: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
+                  >
+                    {SENDER_ALIASES.map((alias) => (
+                      <option key={alias.id} value={alias.formatted}>
+                        {alias.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Selector de Plantillas */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block">
+                    Plantilla Rápida
+                  </label>
+                  <select
+                    onChange={(e) => handleApplyTemplate(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
+                  >
+                    {TEMPLATES.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

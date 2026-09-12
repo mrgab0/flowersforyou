@@ -17,13 +17,23 @@ import {
   Reply,
   AlertCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  CheckSquare,
+  Square,
+  Check,
+  X,
+  Clock,
+  Filter
 } from "lucide-react";
 import {
   getEmailsAction,
   sendCustomEmailAction,
   markEmailAsReadAction,
+  bulkMarkEmailsAsReadAction,
   deleteEmailAction,
+  bulkDeleteEmailsAction,
 } from "@/lib/actions/emails";
 
 interface EmailItem {
@@ -132,12 +142,15 @@ export function EmailCenterClient({
   initialInboxCount,
 }: Props) {
   const [messages, setMessages] = useState<EmailItem[]>(initialMessages);
-  const [selectedEmail, setSelectedEmail] = useState<EmailItem | null>(initialMessages[0] || null);
   const [folder, setFolder] = useState<"inbox" | "sent" | "all">("inbox");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [unreadCount, setUnreadCount] = useState(initialUnread);
   const [isPending, startTransition] = useTransition();
+
+  // Estados para Selección Múltiple y Visor Inline Acordeón
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   // Modal de redacción
   const [isComposeOpen, setIsComposeOpen] = useState(false);
@@ -163,11 +176,7 @@ export function EmailCenterClient({
       });
       if (res.success && res.data) {
         setMessages(res.data);
-        if (res.data.length > 0) {
-          setSelectedEmail(res.data[0]);
-        } else {
-          setSelectedEmail(null);
-        }
+        setSelectedIds(new Set());
         if (typeof res.unreadCount === "number") setUnreadCount(res.unreadCount);
       }
     });
@@ -189,39 +198,124 @@ export function EmailCenterClient({
     loadEmails(folder, typeFilter, searchQuery);
   };
 
-  const handleSelectEmail = async (email: EmailItem) => {
-    setSelectedEmail(email);
-    if (!email.isRead && email.direction === "inbound") {
+  // Expandir / Contraer Correo Inline (Estilo Gmail)
+  const handleToggleExpand = async (email: EmailItem) => {
+    const isCurrentlyExpanded = expandedIds.has(email._id);
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (isCurrentlyExpanded) {
+        next.delete(email._id);
+      } else {
+        next.add(email._id);
+      }
+      return next;
+    });
+
+    // Si no está leído y es entrante, marcarlo como leído automáticamente al abrirlo
+    if (!isCurrentlyExpanded && !email.isRead && email.direction === "inbound") {
       setMessages((prev) => prev.map((m) => (m._id === email._id ? { ...m, isRead: true } : m)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
       await markEmailAsReadAction(email._id, true);
     }
   };
 
-  const handleToggleRead = async (email: EmailItem) => {
+  // Toggle Selección Individual
+  const handleToggleSelect = (emailId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(emailId)) {
+        next.delete(emailId);
+      } else {
+        next.add(emailId);
+      }
+      return next;
+    });
+  };
+
+  // Seleccionar / Deseleccionar Todos
+  const handleSelectAll = () => {
+    if (selectedIds.size === messages.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(messages.map((m) => m._id)));
+    }
+  };
+
+  // Acciones en Lote: Marcar como Leído / No Leído
+  const handleBulkMarkRead = async (isRead: boolean) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    setMessages((prev) =>
+      prev.map((m) => (selectedIds.has(m._id) ? { ...m, isRead } : m))
+    );
+
+    const affectedInboundUnread = messages.filter(
+      (m) => selectedIds.has(m._id) && m.direction === "inbound" && m.isRead !== isRead
+    ).length;
+
+    if (isRead) {
+      setUnreadCount((prev) => Math.max(0, prev - affectedInboundUnread));
+    } else {
+      setUnreadCount((prev) => prev + affectedInboundUnread);
+    }
+
+    setSelectedIds(new Set());
+    await bulkMarkEmailsAsReadAction(ids, isRead);
+  };
+
+  // Acciones en Lote: Eliminar Seleccionados
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    if (!confirm(`¿Estás seguro de eliminar los ${ids.length} correos seleccionados?`)) {
+      return;
+    }
+
+    setMessages((prev) => prev.filter((m) => !selectedIds.has(m._id)));
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+    setSelectedIds(new Set());
+    await bulkDeleteEmailsAction(ids);
+  };
+
+  // Alternar Estado Leído Individual
+  const handleToggleRead = async (email: EmailItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const nextState = !email.isRead;
     setMessages((prev) => prev.map((m) => (m._id === email._id ? { ...m, isRead: nextState } : m)));
     if (email.direction === "inbound") {
       setUnreadCount((prev) => (nextState ? Math.max(0, prev - 1) : prev + 1));
     }
-    if (selectedEmail?._id === email._id) {
-      setSelectedEmail({ ...selectedEmail, isRead: nextState });
-    }
     await markEmailAsReadAction(email._id, nextState);
   };
 
-  const handleDelete = async (emailId: string) => {
+  // Eliminar Correo Individual
+  const handleDelete = async (emailId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!confirm("¿Estás seguro de eliminar este registro de correo?")) return;
     setMessages((prev) => prev.filter((m) => m._id !== emailId));
-    if (selectedEmail?._id === emailId) {
-      const remaining = messages.filter((m) => m._id !== emailId);
-      setSelectedEmail(remaining[0] || null);
-    }
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(emailId);
+      return next;
+    });
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(emailId);
+      return next;
+    });
     await deleteEmailAction(emailId);
   };
 
   // Abrir redactor prellenado para responder
-  const handleReply = (email: EmailItem) => {
+  const handleReply = (email: EmailItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const replyTarget = email.replyTo || email.customerEmail || (email.direction === "inbound" ? email.from : email.to[0]);
     setComposeForm({
       from: SENDER_ALIASES[0].formatted,
@@ -296,6 +390,9 @@ export function EmailCenterClient({
     }
   };
 
+  const isAllSelected = messages.length > 0 && selectedIds.size === messages.length;
+  const isPartiallySelected = selectedIds.size > 0 && selectedIds.size < messages.length;
+
   return (
     <div className="bg-white dark:bg-[#181922] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col min-h-[750px]">
       
@@ -315,7 +412,7 @@ export function EmailCenterClient({
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-              Envía desde múltiples alias oficiales (sales@, info@, support@, orders@, delivery@, gerencia@) y administra el inbox de clientes.
+              Administra múltiples correos con selección masiva y vista de hilo expandible directamente bajo cada mensaje.
             </p>
           </div>
         </div>
@@ -351,7 +448,7 @@ export function EmailCenterClient({
         </div>
       </div>
 
-      {/* Cuerpo Principal: Sidebar de Carpetas + Lista de Correos + Visor */}
+      {/* Cuerpo Principal: Sidebar de Carpetas + Feed Expandible Inline */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
         
         {/* Columna Izquierda: Carpetas y Filtros (3 columnas) */}
@@ -453,192 +550,353 @@ export function EmailCenterClient({
               <span>Múltiples Alias Activos</span>
             </div>
             <p>
-              Puedes enviar desde cualquier cuenta de @flowerforyoullc.com con copia automática a los 3 administradores.
+              Envía desde cualquier cuenta corporativa y visualiza el historial de respuestas expandible en tiempo real.
             </p>
           </div>
         </div>
 
-        {/* Columna Central: Lista de Mensajes (4 columnas) */}
-        <div className="lg:col-span-4 border-r border-gray-200 dark:border-gray-800 overflow-y-auto max-h-[700px] divide-y divide-gray-100 dark:divide-gray-800">
-          {messages.length === 0 ? (
-            <div className="p-12 text-center text-gray-400 space-y-2">
-              <Mail size={32} className="mx-auto text-gray-300 dark:text-gray-600" />
-              <p className="text-xs font-semibold">No se encontraron correos en esta vista</p>
-            </div>
-          ) : (
-            messages.map((email) => {
-              const isSelected = selectedEmail?._id === email._id;
-              const formattedDate = new Date(email.createdAt).toLocaleDateString("es-US", {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              });
-
-              return (
-                <div
-                  key={email._id}
-                  onClick={() => handleSelectEmail(email)}
-                  className={"p-4 cursor-pointer transition-all flex items-start gap-3 " + (
-                    isSelected
-                      ? "bg-pink-50/80 dark:bg-pink-950/40 border-l-4 border-[#FF97A4]"
-                      : "hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                  ) + " " + (!email.isRead && email.direction === "inbound" ? "font-bold bg-amber-50/40 dark:bg-amber-950/20" : "")}
-                >
-                  <div className="pt-1">
-                    {!email.isRead && email.direction === "inbound" ? (
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#FF97A4]" title="No leído" />
-                    ) : (
-                      <div className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-700" />
-                    )}
+        {/* Columna Derecha: Feed Expandible Inline con Acciones en Lote (9 columnas) */}
+        <div className="lg:col-span-9 flex flex-col bg-white dark:bg-[#181922]">
+          
+          {/* Barra de Herramientas de Selección Múltiple y Acciones Masivas */}
+          <div className="p-3.5 border-b border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-900/40 flex items-center justify-between gap-3 min-h-[52px]">
+            
+            <div className="flex items-center gap-3">
+              {/* Checkbox Maestro para Seleccionar Todos */}
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                title={isAllSelected ? "Deseleccionar todos" : "Seleccionar todos"}
+                className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+              >
+                {isAllSelected ? (
+                  <CheckSquare size={18} className="text-[#FF97A4]" />
+                ) : isPartiallySelected ? (
+                  <div className="w-[18px] h-[18px] rounded border-2 border-[#FF97A4] bg-pink-100 dark:bg-pink-950 flex items-center justify-center">
+                    <span className="w-2 h-0.5 bg-[#FF97A4]" />
                   </div>
+                ) : (
+                  <Square size={18} className="text-gray-400" />
+                )}
+                <span className="hidden sm:inline text-gray-600 dark:text-gray-300 text-xs">
+                  {selectedIds.size > 0 ? `${selectedIds.size} seleccionados` : "Seleccionar todos"}
+                </span>
+              </button>
 
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-gray-900 dark:text-white truncate font-bold">
-                        {email.customerName || (email.direction === "inbound" ? email.from.split("<")[0].trim() || email.from : email.to.join(", "))}
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-normal whitespace-nowrap">
-                        {formattedDate}
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-gray-700 dark:text-gray-300 truncate">
-                      {email.subject}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className={"text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider " + (
-                        email.type === "contact_form"
-                          ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
-                          : email.type === "order_receipt"
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                          : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                      )}>
-                        {email.type === "contact_form" ? "Formulario" : email.type === "order_receipt" ? "Recibo" : "Directo"}
-                      </span>
-                      {email.customerPhone && (
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-0.5">
-                          <Phone size={10} />
-                          <span>WhatsApp</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Columna Derecha: Visor de Correo Seleccionado (5 columnas) */}
-        <div className="lg:col-span-5 p-6 flex flex-col justify-between overflow-y-auto max-h-[700px] bg-white dark:bg-[#181922]">
-          {selectedEmail ? (
-            <div className="space-y-6">
-              
-              {/* Header del Mensaje */}
-              <div className="space-y-4 pb-4 border-b border-gray-100 dark:border-gray-800">
-                <div className="flex items-start justify-between gap-4">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white font-serif leading-tight">
-                    {selectedEmail.subject}
-                  </h2>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleToggleRead(selectedEmail)}
-                      title={selectedEmail.isRead ? "Marcar como no leído" : "Marcar como leído"}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 transition-colors"
-                    >
-                      {selectedEmail.isRead ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(selectedEmail._id)}
-                      title="Eliminar mensaje"
-                      className="p-2 hover:bg-red-50 dark:hover:bg-red-950 text-gray-400 hover:text-red-600 rounded-xl transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-2xl space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <strong className="text-gray-500 dark:text-gray-400">De: </strong>
-                      <span className="text-gray-900 dark:text-white font-bold">{selectedEmail.from}</span>
-                    </div>
-                    <span className="text-gray-400 text-[11px]">
-                      {new Date(selectedEmail.createdAt).toLocaleString("es-US")}
-                    </span>
-                  </div>
-
-                  <div>
-                    <strong className="text-gray-500 dark:text-gray-400">Para: </strong>
-                    <span className="text-gray-900 dark:text-white">{selectedEmail.to.join(", ")}</span>
-                  </div>
-
-                  {selectedEmail.customerName && (
-                    <div>
-                      <strong className="text-gray-500 dark:text-gray-400">Cliente: </strong>
-                      <span className="text-gray-900 dark:text-white font-semibold">{selectedEmail.customerName}</span>
-                    </div>
-                  )}
-
-                  {selectedEmail.customerPhone && (
-                    <div>
-                      <strong className="text-gray-500 dark:text-gray-400">Teléfono: </strong>
-                      <a
-                        href={"https://wa.me/" + selectedEmail.customerPhone.replace(/\D/g, "")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
-                      >
-                        {selectedEmail.customerPhone} (WhatsApp)
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Botones de Acción Rápida */}
-              <div className="flex flex-wrap gap-2">
+              {/* Botón de Expansión Global */}
+              {messages.length > 0 && (
                 <button
-                  onClick={() => handleReply(selectedEmail)}
-                  className="bg-[#FF97A4] hover:bg-[#B0004A] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                  type="button"
+                  onClick={() => {
+                    if (expandedIds.size === messages.length) {
+                      setExpandedIds(new Set());
+                    } else {
+                      setExpandedIds(new Set(messages.map((m) => m._id)));
+                    }
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 font-medium px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <Reply size={14} />
-                  <span>Responder por Correo</span>
+                  {expandedIds.size === messages.length ? "Contraer todos" : "Expandir todos"}
+                </button>
+              )}
+            </div>
+
+            {/* Acciones en Lote Flotantes cuando hay correos seleccionados */}
+            {selectedIds.size > 0 ? (
+              <div className="flex items-center gap-2 animate-in fade-in duration-200">
+                <button
+                  type="button"
+                  onClick={() => handleBulkMarkRead(true)}
+                  className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Marcar como leídos"
+                >
+                  <Eye size={14} className="text-emerald-500" />
+                  <span className="hidden sm:inline">Marcar leídos</span>
                 </button>
 
-                {selectedEmail.customerPhone && (
-                  <a
-                    href={"https://wa.me/" + selectedEmail.customerPhone.replace(/\D/g, "") + "?text=" + encodeURIComponent(
-                      "¡Hola " + (selectedEmail.customerName || "") + "! 🌸 Te contactamos de Flowers For You LLC en relación a tu consulta."
+                <button
+                  type="button"
+                  onClick={() => handleBulkMarkRead(false)}
+                  className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Marcar como no leídos"
+                >
+                  <EyeOff size={14} className="text-amber-500" />
+                  <span className="hidden sm:inline">No leídos</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Eliminar seleccionados"
+                >
+                  <Trash2 size={14} />
+                  <span>Eliminar ({selectedIds.size})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+                  title="Cancelar selección"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="text-xs text-gray-400 font-medium">
+                {messages.length} {messages.length === 1 ? "correo" : "correos"} en esta vista
+              </div>
+            )}
+
+          </div>
+
+          {/* Lista de Correos con Acordeón Desplegable Directo Debajo */}
+          <div className="overflow-y-auto max-h-[720px] divide-y divide-gray-100 dark:divide-gray-800">
+            {messages.length === 0 ? (
+              <div className="p-16 text-center text-gray-400 space-y-3">
+                <Mail size={44} className="mx-auto text-gray-300 dark:text-gray-700" />
+                <p className="text-sm font-bold text-gray-600 dark:text-gray-300">No se encontraron correos en esta bandeja</p>
+                <p className="text-xs text-gray-400">Prueba cambiando los filtros o la búsqueda</p>
+              </div>
+            ) : (
+              messages.map((email) => {
+                const isExpanded = expandedIds.has(email._id);
+                const isSelected = selectedIds.has(email._id);
+                const isUnread = !email.isRead && email.direction === "inbound";
+                
+                const formattedDate = new Date(email.createdAt).toLocaleDateString("es-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+
+                // Snippet limpio sin etiquetas HTML
+                const cleanSnippet = (email.bodyText || email.bodyHtml || "")
+                  .replace(/<[^>]*>?/gm, " ")
+                  .replace(/\s+/g, " ")
+                  .trim()
+                  .slice(0, 110);
+
+                return (
+                  <div
+                    key={email._id}
+                    className={"transition-colors " + (
+                      isExpanded
+                        ? "bg-pink-50/30 dark:bg-pink-950/20"
+                        : isSelected
+                        ? "bg-pink-50/50 dark:bg-pink-950/30"
+                        : isUnread
+                        ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/60"
+                        : "hover:bg-gray-50/70 dark:hover:bg-gray-800/40"
                     )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#25D366] hover:bg-[#1EBE5B] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
                   >
-                    <MessageCircle size={14} />
-                    <span>Contactar por WhatsApp</span>
-                  </a>
-                )}
-              </div>
+                    
+                    {/* Fila Principal de Resumen del Correo (Click para abrir visor debajo) */}
+                    <div
+                      onClick={() => handleToggleExpand(email)}
+                      role="button"
+                      tabIndex={0}
+                      className="p-4 cursor-pointer flex items-start sm:items-center gap-3 select-none"
+                    >
+                      {/* Checkbox de Selección Múltiple */}
+                      <div
+                        onClick={(e) => handleToggleSelect(email._id, e)}
+                        className="pt-0.5 sm:pt-0 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg cursor-pointer"
+                        title={isSelected ? "Deseleccionar" : "Seleccionar"}
+                      >
+                        {isSelected ? (
+                          <CheckSquare size={17} className="text-[#FF97A4]" />
+                        ) : (
+                          <Square size={17} className="text-gray-300 dark:text-gray-600 hover:text-gray-500" />
+                        )}
+                      </div>
 
-              {/* Contenido Renderizado del Correo */}
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed overflow-x-auto"
-                  dangerouslySetInnerHTML={{ __html: selectedEmail.bodyHtml }}
-                />
-              </div>
+                      {/* Punto de No Leído */}
+                      <div className="pt-1.5 sm:pt-0">
+                        {isUnread ? (
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#FF97A4] shadow-sm animate-pulse" title="No leído" />
+                        ) : (
+                          <div className="w-2.5 h-2.5 rounded-full bg-gray-200 dark:bg-gray-700" />
+                        )}
+                      </div>
 
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 p-8 space-y-3">
-              <Mail size={40} className="text-gray-300 dark:text-gray-700" />
-              <p className="text-sm font-semibold">Selecciona un correo de la lista para ver sus detalles</p>
-            </div>
-          )}
+                      {/* Remitente / Destinatario */}
+                      <div className="w-40 sm:w-48 flex-shrink-0">
+                        <span className={"text-xs truncate block " + (isUnread ? "font-black text-gray-900 dark:text-white" : "font-semibold text-gray-700 dark:text-gray-300")}>
+                          {email.customerName || (email.direction === "inbound" ? email.from.split("<")[0].trim() || email.from : email.to.join(", "))}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-mono truncate block">
+                          {email.direction === "inbound" ? (email.from.match(/<(.+)>/)?.[1] || email.from) : `Para: ${email.to[0]}`}
+                        </span>
+                      </div>
+
+                      {/* Asunto + Snippet (Estilo Gmail) */}
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="flex flex-wrap sm:flex-nowrap items-baseline gap-1.5">
+                          <span className={"text-xs truncate " + (isUnread ? "font-extrabold text-gray-900 dark:text-white" : "font-medium text-gray-800 dark:text-gray-200")}>
+                            {email.subject}
+                          </span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500 font-normal truncate hidden md:inline">
+                            — {cleanSnippet}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Badges de Categoría y WhatsApp */}
+                      <div className="hidden lg:flex items-center gap-1.5 flex-shrink-0">
+                        <span className={"text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider " + (
+                          email.type === "contact_form"
+                            ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                            : email.type === "order_receipt"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                            : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                        )}>
+                          {email.type === "contact_form" ? "Formulario" : email.type === "order_receipt" ? "Recibo" : "Directo"}
+                        </span>
+
+                        {email.customerPhone && (
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Phone size={10} />
+                            <span>WA</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Fecha y Flecha de Expansión */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-[11px] text-gray-400 font-medium whitespace-nowrap">
+                          {formattedDate}
+                        </span>
+                        <div className="text-gray-400 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                          {isExpanded ? <ChevronUp size={16} className="text-[#FF97A4]" /> : <ChevronDown size={16} />}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Visor Desplegable Inline Directamente Debajo (Estilo Gmail) */}
+                    {isExpanded && (
+                      <div className="px-6 py-5 border-t border-b border-pink-200/80 dark:border-pink-900/40 bg-white dark:bg-[#15161E] space-y-5 animate-in fade-in slide-in-from-top-2 duration-200 shadow-inner">
+                        
+                        {/* Cabecera del Correo Expandido */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/80 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+                          
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-extrabold text-sm text-[#1A1C1C] dark:text-white font-serif">
+                                {email.subject}
+                              </span>
+                              <span className={"text-[9px] px-2 py-0.5 rounded-full font-bold uppercase " + (
+                                email.type === "contact_form"
+                                  ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                                  : email.type === "order_receipt"
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                                  : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                              )}>
+                                {email.type === "contact_form" ? "Formulario Web" : email.type === "order_receipt" ? "Recibo de Pedido" : "Correo Directo"}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-gray-600 dark:text-gray-300">
+                              <div>
+                                <strong className="text-gray-400">De: </strong>
+                                <span className="font-semibold text-gray-900 dark:text-gray-100">{email.from}</span>
+                              </div>
+                              <div>
+                                <strong className="text-gray-400">Para: </strong>
+                                <span>{email.to.join(", ")}</span>
+                              </div>
+                              {email.customerName && (
+                                <div>
+                                  <strong className="text-gray-400">Cliente: </strong>
+                                  <span className="font-bold text-[#FF97A4]">{email.customerName}</span>
+                                </div>
+                              )}
+                              {email.customerPhone && (
+                                <div>
+                                  <strong className="text-gray-400">Teléfono: </strong>
+                                  <a
+                                    href={"https://wa.me/" + email.customerPhone.replace(/\D/g, "")}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1"
+                                  >
+                                    <Phone size={11} /> {email.customerPhone} (WhatsApp)
+                                  </a>
+                                </div>
+                              )}
+                              <div>
+                                <strong className="text-gray-400">Fecha: </strong>
+                                <span>{new Date(email.createdAt).toLocaleString("es-US")}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Botones de Acción Inline */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => handleReply(email, e)}
+                              className="bg-[#FF97A4] hover:bg-[#B0004A] text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm hover:scale-105"
+                            >
+                              <Reply size={14} />
+                              <span>Responder</span>
+                            </button>
+
+                            {email.customerPhone && (
+                              <a
+                                href={"https://wa.me/" + email.customerPhone.replace(/\D/g, "") + "?text=" + encodeURIComponent(
+                                  "¡Hola " + (email.customerName || "") + "! 🌸 Te contactamos de Flowers For You LLC en relación a tu consulta."
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-[#25D366] hover:bg-[#1EBE5B] text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                              >
+                                <MessageCircle size={14} />
+                                <span>WhatsApp</span>
+                              </a>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleRead(email, e)}
+                              title={email.isRead ? "Marcar como no leído" : "Marcar como leído"}
+                              className="p-2 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors"
+                            >
+                              {email.isRead ? <EyeOff size={15} /> : <Eye size={15} />}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => handleDelete(email._id, e)}
+                              title="Eliminar mensaje"
+                              className="p-2 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-950 text-gray-400 hover:text-red-600 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+
+                        </div>
+
+                        {/* Contenido Renderizado del Correo (Aprovecha Todo el Ancho) */}
+                        <div className="p-4 bg-white dark:bg-[#181922] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-x-auto">
+                          <div
+                            className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: email.bodyHtml }}
+                          />
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })
+            )}
+          </div>
+
         </div>
 
       </div>

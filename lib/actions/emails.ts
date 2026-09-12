@@ -197,6 +197,18 @@ export async function markEmailAsReadAction(id: string, isRead: boolean = true) 
   }
 }
 
+export async function bulkMarkEmailsAsReadAction(ids: string[], isRead: boolean = true) {
+  try {
+    await dbConnect();
+    if (!ids || ids.length === 0) return { success: true };
+    await EmailMessage.updateMany({ _id: { $in: ids } }, { isRead });
+    revalidatePath("/admin/correos");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error?.message || "Error al actualizar correos en lote." };
+  }
+}
+
 export async function deleteEmailAction(id: string) {
   try {
     await dbConnect();
@@ -205,6 +217,18 @@ export async function deleteEmailAction(id: string) {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error?.message || "Error al eliminar correo." };
+  }
+}
+
+export async function bulkDeleteEmailsAction(ids: string[]) {
+  try {
+    await dbConnect();
+    if (!ids || ids.length === 0) return { success: true };
+    await EmailMessage.deleteMany({ _id: { $in: ids } });
+    revalidatePath("/admin/correos");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error?.message || "Error al eliminar correos en lote." };
   }
 }
 

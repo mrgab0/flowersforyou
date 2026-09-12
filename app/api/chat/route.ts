@@ -26,8 +26,6 @@ export async function POST(req: Request) {
           : `\nContexto de Cliente Recurrente:\n${customerName ? `- Nombre del cliente: ${customerName}\n` : ''}${lastOrderId ? `- Último pedido registrado: ${lastOrderId}\n` : ''}- Nota: Si saludas o das la bienvenida al cliente, puedes llamarlo cordialmente por su nombre (ej: "¡Hola de nuevo, ${customerName}! 🌸"). Solo haz referencia al ID de orden si pregunta por su pedido o rastreo.\n`)
       : '';
 
-    const apiKey = process.env.GEMINI_API_KEY;
-
     // 1. Obtener catálogo, opciones de entrega y configuración de la tienda para nutrir el contexto
     await dbConnect();
     const [products, deliveryRes, siteConfigRes] = await Promise.all([
@@ -40,6 +38,7 @@ export async function POST(req: Request) {
     ]);
 
     const siteConfig = siteConfigRes?.data || {};
+    const apiKey = siteConfig?.geminiApiKey || process.env.GEMINI_API_KEY;
 
     const productCatalogSummary = (products && products.length > 0)
       ? products.map((p: any) => `- ${p.name} ($${p.price} USD) [Categoría: ${p.category || 'General'}] [Enlace: /productos/${p.slug}]: ${p.description ? p.description.slice(0, 100) : ''}`).join('\n')
@@ -140,13 +139,13 @@ Reglas estrictas de conversación humana y corta:
       parts: [{ text: m.text }]
     }));
 
-    // 4. Llamar a la API de Gemini priorizando Flash Lite por velocidad y bajo costo
+    // 4. Llamar a la API de Gemini priorizando Flash por velocidad, naturalidad y bajo costo
     const modelsToTry = [
-      'gemini-2.5-flash-lite',
-      'gemini-2.0-flash-lite',
-      'gemini-2.0-flash-lite-preview-02-05',
       'gemini-2.5-flash',
-      'gemini-2.0-flash'
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash-lite'
     ];
     let aiResponseText = "";
 

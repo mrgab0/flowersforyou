@@ -88,6 +88,9 @@ export interface ISiteConfig extends Document {
   smtpUserOverride?: string;
   smtpPassOverride?: string;
 
+  // IA Chatbot (Gemini Flash)
+  geminiApiKey?: string;
+
   updatedAt: Date;
 }
 
@@ -178,6 +181,9 @@ const SiteConfigSchema: Schema = new Schema({
   smtpPortOverride: { type: Number, default: 0 },
   smtpUserOverride: { type: String, default: "" },
   smtpPassOverride: { type: String, default: "" },
+
+  // IA Chatbot (Gemini Flash)
+  geminiApiKey: { type: String, default: "" },
 
   updatedAt: { type: Date, default: Date.now }
 });

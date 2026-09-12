@@ -52,7 +52,9 @@ const DEFAULT_SITE_CONFIG = {
   smtpHostOverride: "",
   smtpPortOverride: 0,
   smtpUserOverride: "",
-  smtpPassOverride: ""
+  smtpPassOverride: "",
+  // IA Chatbot (Gemini Flash)
+  geminiApiKey: ""
 };
 
 export async function getSiteConfig() {
@@ -140,6 +142,9 @@ export async function updateSiteConfig(formData: FormData) {
     const smtpUserOverride = (formData.get("smtpUserOverride") as string || "").trim();
     const smtpPassOverride = (formData.get("smtpPassOverride") as string || "").trim();
 
+    // IA Chatbot (Gemini Flash)
+    const geminiApiKey = (formData.get("geminiApiKey") as string || "").trim();
+
     await SiteConfig.findOneAndUpdate(
       { key: "global" },
       {
@@ -192,6 +197,7 @@ export async function updateSiteConfig(formData: FormData) {
         smtpPortOverride,
         smtpUserOverride,
         smtpPassOverride,
+        geminiApiKey,
         updatedAt: new Date()
       },
       { upsert: true, new: true }

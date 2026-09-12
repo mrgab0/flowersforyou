@@ -791,27 +791,27 @@ export default function AdminConfiguracionPage() {
                   onClick={() => {
                     setConfig({
                       ...config,
-                      corporateSenderEmail: "sales@flowersforyou.com",
-                      corporateReplyToEmail: "sales@flowersforyou.com",
+                      corporateSenderEmail: "sales@flowerforyoullc.com",
+                      corporateReplyToEmail: "sales@flowerforyoullc.com",
                       corporateSenderName: config.corporateSenderName || "Flowers For You LLC"
                     });
                   }}
                   className={`p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between space-y-2 ${
-                    (config.corporateSenderEmail || "sales@flowersforyou.com").includes(".com")
+                    (config.corporateSenderEmail || "").includes("flowerforyoullc.com")
                       ? "border-[#FF97A4] bg-pink-50/20 dark:bg-pink-950/20 shadow-sm"
                       : "border-gray-200 dark:border-gray-800 hover:border-pink-300"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-black text-xs text-[#1A1C1C] dark:text-white flex items-center gap-1.5">
-                      🌟 Dominio .COM (Recomendado)
+                      🌟 Dominio .COM (Verificado Resend)
                     </span>
-                    {(config.corporateSenderEmail || "sales@flowersforyou.com").includes(".com") && (
+                    {(config.corporateSenderEmail || "").includes("flowerforyoullc.com") && (
                       <span className="w-2.5 h-2.5 rounded-full bg-[#FF97A4]"></span>
                     )}
                   </div>
-                  <code className="text-xs text-[#FF97A4] font-mono font-bold">sales@flowersforyou.com</code>
-                  <span className="text-[10px] text-gray-400">Identidad principal comercial de la marca.</span>
+                  <code className="text-xs text-[#FF97A4] font-mono font-bold">sales@flowerforyoullc.com</code>
+                  <span className="text-[10px] text-gray-400">Identidad comercial oficial verificada en Resend.</span>
                 </button>
 
                 {/* Opción .ORG */}

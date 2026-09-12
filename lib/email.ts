@@ -84,22 +84,61 @@ export interface SendMailOptions {
 export async function sendEmail({ to, subject, html, from, replyTo, attachments, smtpOverride }: SendMailOptions) {
   try {
     const emailCfg = await getCorporateEmailConfig();
-    const transporter = await getTransporter(smtpOverride);
-    const recipients = Array.isArray(to) ? to.join(", ") : to;
-
+    const recipients = Array.isArray(to) ? to : [to];
     const fromAddress = from || emailCfg.senderFormatted;
     const replyToAddress = replyTo || emailCfg.replyTo;
 
+    // Detectar si tenemos una API Key de Resend (en RESEND_API_KEY o como smtpPass "re_...")
+    const resendApiKey = process.env.RESEND_API_KEY || (emailCfg.smtpPass?.startsWith("re_") ? emailCfg.smtpPass : null) || (smtpOverride?.pass?.startsWith("re_") ? smtpOverride.pass : null);
+
+    if (resendApiKey) {
+      const resendPayload: any = {
+        from: fromAddress,
+        to: recipients,
+        reply_to: replyToAddress,
+        subject,
+        html,
+      };
+
+      if (attachments && attachments.length > 0) {
+        resendPayload.attachments = attachments.map((att) => ({
+          filename: att.filename,
+          content: att.content ? (typeof att.content === "string" ? att.content : att.content.toString("base64")) : undefined,
+          path: att.path,
+        }));
+      }
+
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(resendPayload),
+      });
+
+      const resData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(resData?.message || `Error de Resend (${res.status})`);
+      }
+
+      console.log(`[Resend Success] Enviado a ${recipients.join(", ")} desde ${fromAddress} | ID: ${resData.id}`);
+      return { success: true, messageId: resData.id, sender: fromAddress };
+    }
+
+    // Si no es Resend API, usar NodeMailer SMTP estándar
+    const transporter = await getTransporter(smtpOverride);
     const info = await transporter.sendMail({
       from: fromAddress,
-      to: recipients,
+      to: recipients.join(", "),
       replyTo: replyToAddress,
       subject,
       html,
       attachments,
     });
 
-    console.log(`[Email Success] Enviado a ${recipients} desde ${fromAddress} | ID: ${info.messageId}`);
+    console.log(`[Email Success] Enviado a ${recipients.join(", ")} desde ${fromAddress} | ID: ${info.messageId}`);
     return { success: true, messageId: info.messageId, sender: fromAddress };
   } catch (error: any) {
     console.error("[Email Error] Error al enviar correo:", error);

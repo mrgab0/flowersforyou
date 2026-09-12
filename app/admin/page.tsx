@@ -13,6 +13,10 @@ export default function AdminPage() {
           <span className="text-2xl">🛍️</span>
           <span>Gestor de Órdenes & Despacho</span>
         </a>
+        <a href="/admin/correos" className="bg-rose-500 text-white p-5 rounded-2xl font-bold hover:bg-rose-600 text-center transition-all shadow-sm hover:shadow-md flex flex-col items-center justify-center gap-2">
+          <span className="text-2xl">✉️</span>
+          <span>Centro de Correos & Inbox</span>
+        </a>
         <a href="/admin/productos" className="bg-blue-600 text-white p-5 rounded-2xl font-bold hover:bg-blue-700 text-center transition-all shadow-sm hover:shadow-md flex flex-col items-center justify-center gap-2">
           <span className="text-2xl">📦</span>
           <span>Gestionar Productos</span>

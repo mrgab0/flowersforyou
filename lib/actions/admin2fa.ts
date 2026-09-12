@@ -3,32 +3,13 @@
 import dbConnect from "@/lib/db";
 import { SiteConfig } from "@/lib/models/SiteConfig";
 import * as QRCode from "qrcode";
-import * as nodemailer from "nodemailer";
 import * as crypto from "crypto";
 import * as speakeasy from "speakeasy";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { sendEmail, getAdminEmails } from "@/lib/email";
 
 const ADMIN_COOKIE_NAME = "ffy_admin_session";
-
-// Helper Nodemailer Transporter
-function getTransporter() {
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = parseInt(process.env.SMTP_PORT || "465", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!user || !pass) {
-    throw new Error("No hay credenciales SMTP configuradas.");
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-}
 
 // Helper para generar URL QR limpia y escaneable por Google Authenticator / Authy / iOS
 async function buildTotpQrData(secretBase32: string) {
@@ -204,17 +185,10 @@ export async function verify2FACodeAction(code: string) {
 export async function sendEmergencyRescueOtpAction() {
   await dbConnect();
   try {
-    const rawAdminEmails = process.env.ADMIN_EMAILS;
-    let adminEmails = rawAdminEmails
-      ? rawAdminEmails.split(",").map((e) => e.trim()).filter(Boolean)
-      : [];
-
-    if (adminEmails.length === 0 && process.env.SMTP_USER) {
-      adminEmails = [process.env.SMTP_USER];
-    }
+    const adminEmails = getAdminEmails();
 
     if (adminEmails.length === 0) {
-      return { success: false, error: "No se encontraron correos de administrador en Vercel SMTP_USER / ADMIN_EMAILS." };
+      return { success: false, error: "No se encontraron correos de administrador en ADMIN_EMAILS." };
     }
 
     // Generar código de 6 dígitos numéricos aleatorios
@@ -229,9 +203,6 @@ export async function sendEmergencyRescueOtpAction() {
       },
       { upsert: true, new: true }
     );
-
-    const transporter = getTransporter();
-    const sender = process.env.SMTP_USER ? `"Flowers For You Security" <${process.env.SMTP_USER}>` : '"Flowers For You Security"';
 
     const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background: #ffffff;">
@@ -257,22 +228,28 @@ export async function sendEmergencyRescueOtpAction() {
         </div>
         
         <div style="background-color: #f9f9f9; padding: 15px; text-align: center; border-top: 1px solid #eee; font-size: 11px; color: #aaa;">
-          Flowers For You Security System • Miami, FL
+          Flowers For You Security System • Houston, Texas
         </div>
       </div>
     `;
 
-    await transporter.sendMail({
-      from: sender,
-      to: adminEmails.join(", "),
+    const result = await sendEmail({
+      to: adminEmails,
       subject: `🔑 Código de Rescate 2FA: ${rescueOtp} - Flowers For You Admin`,
       html: emailContent,
     });
 
-    return {
-      success: true,
-      message: `Se envió el código de rescate de 6 dígitos a ${adminEmails[0]}.`,
-    };
+    if (result.success) {
+      return {
+        success: true,
+        message: `Se envió el código de rescate de 6 dígitos a: ${adminEmails.join(", ")}`,
+      };
+    } else {
+      return {
+        success: false,
+        error: result.error || "No se pudo entregar el correo de rescate.",
+      };
+    }
   } catch (error: any) {
     console.error("Error enviando OTP de rescate:", error);
     return { success: false, error: "No se pudo enviar el correo de rescate: " + (error?.message || "Error de servidor") };

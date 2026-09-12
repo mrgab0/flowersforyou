@@ -2,27 +2,7 @@
 
 import dbConnect from "@/lib/db";
 import { Order } from "@/lib/models/Order";
-import nodemailer from "nodemailer";
-import path from "path";
-import fs from "fs";
-
-function getTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || "587");
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    throw new Error("Missing SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS)");
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-}
+import { sendEmail, getAdminEmails, getCorporateEmailConfig } from "@/lib/email";
 
 export async function createOrder(orderData: any, existingOrderId?: string) {
   await dbConnect();
@@ -90,30 +70,26 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
     }
   }
 
-  // Notificación por Email usando Nodemailer
+  // Notificación y Factura por Email (Resend API / SMTP)
   try {
-    const rawAdminEmails = process.env.ADMIN_EMAILS;
-    let adminEmails = rawAdminEmails
-      ? rawAdminEmails.split(',').map(e => e.trim()).filter(Boolean)
-      : [];
+    const adminEmails = getAdminEmails();
+    const customerEmail = (savedOrder.customerEmail || orderData.customerEmail || "").trim();
 
-    if (adminEmails.length === 0 && process.env.SMTP_USER) {
-      adminEmails = [process.env.SMTP_USER];
+    // Construir lista de destinatarios (cliente + ambos administradores iirockalonso y flowersforyou403)
+    const recipientList: string[] = [];
+    if (customerEmail && customerEmail.includes("@")) {
+      recipientList.push(customerEmail);
+    }
+    for (const adm of adminEmails) {
+      if (!recipientList.includes(adm)) {
+        recipientList.push(adm);
+      }
     }
 
-    if (adminEmails.length === 0) {
-      console.error("Error enviando email SMTP: No se encontraron destinatarios válidos en ADMIN_EMAILS ni SMTP_USER.");
+    if (recipientList.length === 0) {
+      console.warn("No hay destinatarios válidos para la notificación de orden.");
     } else {
-      const transporter = getTransporter();
-      const sender = process.env.SMTP_FROM || `"Flowers For You LLC" <sales@flowersforyou.org>`;
-
-      // Destinatarios: Administradores y opcionalmente el cliente
-      const recipients = [...adminEmails];
-      if (savedOrder.customerEmail && savedOrder.customerEmail.trim()) {
-        recipients.push(savedOrder.customerEmail.trim());
-      }
-      const toEmails = Array.from(new Set(recipients)).join(", ");
-
+      const emailCfg = await getCorporateEmailConfig();
       const cleanPhoneDigits = (savedOrder.customerPhone || "").replace(/\D/g, "");
       const waLink = cleanPhoneDigits ? `https://wa.me/${cleanPhoneDigits.length === 10 ? '1' + cleanPhoneDigits : cleanPhoneDigits}` : "https://wa.me/16576988586";
 
@@ -124,13 +100,8 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
 
       const itemsSubtotal = (savedOrder.items || []).reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
 
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flowersforyou.vercel.app";
-      const fallbackLogoUrl = `${siteUrl.replace(/\/$/, "")}/logo.jpg`;
-
-      // Comprobar archivo del logo en el servidor de forma local para adjuntarlo inline (CID)
-      const logoPath = path.join(process.cwd(), "public", "logo.jpg");
-      const hasLogoFile = fs.existsSync(logoPath);
-      const logoSrc = hasLogoFile ? "cid:logo_image@flowersforyou" : fallbackLogoUrl;
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flowerforyoullc.com";
+      const logoSrc = `${siteUrl.replace(/\/$/, "")}/logo.jpg`;
 
       const emailContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background: #ffffff;">
@@ -149,7 +120,7 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
           </div>
           
           <div style="padding: 25px;">
-            <h2 style="color: #1A1C1C;">¡Comprobante de Pedido / Receipt! 🌸</h2>
+            <h2 style="color: #1A1C1C; margin-top: 0;">¡Comprobante de Pedido / Receipt! 🌸</h2>
 
             ${isConsolidatedWithin2Hours && originalOrder ? `
               <div style="margin-bottom: 20px; padding: 14px; background-color: #f3e8ff; border-left: 4px solid #9333ea; border-radius: 8px;">
@@ -211,7 +182,7 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
               `).join('')}
             </table>
 
-            {/* Desglose Fiscal e Impuestos Transparente */}
+            <!-- Desglose Fiscal e Impuestos Transparente -->
             <div style="background-color: #fafafa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                 <span>Subtotal Arreglos & Adicionales:</span>
@@ -257,29 +228,17 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
         </div>
       `;
 
-      const mailOptions: any = {
-        from: sender,
-        to: toEmails,
-        subject: `Factura / Confirmación de Pedido: ${savedOrder.orderId}`,
+      await sendEmail({
+        to: recipientList,
+        subject: `🌸 Factura / Confirmación de Pedido: ${savedOrder.orderId}`,
         html: emailContent,
-      };
+        replyTo: emailCfg.replyTo,
+      });
 
-      if (hasLogoFile) {
-        mailOptions.attachments = [
-          {
-            filename: "logo.jpg",
-            path: logoPath,
-            cid: "logo_image@flowersforyou",
-          },
-        ];
-      }
-
-      const info = await transporter.sendMail(mailOptions);
-
-      console.log("Email enviado con éxito a", toEmails, "MessageId:", info.messageId);
+      console.log(`[Order Email] Notificación de orden ${savedOrder.orderId} enviada a: ${recipientList.join(", ")}`);
     }
   } catch (error) {
-    console.error("Error enviando email SMTP:", error);
+    console.error("Error enviando email de orden:", error);
   }
 
   return { success: true, orderId: savedOrder.orderId };

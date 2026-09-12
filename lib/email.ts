@@ -10,13 +10,25 @@ export interface SmtpConfigOverride {
 }
 
 export async function getCorporateEmailConfig() {
-  let senderEmail = "sales@flowersforyou.com";
+  let senderEmail = "sales@flowerforyoullc.com";
   let senderName = "Flowers For You LLC";
-  let replyTo = "sales@flowersforyou.com";
+  let replyTo = "sales@flowerforyoullc.com";
   let smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
   let smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
   let smtpUser = process.env.SMTP_USER || "";
   let smtpPass = process.env.SMTP_PASS || "";
+
+  // Si SMTP_FROM está definido en el entorno, usarlo como valor base
+  if (process.env.SMTP_FROM) {
+    const match = process.env.SMTP_FROM.match(/^(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)$/);
+    if (match) {
+      if (match[1]) senderName = match[1].trim();
+      if (match[2]) {
+        senderEmail = match[2].trim();
+        replyTo = match[2].trim();
+      }
+    }
+  }
 
   try {
     await dbConnect();
@@ -49,6 +61,18 @@ export async function getCorporateEmailConfig() {
   };
 }
 
+export function getAdminEmails(): string[] {
+  const defaults = ["iirockalonso@gmail.com", "flowersforyou403@gmail.com"];
+  const rawEnv = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+  const envAdmins = rawEnv
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  const merged = Array.from(new Set([...defaults, ...envAdmins]));
+  return merged.filter((email) => email.includes("@"));
+}
+
 export async function getTransporter(override?: SmtpConfigOverride) {
   const emailCfg = await getCorporateEmailConfig();
 
@@ -69,7 +93,7 @@ export async function getTransporter(override?: SmtpConfigOverride) {
   });
 }
 
-export const DEFAULT_CORPORATE_SENDER = process.env.SMTP_FROM || `"Flowers For You LLC" <sales@flowersforyou.com>`;
+export const DEFAULT_CORPORATE_SENDER = process.env.SMTP_FROM || `"Flowers For You LLC" <sales@flowerforyoullc.com>`;
 
 export interface SendMailOptions {
   to: string | string[];

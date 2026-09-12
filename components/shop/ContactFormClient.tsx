@@ -1,10 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ShopHeader } from "@/components/shop/ShopHeader";
 import { Footer } from "@/components/shop/Footer";
-import { MapPin, Phone, Clock, Send, CheckCircle2, MessageCircle, Loader2, Sparkles } from "lucide-react";
+import { MapPin, Phone, Clock, Send, CheckCircle2, MessageCircle, Loader2, Sparkles, Paperclip, Image as ImageIcon, X, Upload } from "lucide-react";
 import { sendContactEmail } from "@/lib/actions/contact";
+import { IKContext, IKUpload } from "imagekitio-react";
+
+const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/nzjtc1avv";
+const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "public_huW/0HuThqhQncgbm14znTZHVpk=";
+
+const authenticator = async () => {
+  try {
+    const response = await fetch("/api/imagekit-auth");
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error en auth API: ${response.status} - ${errorText}`);
+    }
+    const data = await response.json();
+    return {
+      signature: data.signature,
+      expire: data.expire,
+      token: data.token,
+    };
+  } catch (error: any) {
+    console.error("Error al autenticar ImageKit:", error);
+    throw error;
+  }
+};
 
 export function ContactFormClient() {
   const [loading, setLoading] = useState(false);
@@ -17,13 +40,46 @@ export function ContactFormClient() {
     message: "",
   });
 
+  // Estado para foto / imagen adjunta
+  const [attachmentUrl, setAttachmentUrl] = useState("");
+  const [attachmentName, setAttachmentName] = useState("");
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const ikUploadRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadStart = () => {
+    setUploadingAttachment(true);
+  };
+
+  const handleUploadError = (err: any) => {
+    console.error("Error al subir imagen a ImageKit:", err);
+    alert("No se pudo subir la foto de referencia. Intenta nuevamente o continúa sin adjunto.");
+    setUploadingAttachment(false);
+  };
+
+  const handleUploadSuccess = (res: any) => {
+    setUploadingAttachment(false);
+    if (res && res.url) {
+      setAttachmentUrl(res.url);
+      setAttachmentName(res.name || "foto_referencia.jpg");
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentUrl("");
+    setAttachmentName("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
 
     setLoading(true);
     try {
-      const res = await sendContactEmail(formData);
+      const res = await sendContactEmail({
+        ...formData,
+        attachmentUrl: attachmentUrl || undefined,
+        attachmentName: attachmentName || undefined,
+      });
       if (res.success) {
         setSubmitted(true);
         setShowTooltip(true);
@@ -168,6 +224,8 @@ export function ContactFormClient() {
                         setSubmitted(false);
                         setShowTooltip(false);
                         setFormData({ name: "", email: "", phone: "", message: "" });
+                        setAttachmentUrl("");
+                        setAttachmentName("");
                       }}
                       className="bg-gray-100 text-gray-700 px-6 py-3.5 rounded-full font-bold text-xs hover:bg-gray-200 transition-all"
                     >
@@ -231,9 +289,82 @@ export function ContactFormClient() {
                     />
                   </div>
 
+                  {/* Sección de Adjuntar Foto de Referencia (ImageKit) */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Paperclip size={14} className="text-[#FF97A4]" />
+                        <span>Foto o Diseño de Referencia (Opcional)</span>
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-normal">JPG, PNG o WebP</span>
+                    </label>
+
+                    <IKContext publicKey={publicKey} urlEndpoint={urlEndpoint} authenticator={authenticator}>
+                      <IKUpload
+                        ref={ikUploadRef}
+                        onError={handleUploadError}
+                        onSuccess={handleUploadSuccess}
+                        onUploadStart={handleUploadStart}
+                        style={{ display: "none" }}
+                        folder="/contact_attachments"
+                        accept="image/*"
+                      />
+
+                      {attachmentUrl ? (
+                        <div className="p-3 bg-pink-50/60 border border-pink-200 rounded-2xl flex items-center justify-between gap-3 animate-in fade-in duration-200">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={attachmentUrl}
+                              alt="Referencia subida"
+                              className="w-14 h-14 rounded-xl object-cover border border-pink-200 shadow-sm flex-shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-gray-800 truncate">{attachmentName || "Foto de referencia"}</p>
+                              <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                                <CheckCircle2 size={11} /> Imagen adjuntada con éxito
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveAttachment}
+                            className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                            title="Quitar foto"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => !uploadingAttachment && ikUploadRef.current?.click()}
+                          className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-1 bg-gray-50/50 hover:bg-pink-50/40 hover:border-[#FF97A4] ${
+                            uploadingAttachment ? "opacity-60 cursor-not-allowed" : "border-gray-200"
+                          }`}
+                        >
+                          {uploadingAttachment ? (
+                            <div className="flex items-center gap-2 py-1">
+                              <Loader2 className="animate-spin text-[#FF97A4]" size={18} />
+                              <span className="text-xs font-bold text-gray-600">Subiendo foto a alta resolución...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
+                                <div className="p-1.5 bg-[#FF97A4]/10 rounded-lg text-[#FF97A4]">
+                                  <ImageIcon size={16} />
+                                </div>
+                                <span>¿Tienes una foto de un ramo o estilo que te gusta? Haz clic para adjuntarla</span>
+                              </div>
+                              <p className="text-[10px] text-gray-400">Nuestro florista la revisará para prepararte una propuesta idéntica</p>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </IKContext>
+                  </div>
+
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || uploadingAttachment}
                     className="w-full bg-[#FF97A4] hover:bg-[#B0004A] text-white py-4 rounded-full font-bold text-sm transition-all shadow-lg shadow-[#FF97A4]/20 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:bg-gray-300"
                   >
                     {loading ? (

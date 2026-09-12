@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import {
   Mail,
   Inbox,
@@ -25,7 +25,14 @@ import {
   Check,
   X,
   Clock,
-  Filter
+  Filter,
+  Paperclip,
+  Download,
+  ExternalLink,
+  FileText,
+  Image as ImageIcon,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import {
   getEmailsAction,
@@ -35,6 +42,36 @@ import {
   deleteEmailAction,
   bulkDeleteEmailsAction,
 } from "@/lib/actions/emails";
+import { IKContext, IKUpload } from "imagekitio-react";
+
+const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/nzjtc1avv";
+const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "public_huW/0HuThqhQncgbm14znTZHVpk=";
+
+const authenticator = async () => {
+  try {
+    const response = await fetch("/api/imagekit-auth");
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error en auth API: ${response.status} - ${errorText}`);
+    }
+    const data = await response.json();
+    return {
+      signature: data.signature,
+      expire: data.expire,
+      token: data.token,
+    };
+  } catch (error: any) {
+    console.error("Error al autenticar ImageKit:", error);
+    throw error;
+  }
+};
+
+interface EmailAttachment {
+  filename: string;
+  url: string;
+  size?: number;
+  mimeType?: string;
+}
 
 interface EmailItem {
   _id: string;
@@ -52,6 +89,7 @@ interface EmailItem {
   customerPhone?: string;
   customerEmail?: string;
   orderId?: string;
+  attachments?: EmailAttachment[];
   createdAt: string;
 }
 
@@ -155,6 +193,10 @@ export function EmailCenterClient({
   // Modal de redacción
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [composeAttachments, setComposeAttachments] = useState<EmailAttachment[]>([]);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const ikUploadRef = useRef<HTMLInputElement>(null);
+
   const [composeForm, setComposeForm] = useState({
     from: SENDER_ALIASES[0].formatted,
     to: "",
@@ -165,6 +207,35 @@ export function EmailCenterClient({
     bccAdmins: true,
   });
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleUploadStart = () => {
+    setUploadingAttachment(true);
+  };
+
+  const handleUploadError = (err: any) => {
+    console.error("Error al subir archivo a ImageKit:", err);
+    alert("Hubo un error al subir el archivo. Por favor intenta de nuevo.");
+    setUploadingAttachment(false);
+  };
+
+  const handleUploadSuccess = (res: any) => {
+    setUploadingAttachment(false);
+    if (res && res.url) {
+      setComposeAttachments((prev) => [
+        ...prev,
+        {
+          filename: res.name || "archivo_adjunto",
+          url: res.url,
+          size: res.size,
+          mimeType: res.fileType,
+        },
+      ]);
+    }
+  };
+
+  const handleRemoveComposeAttachment = (index: number) => {
+    setComposeAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Recargar correos
   const loadEmails = (targetFolder: "inbox" | "sent" | "all" = folder, targetType = typeFilter, query = searchQuery) => {
@@ -362,6 +433,7 @@ export function EmailCenterClient({
         customerPhone: composeForm.customerPhone,
         customerEmail: composeForm.to,
         bccAdmins: composeForm.bccAdmins,
+        attachments: composeAttachments.length > 0 ? composeAttachments : undefined,
       });
 
       if (res.success) {
@@ -369,6 +441,7 @@ export function EmailCenterClient({
         setTimeout(() => {
           setIsComposeOpen(false);
           setFeedbackMsg(null);
+          setComposeAttachments([]);
           setComposeForm({
             from: SENDER_ALIASES[0].formatted,
             to: "",
@@ -744,7 +817,7 @@ export function EmailCenterClient({
                         </div>
                       </div>
 
-                      {/* Badges de Categoría y WhatsApp */}
+                      {/* Badges de Categoría, WhatsApp y Adjuntos */}
                       <div className="hidden lg:flex items-center gap-1.5 flex-shrink-0">
                         <span className={"text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider " + (
                           email.type === "contact_form"
@@ -760,6 +833,13 @@ export function EmailCenterClient({
                           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <Phone size={10} />
                             <span>WA</span>
+                          </span>
+                        )}
+
+                        {email.attachments && email.attachments.length > 0 && (
+                          <span className="text-[10px] text-pink-600 dark:text-pink-400 font-bold bg-pink-50 dark:bg-pink-950/60 px-2 py-0.5 rounded-full flex items-center gap-1" title={`${email.attachments.length} archivo(s) adjunto(s)`}>
+                            <Paperclip size={10} />
+                            <span>{email.attachments.length}</span>
                           </span>
                         )}
                       </div>
@@ -887,6 +967,63 @@ export function EmailCenterClient({
                             dangerouslySetInnerHTML={{ __html: email.bodyHtml }}
                           />
                         </div>
+
+                        {/* Sección de Archivos y Fotos Adjuntas */}
+                        {email.attachments && email.attachments.length > 0 && (
+                          <div className="p-4 bg-gray-50/90 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-gray-200">
+                              <Paperclip size={15} className="text-[#FF97A4]" />
+                              <span>Archivos y Fotos Adjuntas ({email.attachments.length})</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                              {email.attachments.map((att, idx) => {
+                                const isImg = att.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) || att.mimeType?.startsWith("image/") || att.url.includes("imagekit.io");
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="p-3 bg-white dark:bg-[#181922] rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col justify-between gap-2 shadow-sm hover:border-[#FF97A4] transition-all"
+                                  >
+                                    <div className="space-y-2">
+                                      {isImg ? (
+                                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="block relative group overflow-hidden rounded-lg aspect-video bg-black/5">
+                                          <img src={att.url} alt={att.filename} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                                            <ExternalLink size={14} />
+                                            <span>Ver en grande</span>
+                                          </div>
+                                        </a>
+                                      ) : (
+                                        <div className="h-20 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                                          <FileText size={32} />
+                                        </div>
+                                      )}
+                                      <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate" title={att.filename}>
+                                        {att.filename}
+                                      </p>
+                                    </div>
+
+                                    <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                      <span className="text-[10px] text-gray-400">
+                                        {att.size ? `${(att.size / 1024).toFixed(1)} KB` : "Adjunto"}
+                                      </span>
+                                      <a
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download={att.filename}
+                                        className="text-xs text-[#FF97A4] hover:text-[#B0004A] font-bold flex items-center gap-1 hover:underline"
+                                      >
+                                        <Download size={13} />
+                                        <span>Descargar</span>
+                                      </a>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                       </div>
                     )}
@@ -1017,12 +1154,86 @@ export function EmailCenterClient({
                 </label>
                 <textarea
                   required
-                  rows={7}
+                  rows={6}
                   value={composeForm.bodyHtml}
                   onChange={(e) => setComposeForm({ ...composeForm, bodyHtml: e.target.value })}
                   placeholder="Escribe aquí el contenido del correo..."
                   className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-sans text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
                 />
+              </div>
+
+              {/* Adjuntos en el Redactor (ImageKit) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <Paperclip size={14} className="text-[#FF97A4]" />
+                    <span>Archivos o Fotos Adjuntas ({composeAttachments.length})</span>
+                  </label>
+                  <span className="text-[10px] text-gray-400">Resend & ImageKit CDN</span>
+                </div>
+
+                <IKContext publicKey={publicKey} urlEndpoint={urlEndpoint} authenticator={authenticator}>
+                  <IKUpload
+                    ref={ikUploadRef}
+                    onError={handleUploadError}
+                    onSuccess={handleUploadSuccess}
+                    onUploadStart={handleUploadStart}
+                    style={{ display: "none" }}
+                    folder="/admin_attachments"
+                    accept="image/*,application/pdf"
+                  />
+
+                  {/* Lista de Adjuntos Cargados */}
+                  {composeAttachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {composeAttachments.map((att, idx) => {
+                        const isImg = att.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) || att.mimeType?.startsWith("image/") || att.url.includes("imagekit.io");
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 p-2 bg-pink-50 dark:bg-pink-950/40 border border-pink-200 dark:border-pink-900 rounded-xl text-xs max-w-xs animate-in fade-in"
+                          >
+                            {isImg ? (
+                              <img src={att.url} alt={att.filename} className="w-7 h-7 rounded object-cover border border-pink-200" />
+                            ) : (
+                              <FileText size={16} className="text-[#FF97A4]" />
+                            )}
+                            <span className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-[120px]">
+                              {att.filename}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveComposeAttachment(idx)}
+                              className="p-1 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-lg text-rose-600 transition-colors"
+                              title="Eliminar adjunto"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={uploadingAttachment}
+                    onClick={() => ikUploadRef.current?.click()}
+                    className="w-full border border-dashed border-gray-300 dark:border-gray-700 hover:border-[#FF97A4] bg-gray-50 dark:bg-gray-800/60 hover:bg-pink-50/30 p-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2 transition-all"
+                  >
+                    {uploadingAttachment ? (
+                      <>
+                        <Loader2 className="animate-spin text-[#FF97A4]" size={15} />
+                        <span>Subiendo archivo a ImageKit...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} className="text-[#FF97A4]" />
+                        <span>Adjuntar Foto o Documento (ImageKit)</span>
+                      </>
+                    )}
+                  </button>
+                </IKContext>
               </div>
 
               <div className="flex items-center gap-2 pt-1">

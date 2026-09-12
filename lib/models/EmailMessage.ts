@@ -17,6 +17,12 @@ export interface IEmailMessage extends Document {
   orderId?: string;
   resendMessageId?: string;
   bccAdmins?: boolean;
+  attachments?: Array<{
+    filename: string;
+    url: string;
+    size?: number;
+    mimeType?: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -94,6 +100,14 @@ const EmailMessageSchema: Schema = new Schema(
       type: Boolean,
       default: true,
     },
+    attachments: [
+      {
+        filename: { type: String, required: true },
+        url: { type: String, required: true },
+        size: { type: Number },
+        mimeType: { type: String },
+      },
+    ],
   },
   {
     timestamps: true,

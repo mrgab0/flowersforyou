@@ -79,6 +79,12 @@ export async function sendCustomEmailAction(data: {
   customerEmail?: string;
   orderId?: string;
   bccAdmins?: boolean;
+  attachments?: Array<{
+    filename: string;
+    url: string;
+    size?: number;
+    mimeType?: string;
+  }>;
 }) {
   try {
     await dbConnect();
@@ -115,6 +121,37 @@ export async function sendCustomEmailAction(data: {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flowerforyoullc.com";
     const logoSrc = `${siteUrl.replace(/\/$/, "")}/logo.jpg`;
 
+    // Si hay adjuntos con imágenes, insertar vista previa visual elegante
+    const attachmentsHtml = data.attachments && data.attachments.length > 0
+      ? `
+        <div style="margin-top: 20px; padding: 15px; background: #fdf2f4; border: 1px solid #fbcfe8; border-radius: 10px;">
+          <strong style="color: #b0004a; font-size: 13px;">📎 Archivos y Fotos Adjuntas (${data.attachments.length}):</strong>
+          <div style="margin-top: 10px;">
+            ${data.attachments.map((att) => {
+              const isImg = att.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) || att.mimeType?.startsWith("image/");
+              if (isImg) {
+                return `
+                  <div style="margin-bottom: 10px;">
+                    <a href="${att.url}" target="_blank" style="text-decoration: none;">
+                      <img src="${att.url}" alt="${att.filename}" style="max-width: 100%; max-height: 280px; border-radius: 8px; border: 1px solid #e5e7eb; display: block; object-fit: cover;" />
+                      <span style="font-size: 11px; color: #6b7280; display: block; margin-top: 4px;">🔍 Clic para ampliar: <strong>${att.filename}</strong></span>
+                    </a>
+                  </div>
+                `;
+              }
+              return `
+                <div style="margin-bottom: 6px;">
+                  <a href="${att.url}" target="_blank" style="color: #b0004a; font-weight: bold; font-size: 12px; text-decoration: underline;">
+                    📄 Descargar archivo: ${att.filename}
+                  </a>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `
+      : "";
+
     const wrappedHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background: #ffffff;">
         <div style="background-color: #FF97A4; padding: 22px; text-align: center;">
@@ -133,6 +170,7 @@ export async function sendCustomEmailAction(data: {
         
         <div style="padding: 25px 30px; color: #333333; line-height: 1.6; font-size: 14px;">
           ${data.bodyHtml}
+          ${attachmentsHtml}
         </div>
 
         <div style="background-color: #1A1C1C; color: white; padding: 15px; text-align: center; font-size: 11px;">
@@ -141,12 +179,18 @@ export async function sendCustomEmailAction(data: {
       </div>
     `;
 
+    const resendAttachments = data.attachments?.map((att) => ({
+      filename: att.filename,
+      path: att.url,
+    }));
+
     const sendRes = await sendEmail({
       to: finalRecipients,
       from: data.from || emailCfg.senderFormatted,
       subject: data.subject.trim(),
       html: wrappedHtml,
       replyTo: data.from ? (data.from.match(/<(.+)>/)?.[1] || data.from) : emailCfg.replyTo,
+      attachments: resendAttachments,
     });
 
     if (!sendRes.success) {
@@ -171,6 +215,7 @@ export async function sendCustomEmailAction(data: {
       orderId: data.orderId || "",
       resendMessageId: sendRes.messageId || "",
       bccAdmins: data.bccAdmins !== false,
+      attachments: data.attachments || [],
       createdAt: new Date(),
     });
 

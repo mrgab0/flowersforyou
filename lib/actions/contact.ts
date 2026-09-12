@@ -9,11 +9,41 @@ export async function sendContactEmail(formData: {
   email: string;
   phone?: string;
   message: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
 }) {
   try {
     await dbConnect();
     const adminEmails = getAdminEmails();
     const emailCfg = await getCorporateEmailConfig();
+
+    const attachmentsList = formData.attachmentUrl
+      ? [
+          {
+            filename: formData.attachmentName || "referencia_floral.jpg",
+            url: formData.attachmentUrl,
+            mimeType: "image/jpeg",
+          },
+        ]
+      : [];
+
+    const attachmentHtml = formData.attachmentUrl
+      ? `
+        <div style="margin-top: 20px; padding: 16px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+          <h4 style="margin: 0 0 10px 0; color: #1A1C1C; font-size: 14px;">📎 Archivo / Foto de Referencia Adjunta:</h4>
+          <div style="text-align: center; margin-bottom: 10px;">
+            <a href="${formData.attachmentUrl}" target="_blank" rel="noopener noreferrer">
+              <img src="${formData.attachmentUrl}" alt="Foto de referencia" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+            </a>
+          </div>
+          <div style="text-align: center;">
+            <a href="${formData.attachmentUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #FF97A4; color: #ffffff; padding: 8px 18px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 12px;">
+              📥 Descargar / Ver en Alta Resolución
+            </a>
+          </div>
+        </div>
+      `
+      : "";
 
     // Guardar en la bandeja de entrada de MongoDB (EmailMessage)
     try {
@@ -24,13 +54,14 @@ export async function sendContactEmail(formData: {
         to: ["sales@flowerforyoullc.com"],
         replyTo: formData.email,
         subject: `🌸 Consulta de Contacto: ${formData.name}`,
-        bodyHtml: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h3 style="color: #FF97A4; margin-top: 0;">Mensaje recibido a través de la web:</h3><p><strong>Cliente:</strong> ${formData.name}</p><p><strong>Correo:</strong> ${formData.email}</p><p><strong>Teléfono:</strong> ${formData.phone || "No especificado"}</p><div style="padding: 14px; background: #fdf2f7; border-left: 4px solid #FF97A4; border-radius: 6px; margin-top: 12px;">${(formData.message || "").replace(/\n/g, "<br>")}</div></div>`,
+        bodyHtml: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h3 style="color: #FF97A4; margin-top: 0;">Mensaje recibido a través de la web:</h3><p><strong>Cliente:</strong> ${formData.name}</p><p><strong>Correo:</strong> ${formData.email}</p><p><strong>Teléfono:</strong> ${formData.phone || "No especificado"}</p><div style="padding: 14px; background: #fdf2f7; border-left: 4px solid #FF97A4; border-radius: 6px; margin-top: 12px;">${(formData.message || "").replace(/\n/g, "<br>")}</div>${attachmentHtml}</div>`,
         bodyText: formData.message,
         status: "received",
         isRead: false,
         customerName: formData.name,
         customerPhone: formData.phone || "",
         customerEmail: formData.email,
+        attachments: attachmentsList,
         createdAt: new Date(),
       });
     } catch (saveErr) {
@@ -53,6 +84,7 @@ export async function sendContactEmail(formData: {
           <div style="padding: 15px; background-color: #fdf2f7; border-left: 4px solid #FF97A4; border-radius: 6px; color: #333; line-height: 1.6;">
             ${(formData.message || "").replace(/\n/g, '<br>')}
           </div>
+          ${attachmentHtml}
         </div>
         <div style="background-color: #1A1C1C; color: white; padding: 15px; text-align: center; font-size: 12px;">
           <p style="margin: 0;">Flowers For You LLC • Boutique Digital</p>
@@ -60,12 +92,22 @@ export async function sendContactEmail(formData: {
       </div>
     `;
 
+    const resendAttachments = formData.attachmentUrl
+      ? [
+          {
+            filename: formData.attachmentName || "referencia_floral.jpg",
+            path: formData.attachmentUrl,
+          },
+        ]
+      : undefined;
+
     // 1. Enviar notificación a los 3 administradores (iirockalonso, hernandezmiriamcalifornia, flowersforyou403)
     const result = await sendEmail({
       to: adminEmails,
       replyTo: formData.email,
       subject: `🌸 Nuevo Mensaje de Contacto: ${formData.name}`,
       html: emailContent,
+      attachments: resendAttachments,
     });
 
     // 2. Si el cliente proporcionó correo válido, enviarle una confirmación automática de recibido

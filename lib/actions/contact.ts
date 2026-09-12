@@ -35,7 +35,7 @@ export async function sendContactEmail(formData: {
       </div>
     `;
 
-    // 1. Enviar notificación a ambos administradores (iirockalonso@gmail.com, flowersforyou403@gmail.com, etc.)
+    // 1. Enviar notificación a los 3 administradores (iirockalonso, hernandezmiriamcalifornia, flowersforyou403)
     const result = await sendEmail({
       to: adminEmails,
       replyTo: formData.email,

@@ -62,7 +62,11 @@ export async function getCorporateEmailConfig() {
 }
 
 export function getAdminEmails(): string[] {
-  const defaults = ["iirockalonso@gmail.com", "flowersforyou403@gmail.com"];
+  const defaults = [
+    "iirockalonso@gmail.com",
+    "hernandezmiriamcalifornia@gmail.com",
+    "flowersforyou403@gmail.com",
+  ];
   const rawEnv = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
   const envAdmins = rawEnv
     .split(",")
@@ -109,13 +113,18 @@ export async function sendEmail({ to, subject, html, from, replyTo, attachments,
   try {
     const emailCfg = await getCorporateEmailConfig();
     const recipients = Array.isArray(to) ? to : [to];
-    const fromAddress = from || emailCfg.senderFormatted;
+    let fromAddress = from || emailCfg.senderFormatted;
     const replyToAddress = replyTo || emailCfg.replyTo;
 
     // Detectar si tenemos una API Key de Resend (en RESEND_API_KEY o como smtpPass "re_...")
     const resendApiKey = process.env.RESEND_API_KEY || (emailCfg.smtpPass?.startsWith("re_") ? emailCfg.smtpPass : null) || (smtpOverride?.pass?.startsWith("re_") ? smtpOverride.pass : null);
 
     if (resendApiKey) {
+      // Garantizar que Resend siempre envíe desde el remitente corporativo oficial verificado
+      if (!fromAddress.toLowerCase().includes("@flowerforyoullc.com")) {
+        fromAddress = `"Flowers For You LLC" <sales@flowerforyoullc.com>`;
+      }
+
       const resendPayload: any = {
         from: fromAddress,
         to: recipients,

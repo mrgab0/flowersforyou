@@ -1,6 +1,6 @@
 import AdminLoginPage from "./login/page";
 import { verifyAdminSession, logoutAdminAction } from "@/lib/adminAuth";
-import { LogOut, Settings, Search, BarChart3, Package } from "lucide-react";
+import { LogOut, Settings, Search, BarChart3, Package, Mail } from "lucide-react";
 import { ThemeToggle } from "@/components/shop/ThemeToggle";
 import { AdminSalesNotificationListener } from "@/components/admin/AdminSalesNotificationListener";
 
@@ -74,6 +74,10 @@ export default async function AdminLayout({
             <a href="/admin/seo" className="px-3.5 py-2 rounded-xl bg-teal-100 dark:bg-teal-950/80 hover:bg-teal-200 dark:hover:bg-teal-900/80 text-teal-950 dark:text-teal-200 transition-colors border border-teal-300 dark:border-teal-800/80 flex items-center gap-1.5 font-extrabold shadow-sm">
               <Search size={15} className="text-teal-700 dark:text-teal-300" />
               <span>🔍 Optimización SEO</span>
+            </a>
+            <a href="/admin/correos" className="px-3.5 py-2 rounded-xl bg-pink-50 dark:bg-pink-950/40 hover:bg-pink-100 dark:hover:bg-pink-900/60 text-[#B0004A] dark:text-pink-300 transition-colors border border-pink-300 dark:border-pink-800/80 flex items-center gap-1.5 font-extrabold shadow-sm">
+              <Mail size={15} />
+              <span>✉️ Correos & Inbox</span>
             </a>
             <a href="/admin/configuracion" className="px-3.5 py-2 rounded-xl bg-amber-100 dark:bg-amber-950/80 hover:bg-amber-200 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 transition-colors border border-amber-300 dark:border-amber-800/80 flex items-center gap-1.5 font-extrabold shadow-sm">
               <Settings size={15} className="text-amber-700 dark:text-amber-300 animate-spin-slow" />

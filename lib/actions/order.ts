@@ -2,6 +2,7 @@
 
 import dbConnect from "@/lib/db";
 import { Order } from "@/lib/models/Order";
+import { EmailMessage } from "@/lib/models/EmailMessage";
 import { sendEmail, getAdminEmails, getCorporateEmailConfig } from "@/lib/email";
 
 export async function createOrder(orderData: any, existingOrderId?: string) {
@@ -228,12 +229,36 @@ export async function createOrder(orderData: any, existingOrderId?: string) {
         </div>
       `;
 
-      await sendEmail({
+      const emailRes = await sendEmail({
         to: recipientList,
         subject: `🌸 Factura / Confirmación de Pedido: ${savedOrder.orderId}`,
         html: emailContent,
         replyTo: emailCfg.replyTo,
       });
+
+      // Registrar en la colección EmailMessage para visualización en el Panel Admin
+      try {
+        await EmailMessage.create({
+          direction: "outbound",
+          type: "order_receipt",
+          from: emailRes.sender || emailCfg.senderFormatted,
+          to: recipientList,
+          replyTo: emailCfg.replyTo,
+          subject: `🌸 Factura / Confirmación de Pedido: ${savedOrder.orderId}`,
+          bodyHtml: emailContent,
+          status: emailRes.success ? "sent" : "failed",
+          isRead: true,
+          customerName: savedOrder.customerName || "",
+          customerPhone: savedOrder.customerPhone || "",
+          customerEmail: savedOrder.customerEmail || "",
+          orderId: savedOrder.orderId,
+          resendMessageId: emailRes.messageId || "",
+          bccAdmins: true,
+          createdAt: new Date(),
+        });
+      } catch (logErr) {
+        console.error("Error guardando registro de email de orden en MongoDB:", logErr);
+      }
 
       console.log(`[Order Email] Notificación de orden ${savedOrder.orderId} enviada a: ${recipientList.join(", ")}`);
     }

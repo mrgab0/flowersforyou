@@ -1,6 +1,8 @@
 "use server";
 
 import { sendEmail, getAdminEmails, getCorporateEmailConfig } from "@/lib/email";
+import dbConnect from "@/lib/db";
+import { EmailMessage } from "@/lib/models/EmailMessage";
 
 export async function sendContactEmail(formData: {
   name: string;
@@ -9,8 +11,31 @@ export async function sendContactEmail(formData: {
   message: string;
 }) {
   try {
+    await dbConnect();
     const adminEmails = getAdminEmails();
     const emailCfg = await getCorporateEmailConfig();
+
+    // Guardar en la bandeja de entrada de MongoDB (EmailMessage)
+    try {
+      await EmailMessage.create({
+        direction: "inbound",
+        type: "contact_form",
+        from: `"${formData.name}" <${formData.email}>`,
+        to: ["sales@flowerforyoullc.com"],
+        replyTo: formData.email,
+        subject: `🌸 Consulta de Contacto: ${formData.name}`,
+        bodyHtml: `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><h3 style="color: #FF97A4; margin-top: 0;">Mensaje recibido a través de la web:</h3><p><strong>Cliente:</strong> ${formData.name}</p><p><strong>Correo:</strong> ${formData.email}</p><p><strong>Teléfono:</strong> ${formData.phone || "No especificado"}</p><div style="padding: 14px; background: #fdf2f7; border-left: 4px solid #FF97A4; border-radius: 6px; margin-top: 12px;">${(formData.message || "").replace(/\n/g, "<br>")}</div></div>`,
+        bodyText: formData.message,
+        status: "received",
+        isRead: false,
+        customerName: formData.name,
+        customerPhone: formData.phone || "",
+        customerEmail: formData.email,
+        createdAt: new Date(),
+      });
+    } catch (saveErr) {
+      console.error("Error guardando mensaje de contacto en MongoDB:", saveErr);
+    }
 
     const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden; background: #ffffff;">

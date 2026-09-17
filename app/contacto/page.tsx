@@ -14,6 +14,7 @@ import {
   Loader2,
   MessageCircle,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 const COOLDOWN_DURATION = 60; // 60 segundos de cooldown

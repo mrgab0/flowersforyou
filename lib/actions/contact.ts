@@ -120,7 +120,7 @@ export async function sendContactMessage(formData: ContactFormData) {
 
         if (adminEmails.length > 0) {
           await resend.emails.send({
-            from: "contacto@flowersforyou.com",
+            from: process.env.RESEND_FROM_EMAIL || "hernandezmiriamcalifornia@gmail.com",
             to: adminEmails,
             subject: `Nuevo mensaje de contacto: ${formData.subject || "Consulta general"}`,
             html: `

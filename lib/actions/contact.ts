@@ -4,6 +4,12 @@ import { sendEmail, getAdminEmails, getCorporateEmailConfig } from "@/lib/email"
 import dbConnect from "@/lib/db";
 import { EmailMessage } from "@/lib/models/EmailMessage";
 
+/**
+ * NOTA: El formulario de contacto web ha sido deshabilitado temporalmente para mitigar ataques
+ * de bots y spam que saturaban el CPU en Vercel.
+ * Toda la lógica original de envío y guardado en MongoDB se mantiene preservada
+ * comentada a continuación para futura reactivación.
+ */
 export async function sendContactEmail(formData: {
   name: string;
   email: string;
@@ -12,6 +18,14 @@ export async function sendContactEmail(formData: {
   attachmentUrl?: string;
   attachmentName?: string;
 }) {
+  return {
+    success: false,
+    error: "El formulario de contacto web se encuentra deshabilitado temporalmente para prevenir spam. Por favor contáctanos directamente vía WhatsApp al +1 (657) 698-8586.",
+  };
+
+  /* =========================================================================
+   * LÓGICA ORIGINAL PRESERVADA:
+   * =========================================================================
   try {
     await dbConnect();
     const adminEmails = getAdminEmails();
@@ -155,4 +169,5 @@ export async function sendContactEmail(formData: {
     console.error("Error enviando correo de contacto:", error);
     return { success: false, error: "Error enviando correo. " + (error?.message || "") };
   }
+  ========================================================================= */
 }

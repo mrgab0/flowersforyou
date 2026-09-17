@@ -20,6 +20,14 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Protección anti-bot: Redirección inmediata en Edge de rutas de contacto para evitar consumo de CPU
+  if (pathname === '/contacto' || pathname === '/es/contacto' || pathname === '/en/contacto') {
+    const targetLocale = pathname.startsWith('/en') ? '/en' : '/';
+    const url = request.nextUrl.clone();
+    url.pathname = targetLocale;
+    return NextResponse.redirect(url);
+  }
+
   // Si es una ruta de administración, API o estáticos, omitir internacionalización
   if (
     pathname.startsWith('/admin') ||

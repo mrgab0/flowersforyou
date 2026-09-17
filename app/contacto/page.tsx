@@ -1,4 +1,4 @@
-import { ContactFormClient } from "@/components/shop/ContactFormClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -8,5 +8,5 @@ export const metadata = {
 };
 
 export default function ContactoPage() {
-  return <ContactFormClient />;
+  redirect("/");
 }

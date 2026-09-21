@@ -49,7 +49,8 @@ export function A4PrintableInvoice({ order, language = "es" }: A4PrintableInvoic
     couponDiscount: isEn ? "Coupon Discount" : "Descuento Cupón",
     salesTax: isEn ? "Sales Tax (8.25%):" : "Impuestos de Ley (Sales Tax 8.25%):",
     deliveryFee: isEn ? "Delivery Fee:" : "Costo de Envío / Despacho:",
-    free: isEn ? "Free" : "Gratis",
+    free: isEn ? "Free (Pickup)" : "Gratis (Retiro en Boutique)",
+    pendingReview: isEn ? "Subject to Seller Review" : "Sujeto a revisión del vendedor",
     totalInvoiced: isEn ? "TOTAL INVOICED:" : "TOTAL FACTURADO:",
     footerThanks: isEn ? "Thank you for choosing Flowers For You LLC!" : "¡Gracias por tu preferencia en Flowers For You LLC!",
     footerQuality: isEn ? "Freshness Guarantee & Boutique Quality • Houston, Texas • Live Support +1 (657) 698-8586" : "Garantía de Frescura & Calidad Boutique • Houston, Texas • Atención en Vivo +1 (657) 698-8586",
@@ -155,11 +156,15 @@ export function A4PrintableInvoice({ order, language = "es" }: A4PrintableInvoic
             {isPickup ? <Store size={14} className="text-purple-600 flex-shrink-0 mt-0.5" /> : <MapPin size={14} className="text-[#FF97A4] flex-shrink-0 mt-0.5" />}
             <span>{order.address}</span>
           </p>
-          {order.distanceMiles > 0 && (
+          {order.distanceMiles > 0 ? (
             <p className="text-[11px] font-bold text-gray-600">
               {t.distance} <span className="text-purple-700 font-mono">{order.distanceMiles} {t.miles}</span>
             </p>
-          )}
+          ) : !isPickup ? (
+            <p className="text-[11px] text-gray-500 italic">
+              {isEn ? "Distance: Pending seller calculation" : "Distancia: Por calcular por el vendedor"}
+            </p>
+          ) : null}
           {order.deliveryMethod && (
             <p className="text-[11px] text-gray-600">
               {t.deliveryMode} <strong>{order.deliveryMethod}</strong>
@@ -263,7 +268,11 @@ export function A4PrintableInvoice({ order, language = "es" }: A4PrintableInvoic
           <div className="flex justify-between text-gray-600 pb-1 border-b border-gray-100">
             <span>{t.deliveryFee}</span>
             <span className="font-mono font-bold text-gray-800">
-              {order.deliveryFee ? `+$${order.deliveryFee.toFixed(2)}` : t.free}
+              {order.deliveryFee > 0
+                ? `+$${order.deliveryFee.toFixed(2)}`
+                : isPickup
+                ? t.free
+                : t.pendingReview}
             </span>
           </div>
 

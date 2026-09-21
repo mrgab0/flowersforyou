@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getOrderById, updateOrderStatusAction } from "@/lib/actions/order";
+import { getOrderById, updateOrderStatusAction, updateOrderInvoiceAction } from "@/lib/actions/order";
 import { dispatchUberCourierAction, syncUberDeliveryStatusAction, cancelUberDeliveryAction } from "@/lib/actions/uberDirect";
 import { A4PrintableInvoice } from "@/components/admin/A4PrintableInvoice";
-import { ArrowLeft, Printer, MessageCircle, RefreshCw, CheckCircle2, Clock, MapPin, Store, Heart, Package, Globe, Car, ExternalLink, ShieldAlert, AlertTriangle, User, Phone, Navigation } from "lucide-react";
+import { ArrowLeft, Printer, MessageCircle, RefreshCw, CheckCircle2, Clock, MapPin, Store, Heart, Package, Globe, Car, ExternalLink, ShieldAlert, AlertTriangle, User, Phone, Navigation, DollarSign, Edit3, Save, Sparkles } from "lucide-react";
 
 const UBER_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending: { label: "Buscando repartidor...", color: "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200" },
@@ -28,6 +28,12 @@ export default function SingleOrderDetailAdminPage() {
   const [statusSuccess, setStatusSuccess] = useState(false);
   const [invoiceLang, setInvoiceLang] = useState<"es" | "en">("es");
 
+  // Estados para Edición Manual de Factura / Envío
+  const [customMiles, setCustomMiles] = useState<number | string>(0);
+  const [customFee, setCustomFee] = useState<number | string>(0);
+  const [savingInvoice, setSavingInvoice] = useState(false);
+  const [invoiceSuccessMsg, setInvoiceSuccessMsg] = useState("");
+
   // Estados para Uber Direct
   const [dispatchingUber, setDispatchingUber] = useState(false);
   const [cancelingUber, setCancelingUber] = useState(false);
@@ -46,6 +52,8 @@ export default function SingleOrderDetailAdminPage() {
     const res = await getOrderById(orderId);
     if (res.success && res.data) {
       setOrder(res.data);
+      setCustomMiles(res.data.distanceMiles || 0);
+      setCustomFee(res.data.deliveryFee || 0);
     }
     setLoading(false);
   }
@@ -62,6 +70,32 @@ export default function SingleOrderDetailAdminPage() {
       setTimeout(() => setStatusSuccess(false), 3000);
     } else {
       alert("No se pudo actualizar el estado de la orden.");
+    }
+  };
+
+  const handleSaveInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!order) return;
+
+    setSavingInvoice(true);
+    setInvoiceSuccessMsg("");
+
+    const milesNum = Math.max(0, parseFloat(customMiles.toString()) || 0);
+    const feeNum = Math.max(0, parseFloat(customFee.toString()) || 0);
+
+    const res = await updateOrderInvoiceAction(order.orderId, {
+      distanceMiles: milesNum,
+      deliveryFee: feeNum,
+    });
+
+    setSavingInvoice(false);
+
+    if (res.success && res.data) {
+      setOrder(res.data);
+      setInvoiceSuccessMsg("¡Factura y costo de envío actualizados correctamente!");
+      setTimeout(() => setInvoiceSuccessMsg(""), 4000);
+    } else {
+      alert(res.error || "No se pudo actualizar la factura.");
     }
   };
 
@@ -135,15 +169,38 @@ export default function SingleOrderDetailAdminPage() {
     }, 100);
   };
 
-  const createWhatsAppNotifyUrl = (ord: any) => {
+  const createWhatsAppApprovalUrl = (ord: any) => {
     const phone = (ord.customerPhone || "").replace(/\D/g, "");
-    const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://flowersforyou.vercel.app";
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://flowerforyoullc.com";
     const trackUrl = `${siteUrl}/rastreo`;
-    const statusText = ord.status || "En Proceso";
+    const hasFee = (ord.deliveryFee || 0) > 0;
 
-    const msg = `¡Hola ${ord.customerName}! 🌸 Te notificamos de Flowers For You que tu pedido *${ord.orderId}* se encuentra en estado: *${statusText}* ✨\n\nPuedes rastrear la entrega en tiempo real aquí: ${trackUrl}`;
+    let msg = "";
+    if (hasFee) {
+      msg = `¡Hola ${ord.customerName}! 🌸 Te notificamos de Flowers For You LLC sobre tu pedido *${ord.orderId}*.\n\nHemos cotizado el despacho de tu pedido:\n📍 Distancia: *${ord.distanceMiles || 0} Millas*\n🚚 Costo de Envío: *$${(ord.deliveryFee || 0).toFixed(2)} USD*\n💰 Total Final Facturado: *$${(ord.total || 0).toFixed(2)} USD*\n\n¿Nos confirmas tu aprobación para proceder con la entrega? ✨\nPuedes ver tu factura y rastreo aquí: ${trackUrl}`;
+    } else {
+      const statusText = ord.status || "En Proceso";
+      msg = `¡Hola ${ord.customerName}! 🌸 Te notificamos de Flowers For You que tu pedido *${ord.orderId}* se encuentra en estado: *${statusText}* ✨\n\nPuedes rastrear la entrega en tiempo real aquí: ${trackUrl}`;
+    }
 
     return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  };
+
+  // Cálculo en vivo del nuevo total
+  const calculateLiveTotal = () => {
+    if (!order) return 0;
+    const itemsSubtotal = (order.items || []).reduce((acc: number, item: any) => {
+      const itemTotal = item.price * item.quantity;
+      const addonsTotal = (item.addons || []).reduce((adAcc: number, ad: any) => adAcc + (ad.price || 0), 0);
+      return acc + itemTotal + addonsTotal;
+    }, 0);
+    const discount = order.discountAmount || 0;
+    const taxable = Math.max(0, itemsSubtotal - discount);
+    const tax = order.taxAmount !== undefined && order.taxAmount !== null
+      ? order.taxAmount
+      : Math.round(taxable * 0.0825 * 100) / 100;
+    const fee = Math.max(0, parseFloat(customFee.toString()) || 0);
+    return Math.round((taxable + tax + fee) * 100) / 100;
   };
 
   if (loading) {
@@ -237,10 +294,11 @@ export default function SingleOrderDetailAdminPage() {
           </div>
 
           <a
-            href={createWhatsAppNotifyUrl(order)}
+            href={createWhatsAppApprovalUrl(order)}
             target="_blank"
             rel="noopener noreferrer"
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-2xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+            title="Enviar cotización o notificación de aprobación por WhatsApp"
           >
             <MessageCircle size={15} />
             <span>WhatsApp</span>
@@ -267,6 +325,109 @@ export default function SingleOrderDetailAdminPage() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* SECCIÓN NO-PRINT: MODIFICACIÓN MANUAL DE FACTURA, MILLAS Y COSTO DE ENVÍO */}
+      <div className="no-print bg-white dark:bg-[#12131A] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4 border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-md shadow-amber-500/20">
+              <DollarSign size={22} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-serif font-black text-lg text-[#1A1C1C] dark:text-white">
+                  Ajuste Manual de Factura & Costo de Envío
+                </h2>
+                <span className="bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                  Cálculo del Vendedor
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Ingresa manualmente las millas recorridas y el costo de delivery para actualizar la factura y enviarla a aprobación del cliente
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {invoiceSuccessMsg && (
+          <div className="p-3.5 bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900 rounded-2xl text-xs font-bold flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 size={16} className="text-emerald-600" />
+            <span>{invoiceSuccessMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveInvoice} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Input Millas */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                <MapPin size={14} className="text-purple-600" /> Distancia en Millas:
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={customMiles}
+                onChange={(e) => setCustomMiles(e.target.value)}
+                placeholder="Ej: 12.4"
+                className="w-full p-3 border rounded-xl font-mono text-sm font-bold dark:bg-gray-900 dark:text-white dark:border-gray-800 focus:ring-2 focus:ring-[#FF97A4] focus:outline-none"
+                required
+              />
+              <span className="text-[10px] text-gray-400 block">Distancia estimada por el vendedor</span>
+            </div>
+
+            {/* Input Costo de Envío */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                <DollarSign size={14} className="text-emerald-600" /> Costo de Envío ($ USD):
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={customFee}
+                onChange={(e) => setCustomFee(e.target.value)}
+                placeholder="Ej: 25.00"
+                className="w-full p-3 border rounded-xl font-mono text-sm font-bold text-emerald-600 dark:bg-gray-900 dark:border-gray-800 focus:ring-2 focus:ring-[#FF97A4] focus:outline-none"
+                required
+              />
+              <span className="text-[10px] text-gray-400 block">Monto que se sumará al total facturado</span>
+            </div>
+
+            {/* Previsualización del Total */}
+            <div className="p-3.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 flex flex-col justify-center space-y-1 text-xs">
+              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Nuevo Total Facturado:</span>
+              <span className="text-xl font-black text-emerald-600 font-mono">
+                ${calculateLiveTotal().toFixed(2)} USD
+              </span>
+              <span className="text-[10px] text-gray-500">
+                (Subtotal + Sales Tax: ${((order.total || 0) - (order.deliveryFee || 0)).toFixed(2)} + Envío: ${((parseFloat(customFee.toString()) || 0)).toFixed(2)})
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <a
+              href={createWhatsAppApprovalUrl({ ...order, distanceMiles: parseFloat(customMiles.toString()) || 0, deliveryFee: parseFloat(customFee.toString()) || 0, total: calculateLiveTotal() })}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-sm transition-all"
+            >
+              <MessageCircle size={15} />
+              <span>💬 Enviar Cotización para Aprobación por WhatsApp</span>
+            </a>
+
+            <button
+              type="submit"
+              disabled={savingInvoice}
+              className="bg-[#1A1C1C] hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+            >
+              <Save size={15} />
+              {savingInvoice ? "Guardando Factura..." : "💾 Guardar y Actualizar Factura"}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* WIDGET DE DESPACHO Y RASTREO UBER DIRECT (DaaS) (No se imprime) */}

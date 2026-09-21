@@ -321,3 +321,56 @@ export async function getAllOrdersAction() {
     return { success: false, error: "No se pudieron obtener las órdenes." };
   }
 }
+
+export async function updateOrderInvoiceAction(
+  orderId: string,
+  data: {
+    distanceMiles?: number;
+    deliveryFee?: number;
+    status?: string;
+  }
+) {
+  try {
+    await dbConnect();
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      return { success: false, error: "Pedido no encontrado." };
+    }
+
+    const newMiles = typeof data.distanceMiles === "number" ? Math.max(0, data.distanceMiles) : (order.distanceMiles || 0);
+    const newFee = typeof data.deliveryFee === "number" ? Math.max(0, data.deliveryFee) : (order.deliveryFee || 0);
+
+    // Recalcular subtotal de items y addons
+    const itemsSubtotal = (order.items || []).reduce((acc: number, item: any) => {
+      const itemTotal = item.price * item.quantity;
+      const addonsTotal = (item.addons || []).reduce((adAcc: number, ad: any) => adAcc + (ad.price || 0), 0);
+      return acc + itemTotal + addonsTotal;
+    }, 0);
+
+    const discountAmount = order.discountAmount || 0;
+    const taxableSubtotal = Math.max(0, itemsSubtotal - discountAmount);
+    const taxAmount = order.taxAmount !== undefined && order.taxAmount !== null
+      ? order.taxAmount
+      : Math.round(taxableSubtotal * 0.0825 * 100) / 100;
+
+    const newTotal = Math.round((taxableSubtotal + taxAmount + newFee) * 100) / 100;
+
+    order.distanceMiles = newMiles;
+    order.deliveryFee = newFee;
+    order.total = newTotal;
+    if (data.status) {
+      order.status = data.status;
+    }
+
+    await order.save();
+
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(order)),
+      message: "Factura actualizada exitosamente."
+    };
+  } catch (error) {
+    console.error("Error actualizando factura del pedido:", error);
+    return { success: false, error: "Error al actualizar la factura del pedido." };
+  }
+}

@@ -76,15 +76,13 @@ export function DeliveryMapPicker({
   }, [addressInput]);
 
   const updateParent = (newAddress: string, newLat: number, newLng: number) => {
-    const miles = calculateHaversineMiles(storeLat, storeLng, newLat, newLng);
-    setDistanceMiles(miles);
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${newLat},${newLng}`;
 
     onLocationChange({
       address: newAddress,
       lat: newLat,
       lng: newLng,
-      distanceMiles: miles,
+      distanceMiles: 0,
       googleMapsUrl,
     });
   };
@@ -279,10 +277,10 @@ export function DeliveryMapPicker({
         {geocodedSuccess && (
           <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900/50 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
             <span className="flex items-center gap-1">
-              <CheckCircle2 size={14} className="text-emerald-600" /> Dirección localizada en mapa de Houston
+              <CheckCircle2 size={14} className="text-emerald-600" /> Dirección localizada correctamente en el mapa
             </span>
             <span className="bg-emerald-600 text-white px-2.5 py-0.5 rounded-full text-[10px]">
-              📍 {distanceMiles} Millas desde Boutique
+              📍 Ubicación Lista
             </span>
           </div>
         )}
@@ -306,16 +304,10 @@ export function DeliveryMapPicker({
             src={mapIframeUrl}
             className="w-full h-full"
           ></iframe>
-
-          {/* Badge flotante de millas sobre el mapa */}
-          <div className="absolute top-3 right-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-md flex items-center gap-1.5 text-xs font-black">
-            <Compass size={14} className="text-[#FF97A4]" />
-            <span>{distanceMiles > 0 ? `📍 ${distanceMiles} Millas desde Boutique` : "📍 Escribe la dirección para calcular millas"}</span>
-          </div>
         </div>
 
         <p className="text-[11px] text-gray-500 dark:text-gray-400 italic">
-          💡 Las millas calculadas se aplican automáticamente al costo de entrega según la opción elegida.
+          💡 El costo de envío final está sujeto a revisión del vendedor según la distancia y horario.
         </p>
       </div>
     </div>

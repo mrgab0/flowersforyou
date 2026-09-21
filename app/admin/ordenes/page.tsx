@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAllOrdersAction, updateOrderStatusAction } from "@/lib/actions/order";
-import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare, Heart, Printer, ArrowUpDown, DollarSign } from "lucide-react";
+import { getAllOrdersAction, updateOrderStatusAction, updateOrderInvoiceAction } from "@/lib/actions/order";
+import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare, Heart, Printer, ArrowUpDown, DollarSign, Edit3, Save, X, Sparkles, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminOrdenesPage() {
@@ -12,6 +12,12 @@ export default function AdminOrdenesPage() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date-desc");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Estados para Edición Manual de Factura / Envío
+  const [editingOrder, setEditingOrder] = useState<any | null>(null);
+  const [editMiles, setEditMiles] = useState<number | string>(0);
+  const [editFee, setEditFee] = useState<number | string>(0);
+  const [savingInvoice, setSavingInvoice] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -39,13 +45,50 @@ export default function AdminOrdenesPage() {
     setUpdatingId(null);
   };
 
-  const createWhatsAppNotifyUrl = (order: any) => {
-    const phone = (order.customerPhone || "").replace(/\D/g, "");
-    const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://flowersforyou.vercel.app";
-    const trackUrl = `${siteUrl}/rastreo`;
-    const statusText = order.status || "En Proceso";
+  const openEditInvoice = (order: any) => {
+    setEditingOrder(order);
+    setEditMiles(order.distanceMiles || 0);
+    setEditFee(order.deliveryFee || 0);
+  };
 
-    const msg = `¡Hola ${order.customerName}! 🌸 Te notificamos de Flowers For You que tu pedido *${order.orderId}* se encuentra en estado: *${statusText}* ✨\n\nPuedes rastrear el avance en tiempo real aquí: ${trackUrl}`;
+  const handleSaveInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOrder) return;
+
+    setSavingInvoice(true);
+    const milesNum = Math.max(0, parseFloat(editMiles.toString()) || 0);
+    const feeNum = Math.max(0, parseFloat(editFee.toString()) || 0);
+
+    const res = await updateOrderInvoiceAction(editingOrder.orderId, {
+      distanceMiles: milesNum,
+      deliveryFee: feeNum,
+    });
+
+    setSavingInvoice(false);
+
+    if (res.success && res.data) {
+      setOrders((prev) =>
+        prev.map((o) => (o.orderId === editingOrder.orderId ? res.data : o))
+      );
+      setEditingOrder(null);
+    } else {
+      alert(res.error || "No se pudo actualizar la factura.");
+    }
+  };
+
+  const createWhatsAppApprovalUrl = (order: any) => {
+    const phone = (order.customerPhone || "").replace(/\D/g, "");
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://flowerforyoullc.com";
+    const trackUrl = `${siteUrl}/rastreo`;
+    const hasFee = (order.deliveryFee || 0) > 0;
+
+    let msg = "";
+    if (hasFee) {
+      msg = `¡Hola ${order.customerName}! 🌸 Te escribimos de Flowers For You LLC.\n\nHemos cotizado el despacho de tu pedido *${order.orderId}*:\n📍 Distancia: *${order.distanceMiles || 0} Millas*\n🚚 Costo de Envío: *$${(order.deliveryFee || 0).toFixed(2)} USD*\n💰 Total Final Facturado: *$${(order.total || 0).toFixed(2)} USD*\n\n¿Nos confirmas tu aprobación para proceder con la entrega? ✨\nPuedes ver tu factura y rastreo aquí: ${trackUrl}`;
+    } else {
+      const statusText = order.status || "En Proceso";
+      msg = `¡Hola ${order.customerName}! 🌸 Te notificamos de Flowers For You que tu pedido *${order.orderId}* se encuentra en estado: *${statusText}* ✨\n\nPuedes rastrear el avance en tiempo real aquí: ${trackUrl}`;
+    }
 
     return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
   };
@@ -95,6 +138,23 @@ export default function AdminOrdenesPage() {
     return 0;
   });
 
+  // Cálculo en vivo del nuevo total en el modal
+  const calculateModalTotal = () => {
+    if (!editingOrder) return 0;
+    const itemsSubtotal = (editingOrder.items || []).reduce((acc: number, item: any) => {
+      const itemTotal = item.price * item.quantity;
+      const addonsTotal = (item.addons || []).reduce((adAcc: number, ad: any) => adAcc + (ad.price || 0), 0);
+      return acc + itemTotal + addonsTotal;
+    }, 0);
+    const discount = editingOrder.discountAmount || 0;
+    const taxable = Math.max(0, itemsSubtotal - discount);
+    const tax = editingOrder.taxAmount !== undefined && editingOrder.taxAmount !== null
+      ? editingOrder.taxAmount
+      : Math.round(taxable * 0.0825 * 100) / 100;
+    const fee = Math.max(0, parseFloat(editFee.toString()) || 0);
+    return Math.round((taxable + tax + fee) * 100) / 100;
+  };
+
   if (loading) {
     return (
       <div className="p-12 text-center text-gray-500 font-bold animate-pulse flex flex-col items-center justify-center gap-3">
@@ -116,7 +176,7 @@ export default function AdminOrdenesPage() {
             <h1 className="text-2xl font-bold text-[#1A1C1C] dark:text-white flex items-center gap-2">
               Gestor de Órdenes & Facturas A4
             </h1>
-            <p className="text-xs text-gray-400">Administra tus pedidos, filtra dinámicamente e imprime facturas A4 para tu tienda</p>
+            <p className="text-xs text-gray-400">Modifica costos de envío y millas manualmente para aprobación del cliente e imprime facturas A4</p>
           </div>
         </div>
 
@@ -214,6 +274,7 @@ export default function AdminOrdenesPage() {
         {sortedOrders.length > 0 ? (
           sortedOrders.map((order) => {
             const isPickup = (order.deliveryMethod || "").toLowerCase().includes("pickup") || (order.deliveryMethod || "").toLowerCase().includes("retiro");
+            const hasCustomDeliveryFee = (order.deliveryFee || 0) > 0;
 
             return (
               <div
@@ -223,7 +284,7 @@ export default function AdminOrdenesPage() {
                 {/* Fila 1: Datos Principales */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b pb-4 border-gray-100 dark:border-gray-800">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Link
                         href={`/admin/ordenes/${order.orderId}`}
                         className="font-mono font-bold text-sm text-[#1A1C1C] dark:text-white hover:text-[#FF97A4] transition-colors underline"
@@ -234,6 +295,19 @@ export default function AdminOrdenesPage() {
                         <Calendar size={12} />
                         {new Date(order.createdAt).toLocaleString("es-MX", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </span>
+                      {isPickup ? (
+                        <span className="bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-md text-[10px] font-bold border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                          <Store size={11} /> Retiro en Tienda
+                        </span>
+                      ) : hasCustomDeliveryFee ? (
+                        <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                          📍 {order.distanceMiles || 0} mi • Envío: +${order.deliveryFee.toFixed(2)} USD
+                        </span>
+                      ) : (
+                        <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md text-[10px] font-bold border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                          <AlertCircle size={11} /> Envío: Sujeto a revisión
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-3 text-xs">
@@ -245,16 +319,27 @@ export default function AdminOrdenesPage() {
                     </div>
                   </div>
 
-                  {/* Acciones: Imprimir Factura A4 + Selector de Estado + WhatsApp */}
+                  {/* Acciones: Editar Factura + Imprimir Factura A4 + Selector de Estado + WhatsApp */}
                   <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
                     
+                    {/* BOTÓN EDITAR FACTURA / MILLAS MANUAL */}
+                    <button
+                      type="button"
+                      onClick={() => openEditInvoice(order)}
+                      className="bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                      title="Modificar Millas y Costo de Envío Manualmente"
+                    >
+                      <Edit3 size={14} className="text-amber-600 dark:text-amber-400" />
+                      <span>Editar Factura / Millas</span>
+                    </button>
+
                     {/* BOTÓN DIRECTO VER FACTURA / IMPRIMIR A4 */}
                     <Link
                       href={`/admin/ordenes/${order.orderId}`}
                       className="bg-pink-50 dark:bg-pink-950/60 hover:bg-pink-100 dark:hover:bg-pink-900/60 text-[#B0004A] dark:text-pink-300 border border-pink-200 dark:border-pink-800 px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
                     >
                       <Printer size={14} />
-                      <span>Ver Factura e Imprimir A4</span>
+                      <span>Ver Factura A4</span>
                     </Link>
 
                     <div className="flex items-center gap-1.5">
@@ -276,10 +361,11 @@ export default function AdminOrdenesPage() {
                     </div>
 
                     <a
-                      href={createWhatsAppNotifyUrl(order)}
+                      href={createWhatsAppApprovalUrl(order)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
+                      title="Enviar cotización o notificación por WhatsApp"
                     >
                       <MessageCircle size={14} />
                       <span>WhatsApp</span>
@@ -293,9 +379,11 @@ export default function AdminOrdenesPage() {
                   <div className="p-3.5 bg-gray-50 dark:bg-gray-900/60 rounded-2xl space-y-2 border border-gray-100 dark:border-gray-800">
                     <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-400 tracking-wider">
                       <span>{isPickup ? "Método: Retiro en Boutique" : "Dirección de Entrega:"}</span>
-                      {order.distanceMiles > 0 && (
+                      {order.distanceMiles > 0 ? (
                         <span className="font-mono text-purple-600 dark:text-purple-400 font-bold">{order.distanceMiles} Millas</span>
-                      )}
+                      ) : !isPickup ? (
+                        <span className="text-amber-700 dark:text-amber-400 font-bold">Millas por definir</span>
+                      ) : null}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-gray-200 flex items-start gap-1">
                       {isPickup ? <Store size={14} className="text-purple-500 flex-shrink-0 mt-0.5" /> : <MapPin size={14} className="text-[#FF97A4] flex-shrink-0 mt-0.5" />}
@@ -326,17 +414,15 @@ export default function AdminOrdenesPage() {
                     )}
                   </div>
 
-                  {/* Arreglos de la Orden con Adicionales y Tax Resaltado */}
+                  {/* Arreglos de la Orden con Adicionales y Totales */}
                   <div className="p-3.5 bg-gray-50 dark:bg-gray-900/60 rounded-2xl space-y-2 border border-gray-100 dark:border-gray-800">
                     <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-400 tracking-wider">
                       <span>Arreglos Florales ({order.items?.length || 0})</span>
                       <div className="text-right">
-                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs block">${(order.total || 0).toFixed(2)} USD</span>
-                        {order.taxAmount ? (
-                          <span className="text-[9px] text-purple-600 dark:text-purple-400 font-semibold block">
-                            (Sales Tax: +${order.taxAmount.toFixed(2)})
-                          </span>
-                        ) : null}
+                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs block">Total: ${(order.total || 0).toFixed(2)} USD</span>
+                        <span className="text-[9px] text-gray-500 dark:text-gray-400 font-semibold block">
+                          Envío: {order.deliveryFee > 0 ? `+$${order.deliveryFee.toFixed(2)}` : isPickup ? "Gratis" : "Por cotizar"}
+                        </span>
                       </div>
                     </div>
                     
@@ -381,6 +467,109 @@ export default function AdminOrdenesPage() {
           </div>
         )}
       </div>
+
+      {/* MODAL DE EDICIÓN MANUAL DE FACTURA Y MILLAS */}
+      {editingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-[#12131A] rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-gray-800 space-y-6 relative">
+            <button
+              onClick={() => setEditingOrder(null)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1 rounded-full transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="space-y-1">
+              <span className="bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 text-[11px] font-black uppercase px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+                Edición Manual de Factura
+              </span>
+              <h2 className="text-xl font-bold text-[#1A1C1C] dark:text-white pt-2">
+                Modificar Envío de Orden <span className="font-mono text-[#FF97A4]">{editingOrder.orderId}</span>
+              </h2>
+              <p className="text-xs text-gray-500">
+                Cliente: <strong className="text-gray-800 dark:text-gray-200">{editingOrder.customerName}</strong> • {editingOrder.address}
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveInvoice} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Campo Millas */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                    <MapPin size={14} className="text-purple-600" /> Distancia en Millas:
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={editMiles}
+                    onChange={(e) => setEditMiles(e.target.value)}
+                    placeholder="Ej: 8.5"
+                    className="w-full p-3 border rounded-xl font-mono text-sm font-bold dark:bg-gray-900 dark:text-white dark:border-gray-800 focus:ring-2 focus:ring-[#FF97A4] focus:outline-none"
+                    required
+                  />
+                  <span className="text-[10px] text-gray-400">Millas calculadas manualmente</span>
+                </div>
+
+                {/* Campo Costo de Envío */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                    <DollarSign size={14} className="text-emerald-600" /> Costo de Envío ($ USD):
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editFee}
+                    onChange={(e) => setEditFee(e.target.value)}
+                    placeholder="Ej: 20.00"
+                    className="w-full p-3 border rounded-xl font-mono text-sm font-bold text-emerald-600 dark:bg-gray-900 dark:border-gray-800 focus:ring-2 focus:ring-[#FF97A4] focus:outline-none"
+                    required
+                  />
+                  <span className="text-[10px] text-gray-400">Monto sumado a la factura</span>
+                </div>
+              </div>
+
+              {/* Recálculo en tiempo real */}
+              <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-2 text-xs">
+                <div className="flex justify-between text-gray-500 font-medium">
+                  <span>Subtotal + Sales Tax:</span>
+                  <span>${((editingOrder.total || 0) - (editingOrder.deliveryFee || 0)).toFixed(2)} USD</span>
+                </div>
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-bold">
+                  <span>Nuevo Costo de Envío:</span>
+                  <span>+${(Math.max(0, parseFloat(editFee.toString()) || 0)).toFixed(2)} USD</span>
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-2 flex justify-between font-black text-sm text-[#1A1C1C] dark:text-white">
+                  <span>Nuevo Total de la Factura:</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">${calculateModalTotal().toFixed(2)} USD</span>
+                </div>
+              </div>
+
+              {/* Botones de Acción */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingOrder(null)}
+                  disabled={savingInvoice}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-100 transition-colors"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={savingInvoice}
+                  className="bg-[#1A1C1C] hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+                >
+                  <Save size={15} />
+                  {savingInvoice ? "Guardando..." : "Guardar y Actualizar Factura"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

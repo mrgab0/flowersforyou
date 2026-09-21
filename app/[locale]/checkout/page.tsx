@@ -157,23 +157,11 @@ export default function CheckoutPage() {
   // Impuestos de Ley (Sales Tax 8.25%) sumados Adicionalmente al Subtotal Imponible
   const taxAmount = Math.round(taxableSubtotal * 0.0825 * 100) / 100;
 
-  // Cálculo dinámico de tarifa por milla según la opción seleccionada
-  const calcOptionFee = (opt: DeliveryOption) => {
-    if (opt.id === "pickup") return 0;
-    const miles = deliveryLocation?.distanceMiles || 0;
-    const perMile = opt.pricePerMile || 0;
-    const base = opt.extraPrice || 0;
-    
-    if (perMile > 0 && miles === 0) return base;
+  // Tarifa de entrega en checkout (sujeto a revisión manual por el vendedor)
+  const deliveryFee = 0;
 
-    const totalFee = perMile > 0 ? (miles * perMile) + base : base;
-    return Math.round(totalFee * 100) / 100;
-  };
-
-  const deliveryFee = selectedDelivery ? calcOptionFee(selectedDelivery) : 0;
-
-  // Total Final = Subtotal Imponible + Sales Tax (8.25%) + Envío
-  const finalTotal = taxableSubtotal + taxAmount + deliveryFee;
+  // Total Final = Subtotal Imponible + Sales Tax (8.25%)
+  const finalTotal = taxableSubtotal + taxAmount;
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,10 +211,10 @@ export default function CheckoutPage() {
       address: deliveryLocation.address || data.get("address")?.toString() || address,
       destLat: deliveryLocation.lat,
       destLng: deliveryLocation.lng,
-      distanceMiles: deliveryLocation.distanceMiles,
+      distanceMiles: 0,
       googleMapsUrl: deliveryLocation.googleMapsUrl,
       deliveryMethod: `${selectedDelivery.title} (${selectedDelivery.estimatedTimeLabel})`,
-      deliveryFee: deliveryFee,
+      deliveryFee: 0,
       couponCode: appliedCoupon ? appliedCoupon.code : "",
       discountAmount: discountAmount,
       taxAmount: taxAmount,
@@ -396,19 +384,20 @@ export default function CheckoutPage() {
                                 <span className="font-bold text-gray-500">
                                   ⏱️ <strong className="text-gray-800">{option.estimatedTimeLabel}</strong>
                                 </span>
-                                {isMounted && option.id !== "pickup" && option.pricePerMile > 0 && (
-                                  <span suppressHydrationWarning className="text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
-                                    📍 {deliveryLocation?.distanceMiles || 0} mi × ${option.pricePerMile.toFixed(2)}/mi
-                                  </span>
-                                )}
                               </div>
                             </div>
                           </div>
 
                           <div className="text-right flex-shrink-0 ml-3">
-                            <span suppressHydrationWarning className={`text-sm font-extrabold block ${optionPrice > 0 ? "text-[#FF97A4]" : "text-green-600"}`}>
-                              {optionPrice > 0 ? `+$${optionPrice.toFixed(2)} USD` : "Gratis"}
-                            </span>
+                            {option.id === "pickup" ? (
+                              <span suppressHydrationWarning className="text-xs font-extrabold text-green-600 block">
+                                Gratis (Retiro)
+                              </span>
+                            ) : (
+                              <span suppressHydrationWarning className="text-[10px] font-extrabold text-amber-700 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-2 py-1 rounded-xl block max-w-[130px] leading-tight text-center">
+                                Sujeto a revisión del vendedor
+                              </span>
+                            )}
                             {isSelected && (
                               <CheckCircle2 size={18} className="text-[#FF97A4] ml-auto mt-1" />
                             )}
@@ -657,11 +646,19 @@ export default function CheckoutPage() {
                   <span className="font-extrabold text-purple-800">+${taxAmount.toFixed(2)} USD</span>
                 </div>
 
-                <div className="flex justify-between text-gray-600 font-medium">
+                <div className="flex justify-between items-center text-gray-600 font-medium">
                   <span>Entrega {selectedDelivery ? `(${selectedDelivery.title})` : "(Por seleccionar)"}</span>
-                  <span className={`font-bold ${deliveryFee > 0 ? "text-[#FF97A4]" : "text-gray-800"}`}>
-                    {selectedDelivery ? (deliveryFee > 0 ? `+$${deliveryFee.toFixed(2)}` : "Gratis") : "$0.00"}
-                  </span>
+                  {selectedDelivery ? (
+                    selectedDelivery.id === "pickup" ? (
+                      <span className="font-bold text-green-600">Gratis (Retiro)</span>
+                    ) : (
+                      <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
+                        Sujeto a revisión del vendedor
+                      </span>
+                    )
+                  ) : (
+                    <span className="font-bold text-gray-400">$0.00</span>
+                  )}
                 </div>
 
                 <div className="border-t pt-3 flex justify-between font-extrabold text-xl text-[#1A1C1C]">

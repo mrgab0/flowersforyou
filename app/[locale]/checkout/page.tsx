@@ -7,19 +7,11 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createOrder } from "@/lib/actions/order";
 import { ShopHeader } from "@/components/shop/ShopHeader";
-import { DEFAULT_DELIVERY_OPTIONS, DeliveryOption } from "@/lib/deliveryOptions";
-import { getDeliveryOptions } from "@/lib/actions/delivery";
 import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
 import { logAnalyticsEventAction } from "@/lib/actions/analytics";
 import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
-import nextDynamic from "next/dynamic";
-import { Zap, Rocket, Truck, Sun, Clock, Moon, Store, ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart, Fingerprint } from "lucide-react";
-
-const DeliveryMapPicker = nextDynamic(
-  () => import("@/components/shop/DeliveryMapPicker").then((mod) => mod.DeliveryMapPicker),
-  { ssr: false }
-);
+import { ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart, Fingerprint, MapPin } from "lucide-react";
 
 const PaymentLogos = {
   zelle: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><path d="M0 0h38v24H0z" fill="#6d2277"/><path d="M10 5h18v3l-10 8h10v5H10v-3l10-8H10z" fill="#fff"/></svg>,
@@ -29,43 +21,15 @@ const PaymentLogos = {
   efectivo: <svg viewBox="0 0 38 24" width="38" height="24" className="w-8 h-auto"><rect width="38" height="24" fill="#22C55E" rx="4"/><circle cx="19" cy="12" r="5" fill="#fff"/></svg>
 };
 
-const iconMap: Record<string, any> = {
-  Zap: Zap,
-  Rocket: Rocket,
-  Truck: Truck,
-  Sun: Sun,
-  Clock: Clock,
-  Moon: Moon,
-  Store: Store,
-};
-
 export default function CheckoutPage() {
   const { cartItems, clearCart, updateAddonCustomText } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState("");
-  const [deliveryOptionsList, setDeliveryOptionsList] = useState<DeliveryOption[]>(DEFAULT_DELIVERY_OPTIONS);
-  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
-
-  // Estado de Ubicación y Distancia por Millas
-  const [deliveryLocation, setDeliveryLocation] = useState<{
-    address: string;
-    lat: number;
-    lng: number;
-    distanceMiles: number;
-    googleMapsUrl: string;
-  }>({
-    address: "",
-    lat: 29.7027,
-    lng: -95.2936,
-    distanceMiles: 0,
-    googleMapsUrl: "https://maps.google.com",
-  });
-
   const [isMounted, setIsMounted] = useState(false);
 
-  // Estados para datos de contacto
+  // Estados para datos de contacto y entrega
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -84,12 +48,7 @@ export default function CheckoutPage() {
   const [copiedText, setCopiedText] = useState("");
 
   useEffect(() => {
-    async function loadOptionsAndCoupon() {
-      const { data } = await getDeliveryOptions();
-      if (data && data.length > 0) {
-        setDeliveryOptionsList(data);
-      }
-
+    async function loadConfigsAndCoupon() {
       const payRes = await getPaymentConfigs();
       if (payRes.success && payRes.data) {
         setPaymentConfigs(payRes.data);
@@ -106,7 +65,7 @@ export default function CheckoutPage() {
         setCouponSuccess(`🎁 ¡Felicidades! Eres el cliente #${autoRes.orderIndex} de inauguración. Cupón del ${autoRes.coupon.discountValue}% OFF aplicado automáticamente.`);
       }
     }
-    loadOptionsAndCoupon();
+    loadConfigsAndCoupon();
 
     const savedName = localStorage.getItem("customerName") || "";
     const savedEmail = localStorage.getItem("customerEmail") || "";
@@ -130,7 +89,6 @@ export default function CheckoutPage() {
       });
     }
   }, [cartItems]);
-
 
   const handleCopyText = (text: string) => {
     if (!text) return;
@@ -156,9 +114,6 @@ export default function CheckoutPage() {
 
   // Impuestos de Ley (Sales Tax 8.25%) sumados Adicionalmente al Subtotal Imponible
   const taxAmount = Math.round(taxableSubtotal * 0.0825 * 100) / 100;
-
-  // Tarifa de entrega en checkout (sujeto a revisión manual por el vendedor)
-  const deliveryFee = 0;
 
   // Total Final = Subtotal Imponible + Sales Tax (8.25%)
   const finalTotal = taxableSubtotal + taxAmount;
@@ -195,25 +150,25 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (!selectedDelivery) {
-      alert("Por favor selecciona una Opción de Entrega para completar tu pedido.");
-      return;
-    }
 
     setLoading(true);
 
     const data = new FormData(e.currentTarget);
+    const customerAddress = (data.get("address")?.toString() || address).trim();
+    const googleMapsUrl = customerAddress
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customerAddress)}`
+      : "https://maps.google.com";
+
     const orderData = {
-      customerName: data.get("name")?.toString() || "",
-      customerEmail: data.get("email")?.toString() || "",
-      customerPhone: data.get("phone")?.toString() || "",
-      address: deliveryLocation.address || data.get("address")?.toString() || address,
-      destLat: deliveryLocation.lat,
-      destLng: deliveryLocation.lng,
+      customerName: data.get("name")?.toString() || name,
+      customerEmail: data.get("email")?.toString() || email,
+      customerPhone: data.get("phone")?.toString() || phone,
+      address: customerAddress,
+      destLat: 29.7027,
+      destLng: -95.2936,
       distanceMiles: 0,
-      googleMapsUrl: deliveryLocation.googleMapsUrl,
-      deliveryMethod: `${selectedDelivery.title} (${selectedDelivery.estimatedTimeLabel})`,
+      googleMapsUrl: googleMapsUrl,
+      deliveryMethod: "Envío a Domicilio",
       deliveryFee: 0,
       couponCode: appliedCoupon ? appliedCoupon.code : "",
       discountAmount: discountAmount,
@@ -253,7 +208,7 @@ export default function CheckoutPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-6 gap-2">
             <div>
               <h1 className="text-3xl md:text-4xl font-serif font-black text-[#1A1C1C]">Finalizar Pedido</h1>
-              <p className="text-xs text-gray-400">Selecciona tu método de entrega y completa tus datos</p>
+              <p className="text-xs text-gray-400">Completa tus datos de entrega y método de pago</p>
             </div>
             <span className="bg-green-50 text-green-700 text-xs font-bold px-3.5 py-1.5 rounded-full border border-green-200 flex items-center gap-1.5">
               <ShieldCheck size={16} /> Pago Seguro Encriptado
@@ -262,16 +217,16 @@ export default function CheckoutPage() {
           
           <div className="grid md:grid-cols-12 gap-8">
             
-            {/* FORMULARIO DE DATOS Y SELECCIÓN DE ENTREGA */}
+            {/* FORMULARIO DE DATOS */}
             <div className="md:col-span-7 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 space-y-8">
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 
-                {/* 1. Datos de Contacto + Acceso Biométrico */}
+                {/* 1. Datos de Contacto y Dirección de Entrega */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center border-b pb-2">
                     <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500">
-                      1. Información del Cliente
+                      1. Información del Cliente & Dirección
                     </h2>
                     <button
                       type="button"
@@ -309,21 +264,32 @@ export default function CheckoutPage() {
                       className="w-full p-3.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
                       required 
                     />
-                    <DeliveryMapPicker
-                      initialAddress={address}
-                      onLocationChange={(locData: any) => {
-                        setAddress(locData.address);
-                        setDeliveryLocation(locData);
-                      }}
-                    />
+                    
+                    {/* Campo Limpio de Dirección de Entrega */}
+                    <div className="space-y-1.5 pt-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                        <MapPin size={14} className="text-[#FF97A4]" /> Dirección de Entrega Completa *
+                      </label>
+                      <textarea 
+                        name="address" 
+                        value={address} 
+                        onChange={(e) => setAddress(e.target.value)} 
+                        placeholder="Ej: 10827 Kyler Oaks Pl, Houston, TX 77043 (Incluye calle, número, apto/suite, ciudad y código postal) *" 
+                        className="w-full p-3.5 border rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] bg-white text-gray-800 h-24 resize-none leading-relaxed" 
+                        required 
+                      />
+                      <p className="text-[11px] text-gray-400 italic">
+                        💡 El costo de envío será calculado por el vendedor y coordinado para su aprobación.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* 1.5 Mensaje para la Tarjeta de Dedicatoria Incluida */}
+                {/* 2. Mensaje para la Tarjeta de Dedicatoria Incluida */}
                 <div className="space-y-3 bg-pink-50/60 p-4 rounded-2xl border border-pink-100/80">
                   <div className="flex justify-between items-center">
                     <h2 className="text-xs font-bold uppercase tracking-wider text-[#FF97A4] flex items-center gap-1.5">
-                      <Heart size={14} className="text-[#FF97A4] fill-[#FF97A4]" /> Tarjeta de Dedicatoria Impresa (Gratis Incluida)
+                      <Heart size={14} className="text-[#FF97A4] fill-[#FF97A4]" /> 2. Tarjeta de Dedicatoria Impresa (Gratis Incluida)
                     </h2>
                     <span className="bg-[#FF97A4] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">
                       Incluido 🎁
@@ -339,72 +305,6 @@ export default function CheckoutPage() {
                     placeholder="Ej: ¡Feliz Cumpleaños María! Deseo que este día esté lleno de amor y alegría. Con todo mi cariño, Carlos. ❤️"
                     className="w-full p-3.5 border border-pink-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] h-24 bg-white text-gray-800"
                   />
-                </div>
-
-                {/* 2. Selector de Opciones de Entrega */}
-                <div className="space-y-4 pt-2">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500">
-                      2. Opción y Horario de Entrega
-                    </h2>
-                    <span className="text-xs font-bold text-[#FF97A4]">{deliveryOptionsList.length} opciones disponibles</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
-                    {deliveryOptionsList.map((option, index) => {
-                      const IconComponent = iconMap[option.iconName] || Truck;
-                      const isSelected = selectedDelivery ? ((selectedDelivery.id && selectedDelivery.id === option.id) || selectedDelivery.title === option.title) : false;
-
-                      return (
-                        <label
-                          key={option.id || (option as any)._id || `delivery-${index}`}
-                          onClick={() => setSelectedDelivery(option)}
-                          className={`relative flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer transition-all ${
-                            isSelected
-                              ? "border-[#FF97A4] bg-[#FF97A4]/5 shadow-sm"
-                              : "border-gray-100 hover:border-gray-200 bg-white"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3.5">
-                            <div className={`p-2.5 rounded-xl ${isSelected ? "bg-[#FF97A4] text-white" : "bg-gray-100 text-gray-500"}`}>
-                              <IconComponent size={20} />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm text-[#1A1C1C]">{option.title}</span>
-                                {option.badge && (
-                                  <span className="bg-[#FF97A4]/15 text-[#FF97A4] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                                    {option.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-400 mt-0.5">{option.description}</p>
-                              <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px]">
-                                <span className="font-bold text-gray-500">
-                                  ⏱️ <strong className="text-gray-800">{option.estimatedTimeLabel}</strong>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="text-right flex-shrink-0 ml-3">
-                            {option.id === "pickup" ? (
-                              <span suppressHydrationWarning className="text-xs font-extrabold text-green-600 block">
-                                Gratis (Retiro)
-                              </span>
-                            ) : (
-                              <span suppressHydrationWarning className="text-[10px] font-extrabold text-amber-700 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-2 py-1 rounded-xl block max-w-[130px] leading-tight text-center">
-                                Sujeto a revisión del vendedor
-                              </span>
-                            )}
-                            {isSelected && (
-                              <CheckCircle2 size={18} className="text-[#FF97A4] ml-auto mt-1" />
-                            )}
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
                 </div>
 
                 {/* 3. Información de Pago */}
@@ -448,95 +348,101 @@ export default function CheckoutPage() {
                           <div className="space-y-4">
                             <div className="flex justify-between items-start">
                               <div>
-                                <span className="font-bold text-xs text-gray-400 uppercase tracking-wider block">
-                                  Instrucciones de Pago ({cfg.title || selectedPayment})
-                                </span>
-                                {cfg.holderName && (
-                                  <span className="font-bold text-sm text-[#1A1C1C] block mt-0.5">
-                                    Titular: {cfg.holderName}
-                                  </span>
+                                <h3 className="font-bold text-sm text-gray-800 uppercase flex items-center gap-1.5">
+                                  <span>Instrucciones de Pago: {selectedPayment}</span>
+                                </h3>
+                                {cfg.accountHolder && (
+                                  <p className="text-xs text-gray-600 mt-0.5">
+                                    Titular: <strong className="text-gray-900">{cfg.accountHolder}</strong>
+                                  </p>
                                 )}
                               </div>
+                              {PaymentLogos[selectedPayment as keyof typeof PaymentLogos]}
+                            </div>
 
-                              {detailToCopy && (
+                            {/* Datos a Copiar */}
+                            {detailToCopy && (
+                              <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between gap-2">
+                                <div className="text-xs font-mono text-gray-700 truncate">
+                                  <span className="text-gray-400 block text-[10px] uppercase font-sans">Dato de Pago / Cuenta:</span>
+                                  <strong>{detailToCopy}</strong>
+                                </div>
                                 <button
                                   type="button"
                                   onClick={() => handleCopyText(detailToCopy)}
-                                  className="bg-white border text-gray-700 hover:text-[#FF97A4] hover:border-[#FF97A4] px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                                  className="bg-pink-50 hover:bg-pink-100 text-[#FF97A4] border border-pink-200 p-2 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors flex-shrink-0"
                                 >
                                   <Copy size={13} />
-                                  <span>{copiedText === detailToCopy ? "¡Copiado! ✓" : "Copiar Datos"}</span>
+                                  <span>{copiedText === detailToCopy ? "¡Copiado!" : "Copiar"}</span>
                                 </button>
-                              )}
-                            </div>
-
-                            {cfg.qrImage && (
-                              <div className="flex flex-col items-center justify-center p-3 bg-white rounded-2xl border w-fit mx-auto shadow-sm">
-                                <img src={cfg.qrImage} alt={`QR ${cfg.title}`} className="w-44 h-44 object-contain rounded-xl" />
-                                <span className="text-[10px] text-gray-400 font-bold mt-1.5 flex items-center gap-1">
-                                  <QrCode size={12} /> Escanea con la App de {cfg.title}
-                                </span>
                               </div>
                             )}
 
+                            {/* Enlace de Pago Externo si existe */}
                             {cfg.linkUrl && (
-                              <div className="text-center pt-1">
+                              <div>
                                 <a
                                   href={cfg.linkUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 bg-[#1A1C1C] text-white px-5 py-2.5 rounded-full text-xs font-bold hover:bg-[#FF97A4] transition-colors shadow-sm"
+                                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
                                 >
-                                  <span>Pagar vía {cfg.title}</span>
-                                  <ExternalLink size={14} />
+                                  <ExternalLink size={13} /> Abrir Enlace Directo de {selectedPayment.toUpperCase()}
                                 </a>
                               </div>
                             )}
 
-                            {cfg.accountDetail && (
-                              <div className="bg-white p-3 rounded-xl border text-center font-mono font-extrabold text-sm text-[#1A1C1C]">
-                                {cfg.accountDetail}
+                            {/* Código QR si está configurado */}
+                            {cfg.qrCodeImage && (
+                              <div className="text-center space-y-2 pt-2 border-t border-gray-200/60">
+                                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+                                  <QrCode size={13} className="text-[#FF97A4]" /> Escanea para Pagar desde tu Móvil
+                                </span>
+                                <div className="inline-block p-2 bg-white rounded-2xl border shadow-sm">
+                                  <img 
+                                    src={cfg.qrCodeImage} 
+                                    alt={`QR de ${selectedPayment}`} 
+                                    className="w-36 h-36 object-contain rounded-xl mx-auto" 
+                                  />
+                                </div>
                               </div>
                             )}
 
-                            {cfg.instructions && (
-                              <div className="text-xs text-gray-700 bg-white p-3.5 rounded-xl border border-gray-100 space-y-1 shadow-sm">
-                                <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider block mb-1">
-                                  📌 Paso a paso para pagar:
-                                </span>
-                                {cfg.instructions.split('\n').map((line: string, i: number) => (
-                                  <p key={i} className="font-medium text-gray-700 leading-relaxed">
-                                    {line}
-                                  </p>
-                                ))}
-                              </div>
-                            )}
+                            {/* Campo para ingresar el número de referencia del pago */}
+                            <div className="pt-2 border-t border-gray-200/60 space-y-1.5">
+                              <label className="text-xs font-bold text-gray-700 block">
+                                Número de Referencia / Comprobante de Transacción:
+                              </label>
+                              <input
+                                name="paymentRef"
+                                type="text"
+                                placeholder="Ej: ZELLE-849204, Ref #123456 o Efectivo al Recibir"
+                                className="w-full p-3 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] bg-white"
+                                required
+                              />
+                            </div>
                           </div>
                         );
                       })()}
                     </div>
                   )}
-
-                  <input 
-                    name="paymentRef" 
-                    placeholder={selectedPayment === 'efectivo' ? "No requerido para pago en efectivo" : "Número o Código de Referencia de Pago *"} 
-                    className="w-full p-3.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
-                    disabled={selectedPayment === 'efectivo'}
-                    required={selectedPayment !== 'efectivo'}
-                  />
                 </div>
 
                 <button 
                   type="submit" 
-                  disabled={loading || cartItems.length === 0} 
-                  className="w-full bg-[#FF97A4] text-white py-4 rounded-full font-bold hover:bg-[#B0004A] transition-all shadow-lg shadow-[#FF97A4]/20 disabled:bg-gray-300 text-base"
+                  disabled={loading} 
+                  className="w-full bg-[#1A1C1C] hover:bg-black text-white p-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all disabled:opacity-50 shadow-lg shadow-black/10 flex items-center justify-center gap-2"
                 >
-                  {loading ? "Procesando Orden..." : `Confirmar Pedido - $${finalTotal.toFixed(2)} USD`}
+                  {loading ? (
+                    <span>Procesando tu Pedido...</span>
+                  ) : (
+                    <span>Completar Pedido • ${finalTotal.toFixed(2)} USD</span>
+                  )}
                 </button>
               </form>
             </div>
 
-            {/* RESUMEN DE COMPRA CON DESGLOSE DINÁMICO */}
+            {/* RESUMEN DE COMPRA */}
             <div className="md:col-span-5 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 h-fit space-y-6">
               <h2 className="text-xl font-serif font-black text-[#1A1C1C] border-b pb-3">Resumen de Tu Pedido</h2>
               
@@ -646,18 +552,10 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="flex justify-between items-center text-gray-600 font-medium">
-                  <span>Entrega {selectedDelivery ? `(${selectedDelivery.title})` : "(Por seleccionar)"}</span>
-                  {selectedDelivery ? (
-                    selectedDelivery.id === "pickup" ? (
-                      <span className="font-bold text-green-600">Gratis (Retiro)</span>
-                    ) : (
-                      <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
-                        Sujeto a revisión del vendedor
-                      </span>
-                    )
-                  ) : (
-                    <span className="font-bold text-gray-400">$0.00</span>
-                  )}
+                  <span>Costo de Envío / Despacho</span>
+                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                    Sujeto a revisión del vendedor
+                  </span>
                 </div>
 
                 <div className="border-t pt-3 flex justify-between font-extrabold text-xl text-[#1A1C1C]">

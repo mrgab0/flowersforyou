@@ -11,6 +11,7 @@ import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
 import { logAnalyticsEventAction } from "@/lib/actions/analytics";
 import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
+import { useLocale } from "next-intl";
 import { ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart, Fingerprint, MapPin } from "lucide-react";
 
 const PaymentLogos = {
@@ -22,6 +23,63 @@ const PaymentLogos = {
 };
 
 export default function CheckoutPage() {
+  const locale = useLocale();
+  const isEn = locale === "en";
+
+  const t = {
+    pageTitle: isEn ? "Complete Your Order" : "Finalizar Pedido",
+    pageSubtitle: isEn ? "Complete your delivery details and payment method" : "Completa tus datos de entrega y método de pago",
+    secureBadge: isEn ? "Secure Encrypted Payment" : "Pago Seguro Encriptado",
+    section1: isEn ? "1. Customer Information & Address" : "1. Información del Cliente & Dirección",
+    fingerprintBtn: isEn ? "Log In with Fingerprint 👆" : "Ingresar con Huella 👆",
+    namePlaceholder: isEn ? "Full Name & Last Name *" : "Nombre y Apellido Completo *",
+    emailPlaceholder: isEn ? "Customer Email Address *" : "Correo Electrónico del Cliente *",
+    phonePlaceholder: isEn ? "Contact Phone / WhatsApp *" : "Teléfono / WhatsApp de Contacto *",
+    addressLabel: isEn ? "Full Delivery Address *" : "Dirección de Entrega Completa *",
+    addressPlaceholder: isEn 
+      ? "Ex: 10827 Kyler Oaks Pl, Houston, TX 77043 (Include street, house number, apt/suite, city and zip code) *" 
+      : "Ej: 10827 Kyler Oaks Pl, Houston, TX 77043 (Incluye calle, número, apto/suite, ciudad y código postal) *",
+    shippingNotice: isEn 
+      ? "💡 The shipping fee will be calculated by the seller and coordinated for your approval."
+      : "💡 El costo de envío será calculado por el vendedor y coordinado para su aprobación.",
+    section2: isEn ? "2. Printed Gift Card Dedication (Free Included)" : "2. Tarjeta de Dedicatoria Impresa (Gratis Incluida)",
+    includedBadge: isEn ? "Included 🎁" : "Incluido 🎁",
+    cardMessageDesc: isEn 
+      ? "Write below the special message you want us to print on the gift card of your floral arrangement:"
+      : "Escribe a continuación el mensaje especial que deseas que imprimamos en la tarjeta de regalo de tu arreglo floral:",
+    cardMessagePlaceholder: isEn 
+      ? "Ex: Happy Birthday Maria! Wishing you a day filled with love and happiness. With all my love, Carlos. ❤️"
+      : "Ej: ¡Feliz Cumpleaños María! Deseo que este día esté lleno de amor y alegría. Con todo mi cariño, Carlos. ❤️",
+    section3: isEn ? "3. Payment Method" : "3. Método de Pago",
+    paymentInstructions: isEn ? "Payment Instructions" : "Instrucciones de Pago",
+    accountHolder: isEn ? "Account Holder:" : "Titular:",
+    accountDetailLabel: isEn ? "Payment Detail / Account:" : "Dato de Pago / Cuenta:",
+    copied: isEn ? "Copied!" : "¡Copiado!",
+    copy: isEn ? "Copy" : "Copiar",
+    openDirectLink: isEn ? "Open Direct Link for" : "Abrir Enlace Directo de",
+    scanQr: isEn ? "Scan to Pay from your Mobile" : "Escanea para Pagar desde tu Móvil",
+    refLabel: isEn ? "Payment Reference / Transaction Proof Number:" : "Número de Referencia / Comprobante de Transacción:",
+    refPlaceholder: isEn 
+      ? "Ex: ZELLE-849204, Ref #123456 or Cash upon Delivery" 
+      : "Ej: ZELLE-849204, Ref #123456 o Efectivo al Recibir",
+    processing: isEn ? "Processing your Order..." : "Procesando tu Pedido...",
+    completeOrder: isEn ? "Complete Order" : "Completar Pedido",
+    orderSummary: isEn ? "Your Order Summary" : "Resumen de Tu Pedido",
+    qty: isEn ? "Qty:" : "Cant:",
+    customTextPlaceholder: isEn ? "Add dedication for this addon..." : "Añadir dedicatoria para este adicional...",
+    couponQuestion: isEn ? "Do you have a Discount Coupon?" : "¿Tienes un Cupón de Descuento?",
+    couponPlaceholder: isEn ? "Ex: LAUNCH, WELCOME" : "Ej: INAUGURACION, BIENVENIDA",
+    applyCoupon: isEn ? "Apply" : "Aplicar",
+    subtotal: isEn ? "Arrangements & Addons Subtotal" : "Subtotal Arreglos & Adicionales",
+    couponDiscount: isEn ? "Coupon Discount" : "Descuento Cupón",
+    taxLabel: isEn ? "🏛️ Sales Tax (8.25%)" : "🏛️ Impuestos de Ley (Sales Tax 8.25%)",
+    shippingLabel: isEn ? "Delivery / Shipping Fee" : "Costo de Envío / Despacho",
+    shippingReview: isEn ? "Subject to seller review" : "Sujeto a revisión del vendedor",
+    finalTotal: isEn ? "Final Total" : "Total Final",
+    couponInvalid: isEn ? "Invalid coupon code." : "Código de cupón inválido.",
+    processError: isEn ? "Error processing order" : "Error al procesar pedido",
+  };
+
   const { cartItems, clearCart, updateAddonCustomText } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -62,7 +120,11 @@ export default function CheckoutPage() {
           coupon: autoRes.coupon
         });
         setAppliedCoupon(autoRes.coupon);
-        setCouponSuccess(`🎁 ¡Felicidades! Eres el cliente #${autoRes.orderIndex} de inauguración. Cupón del ${autoRes.coupon.discountValue}% OFF aplicado automáticamente.`);
+        setCouponSuccess(
+          isEn
+            ? `🎁 Congratulations! You are launch customer #${autoRes.orderIndex}. A ${autoRes.coupon.discountValue}% OFF coupon has been automatically applied.`
+            : `🎁 ¡Felicidades! Eres el cliente #${autoRes.orderIndex} de inauguración. Cupón del ${autoRes.coupon.discountValue}% OFF aplicado automáticamente.`
+        );
       }
     }
     loadConfigsAndCoupon();
@@ -88,7 +150,7 @@ export default function CheckoutPage() {
         cartItems: cartItems.map((i) => ({ productId: i.id, name: i.name, price: i.price, image: i.image }))
       });
     }
-  }, [cartItems]);
+  }, [cartItems, isEn]);
 
   const handleCopyText = (text: string) => {
     if (!text) return;
@@ -128,10 +190,14 @@ export default function CheckoutPage() {
     const res = await validateCoupon(couponInput, subtotal);
     if (res.success && res.coupon) {
       setAppliedCoupon(res.coupon);
-      setCouponSuccess(`¡Cupón "${res.coupon.code}" aplicado con éxito!`);
+      setCouponSuccess(
+        isEn
+          ? `Coupon "${res.coupon.code}" successfully applied!`
+          : `¡Cupón "${res.coupon.code}" aplicado con éxito!`
+      );
       setCouponInput("");
     } else {
-      setCouponError(res.error || "Código de cupón inválido.");
+      setCouponError(res.error || t.couponInvalid);
     }
   };
 
@@ -139,8 +205,8 @@ export default function CheckoutPage() {
     { id: "zelle", label: "Zelle" },
     { id: "cashapp", label: "CashApp" },
     { id: "paypal", label: "PayPal" },
-    { id: "square", label: "Square (Tarjeta)" },
-    { id: "efectivo", label: "Efectivo" },
+    { id: "square", label: isEn ? "Square (Card)" : "Square (Tarjeta)" },
+    { id: "efectivo", label: isEn ? "Cash" : "Efectivo" },
   ];
 
   const paymentMethods = rawPaymentMethods.filter((method) => {
@@ -168,7 +234,7 @@ export default function CheckoutPage() {
       destLng: -95.2936,
       distanceMiles: 0,
       googleMapsUrl: googleMapsUrl,
-      deliveryMethod: "Envío a Domicilio",
+      deliveryMethod: isEn ? "Home Delivery" : "Envío a Domicilio",
       deliveryFee: 0,
       couponCode: appliedCoupon ? appliedCoupon.code : "",
       discountAmount: discountAmount,
@@ -191,9 +257,12 @@ export default function CheckoutPage() {
       localStorage.setItem("customerPhone", orderData.customerPhone);
       localStorage.setItem("customerAddress", orderData.address);
 
-      router.push(`/checkout/confirmacion?orderId=${result.orderId}`);
+      const confirmPath = isEn
+        ? `/en/checkout/confirmacion?orderId=${result.orderId}`
+        : `/checkout/confirmacion?orderId=${result.orderId}`;
+      router.push(confirmPath);
     } else {
-      alert("Error al procesar pedido");
+      alert(t.processError);
       setLoading(false);
     }
   };
@@ -207,11 +276,11 @@ export default function CheckoutPage() {
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-6 gap-2">
             <div>
-              <h1 className="text-3xl md:text-4xl font-serif font-black text-[#1A1C1C]">Finalizar Pedido</h1>
-              <p className="text-xs text-gray-400">Completa tus datos de entrega y método de pago</p>
+              <h1 className="text-3xl md:text-4xl font-serif font-black text-[#1A1C1C]">{t.pageTitle}</h1>
+              <p className="text-xs text-gray-400">{t.pageSubtitle}</p>
             </div>
             <span className="bg-green-50 text-green-700 text-xs font-bold px-3.5 py-1.5 rounded-full border border-green-200 flex items-center gap-1.5">
-              <ShieldCheck size={16} /> Pago Seguro Encriptado
+              <ShieldCheck size={16} /> {t.secureBadge}
             </span>
           </div>
           
@@ -226,7 +295,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center border-b pb-2">
                     <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500">
-                      1. Información del Cliente & Dirección
+                      {t.section1}
                     </h2>
                     <button
                       type="button"
@@ -234,7 +303,7 @@ export default function CheckoutPage() {
                       className="bg-pink-50 hover:bg-pink-100 text-[#FF97A4] border border-pink-200 px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
                     >
                       <Fingerprint size={14} />
-                      <span>Ingresar con Huella 👆</span>
+                      <span>{t.fingerprintBtn}</span>
                     </button>
                   </div>
 
@@ -243,7 +312,7 @@ export default function CheckoutPage() {
                       name="name" 
                       value={name} 
                       onChange={(e) => setName(e.target.value)} 
-                      placeholder="Nombre y Apellido Completo *" 
+                      placeholder={t.namePlaceholder} 
                       className="w-full p-3.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
                       required 
                     />
@@ -252,7 +321,7 @@ export default function CheckoutPage() {
                       name="email" 
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)} 
-                      placeholder="Correo Electrónico del Cliente *" 
+                      placeholder={t.emailPlaceholder} 
                       className="w-full p-3.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
                       required 
                     />
@@ -260,7 +329,7 @@ export default function CheckoutPage() {
                       name="phone" 
                       value={phone} 
                       onChange={(e) => setPhone(e.target.value)} 
-                      placeholder="Teléfono / WhatsApp de Contacto *" 
+                      placeholder={t.phonePlaceholder} 
                       className="w-full p-3.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] font-medium" 
                       required 
                     />
@@ -268,18 +337,18 @@ export default function CheckoutPage() {
                     {/* Campo Limpio de Dirección de Entrega */}
                     <div className="space-y-1.5 pt-1">
                       <label className="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-                        <MapPin size={14} className="text-[#FF97A4]" /> Dirección de Entrega Completa *
+                        <MapPin size={14} className="text-[#FF97A4]" /> {t.addressLabel}
                       </label>
                       <textarea 
                         name="address" 
                         value={address} 
                         onChange={(e) => setAddress(e.target.value)} 
-                        placeholder="Ej: 10827 Kyler Oaks Pl, Houston, TX 77043 (Incluye calle, número, apto/suite, ciudad y código postal) *" 
+                        placeholder={t.addressPlaceholder} 
                         className="w-full p-3.5 border rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] bg-white text-gray-800 h-24 resize-none leading-relaxed" 
                         required 
                       />
                       <p className="text-[11px] text-gray-400 italic">
-                        💡 El costo de envío será calculado por el vendedor y coordinado para su aprobación.
+                        {t.shippingNotice}
                       </p>
                     </div>
                   </div>
@@ -289,20 +358,20 @@ export default function CheckoutPage() {
                 <div className="space-y-3 bg-pink-50/60 p-4 rounded-2xl border border-pink-100/80">
                   <div className="flex justify-between items-center">
                     <h2 className="text-xs font-bold uppercase tracking-wider text-[#FF97A4] flex items-center gap-1.5">
-                      <Heart size={14} className="text-[#FF97A4] fill-[#FF97A4]" /> 2. Tarjeta de Dedicatoria Impresa (Gratis Incluida)
+                      <Heart size={14} className="text-[#FF97A4] fill-[#FF97A4]" /> {t.section2}
                     </h2>
                     <span className="bg-[#FF97A4] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                      Incluido 🎁
+                      {t.includedBadge}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 font-medium leading-relaxed">
-                    Escribe a continuación el mensaje especial que deseas que imprimamos en la tarjeta de regalo de tu arreglo floral:
+                    {t.cardMessageDesc}
                   </p>
                   <textarea
                     name="cardMessage"
                     value={cardMessage}
                     onChange={(e) => setCardMessage(e.target.value)}
-                    placeholder="Ej: ¡Feliz Cumpleaños María! Deseo que este día esté lleno de amor y alegría. Con todo mi cariño, Carlos. ❤️"
+                    placeholder={t.cardMessagePlaceholder}
                     className="w-full p-3.5 border border-pink-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] h-24 bg-white text-gray-800"
                   />
                 </div>
@@ -310,7 +379,7 @@ export default function CheckoutPage() {
                 {/* 3. Información de Pago */}
                 <div className="space-y-4 pt-2">
                   <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 border-b pb-2">
-                    3. Método de Pago
+                    {t.section3}
                   </h2>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -349,11 +418,11 @@ export default function CheckoutPage() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <h3 className="font-bold text-sm text-gray-800 uppercase flex items-center gap-1.5">
-                                  <span>Instrucciones de Pago: {selectedPayment}</span>
+                                  <span>{t.paymentInstructions}: {selectedPayment}</span>
                                 </h3>
                                 {cfg.accountHolder && (
                                   <p className="text-xs text-gray-600 mt-0.5">
-                                    Titular: <strong className="text-gray-900">{cfg.accountHolder}</strong>
+                                    {t.accountHolder} <strong className="text-gray-900">{cfg.accountHolder}</strong>
                                   </p>
                                 )}
                               </div>
@@ -364,7 +433,7 @@ export default function CheckoutPage() {
                             {detailToCopy && (
                               <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between gap-2">
                                 <div className="text-xs font-mono text-gray-700 truncate">
-                                  <span className="text-gray-400 block text-[10px] uppercase font-sans">Dato de Pago / Cuenta:</span>
+                                  <span className="text-gray-400 block text-[10px] uppercase font-sans">{t.accountDetailLabel}</span>
                                   <strong>{detailToCopy}</strong>
                                 </div>
                                 <button
@@ -373,7 +442,7 @@ export default function CheckoutPage() {
                                   className="bg-pink-50 hover:bg-pink-100 text-[#FF97A4] border border-pink-200 p-2 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors flex-shrink-0"
                                 >
                                   <Copy size={13} />
-                                  <span>{copiedText === detailToCopy ? "¡Copiado!" : "Copiar"}</span>
+                                  <span>{copiedText === detailToCopy ? t.copied : t.copy}</span>
                                 </button>
                               </div>
                             )}
@@ -387,7 +456,7 @@ export default function CheckoutPage() {
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
                                 >
-                                  <ExternalLink size={13} /> Abrir Enlace Directo de {selectedPayment.toUpperCase()}
+                                  <ExternalLink size={13} /> {t.openDirectLink} {selectedPayment.toUpperCase()}
                                 </a>
                               </div>
                             )}
@@ -396,7 +465,7 @@ export default function CheckoutPage() {
                             {cfg.qrCodeImage && (
                               <div className="text-center space-y-2 pt-2 border-t border-gray-200/60">
                                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
-                                  <QrCode size={13} className="text-[#FF97A4]" /> Escanea para Pagar desde tu Móvil
+                                  <QrCode size={13} className="text-[#FF97A4]" /> {t.scanQr}
                                 </span>
                                 <div className="inline-block p-2 bg-white rounded-2xl border shadow-sm">
                                   <img 
@@ -411,12 +480,12 @@ export default function CheckoutPage() {
                             {/* Campo para ingresar el número de referencia del pago */}
                             <div className="pt-2 border-t border-gray-200/60 space-y-1.5">
                               <label className="text-xs font-bold text-gray-700 block">
-                                Número de Referencia / Comprobante de Transacción:
+                                {t.refLabel}
                               </label>
                               <input
                                 name="paymentRef"
                                 type="text"
-                                placeholder="Ej: ZELLE-849204, Ref #123456 o Efectivo al Recibir"
+                                placeholder={t.refPlaceholder}
                                 className="w-full p-3 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#FF97A4] bg-white"
                                 required
                               />
@@ -434,9 +503,9 @@ export default function CheckoutPage() {
                   className="w-full bg-[#1A1C1C] hover:bg-black text-white p-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all disabled:opacity-50 shadow-lg shadow-black/10 flex items-center justify-center gap-2"
                 >
                   {loading ? (
-                    <span>Procesando tu Pedido...</span>
+                    <span>{t.processing}</span>
                   ) : (
-                    <span>Completar Pedido • ${finalTotal.toFixed(2)} USD</span>
+                    <span>{t.completeOrder} • ${finalTotal.toFixed(2)} USD</span>
                   )}
                 </button>
               </form>
@@ -444,7 +513,7 @@ export default function CheckoutPage() {
 
             {/* RESUMEN DE COMPRA */}
             <div className="md:col-span-5 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 h-fit space-y-6">
-              <h2 className="text-xl font-serif font-black text-[#1A1C1C] border-b pb-3">Resumen de Tu Pedido</h2>
+              <h2 className="text-xl font-serif font-black text-[#1A1C1C] border-b pb-3">{t.orderSummary}</h2>
               
               <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
                 {cartItems.map((item) => (
@@ -455,7 +524,7 @@ export default function CheckoutPage() {
                       )}
                       <div>
                         <span className="font-bold text-[#1A1C1C] block">{item.name}</span>
-                        <span className="text-xs text-gray-400 font-medium block">Cant: {item.quantity}</span>
+                        <span className="text-xs text-gray-400 font-medium block">{t.qty} {item.quantity}</span>
                         
                         {item.addons && item.addons.length > 0 && (
                           <div className="mt-1 space-y-1 border-t border-gray-100 pt-1">
@@ -473,7 +542,7 @@ export default function CheckoutPage() {
                                   updateAddonCustomText && (
                                     <input
                                       type="text"
-                                      placeholder="Añadir dedicatoria para este adicional..."
+                                      placeholder={t.customTextPlaceholder}
                                       onChange={(e) => updateAddonCustomText(item.id, add.addonId, e.target.value)}
                                       className="mt-0.5 p-1 text-[9px] border rounded w-full focus:outline-none focus:ring-1 focus:ring-[#FF97A4]"
                                     />
@@ -493,7 +562,7 @@ export default function CheckoutPage() {
               {/* CAJA DE CUPÓN DE DESCUENTO */}
               <div className="pt-4 border-t border-gray-100 space-y-3">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Ticket size={14} className="text-[#FF97A4]" /> ¿Tienes un Cupón de Descuento?
+                  <Ticket size={14} className="text-[#FF97A4]" /> {t.couponQuestion}
                 </label>
 
                 {couponSuccess && (
@@ -515,7 +584,7 @@ export default function CheckoutPage() {
                     type="text"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value)}
-                    placeholder="Ej: INAUGURACION, BIENVENIDA"
+                    placeholder={t.couponPlaceholder}
                     className="flex-1 p-2.5 border rounded-xl text-xs uppercase font-bold focus:outline-none focus:ring-2 focus:ring-[#FF97A4]"
                   />
                   <button
@@ -523,7 +592,7 @@ export default function CheckoutPage() {
                     onClick={handleApplyCoupon}
                     className="bg-[#1A1C1C] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[#FF97A4] transition-colors"
                   >
-                    Aplicar
+                    {t.applyBtn}
                   </button>
                 </div>
               </div>
@@ -531,14 +600,14 @@ export default function CheckoutPage() {
               {/* DESGLOSE TRANSPARENTE DE TOTALES */}
               <div className="space-y-2.5 pt-4 border-t border-gray-100 text-sm">
                 <div className="flex justify-between text-gray-600 font-medium">
-                  <span>Subtotal Arreglos & Adicionales</span>
+                  <span>{t.subtotal}</span>
                   <span className="font-bold text-gray-800">${subtotal.toFixed(2)}</span>
                 </div>
 
                 {appliedCoupon && (
                   <div className="flex justify-between text-green-600 font-bold">
                     <span className="flex items-center gap-1">
-                      <Tag size={14} /> Descuento Cupón ({appliedCoupon.code})
+                      <Tag size={14} /> {t.couponDiscount} ({appliedCoupon.code})
                     </span>
                     <span>-${discountAmount.toFixed(2)} USD</span>
                   </div>
@@ -546,20 +615,20 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-purple-700 font-medium bg-purple-50 p-2.5 rounded-xl border border-purple-100">
                   <span className="font-bold flex items-center gap-1 text-xs">
-                    🏛️ Impuestos de Ley (Sales Tax 8.25%)
+                    {t.taxLabel}
                   </span>
                   <span className="font-extrabold text-purple-800">+${taxAmount.toFixed(2)} USD</span>
                 </div>
 
                 <div className="flex justify-between items-center text-gray-600 font-medium">
-                  <span>Costo de Envío / Despacho</span>
+                  <span>{t.shippingLabel}</span>
                   <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
-                    Sujeto a revisión del vendedor
+                    {t.shippingReview}
                   </span>
                 </div>
 
                 <div className="border-t pt-3 flex justify-between font-extrabold text-xl text-[#1A1C1C]">
-                  <span>Total Final</span>
+                  <span>{t.finalTotal}</span>
                   <span className="text-[#FF97A4]">${finalTotal.toFixed(2)} USD</span>
                 </div>
               </div>

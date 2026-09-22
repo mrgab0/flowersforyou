@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllOrdersAction, updateOrderStatusAction, updateOrderInvoiceAction } from "@/lib/actions/order";
-import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare, Heart, Printer, ArrowUpDown, DollarSign, Edit3, Save, X, Sparkles, AlertCircle } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, MapPin, User, MessageCircle, RefreshCw, ArrowLeft, Search, Filter, Store, ExternalLink, Calendar, MessageSquare, Heart, Printer, ArrowUpDown, DollarSign, Edit3, Save, X, Sparkles, AlertCircle, Bell } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminOrdenesPage() {
@@ -181,6 +181,28 @@ export default function AdminOrdenesPage() {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent("test-admin-sale-notification", {
+                  detail: {
+                    orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+                    customerName: "Cliente de Prueba (Demostración)",
+                    total: 145.50,
+                    items: [{ name: "Ramo de Rosas Luxury", quantity: 1 }],
+                    address: "10827 Kyler Oaks Pl, Houston, TX 77043",
+                  }
+                })
+              );
+            }}
+            className="p-2.5 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 rounded-2xl transition-colors flex items-center gap-1.5 text-xs font-bold"
+            title="Probar Notificación ¡Vendiste!"
+          >
+            <Bell size={16} className="text-amber-500 animate-bounce" />
+            <span className="hidden md:inline">Probar Alerta</span>
+          </button>
+
           <button
             onClick={loadOrders}
             className="p-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl transition-colors"

@@ -69,6 +69,7 @@ export default function CheckoutPage() {
     customTextPlaceholder: isEn ? "Add dedication for this addon..." : "Añadir dedicatoria para este adicional...",
     couponQuestion: isEn ? "Do you have a Discount Coupon?" : "¿Tienes un Cupón de Descuento?",
     couponPlaceholder: isEn ? "Ex: LAUNCH, WELCOME" : "Ej: INAUGURACION, BIENVENIDA",
+    applyBtn: isEn ? "Apply" : "Aplicar",
     applyCoupon: isEn ? "Apply" : "Aplicar",
     subtotal: isEn ? "Arrangements & Addons Subtotal" : "Subtotal Arreglos & Adicionales",
     couponDiscount: isEn ? "Coupon Discount" : "Descuento Cupón",

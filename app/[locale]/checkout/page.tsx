@@ -354,7 +354,6 @@ export default function CheckoutPage() {
                     {deliveryOptionsList.map((option, index) => {
                       const IconComponent = iconMap[option.iconName] || Truck;
                       const isSelected = selectedDelivery ? ((selectedDelivery.id && selectedDelivery.id === option.id) || selectedDelivery.title === option.title) : false;
-                      const optionPrice = calcOptionFee(option);
 
                       return (
                         <label

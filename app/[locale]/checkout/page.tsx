@@ -11,6 +11,7 @@ import { validateCoupon, checkAutoLaunchCoupon } from "@/lib/actions/coupon";
 import { getPaymentConfigs } from "@/lib/actions/paymentConfig";
 import { logAnalyticsEventAction } from "@/lib/actions/analytics";
 import { CustomerBiometricModal } from "@/components/auth/CustomerBiometricModal";
+import { CheckoutCaptcha } from "@/components/shop/CheckoutCaptcha";
 import { useLocale } from "next-intl";
 import { ShieldCheck, CheckCircle2, Ticket, Sparkles, Tag, AlertCircle, Copy, ExternalLink, QrCode, MessageSquare, Heart, Fingerprint, MapPin } from "lucide-react";
 
@@ -79,6 +80,7 @@ export default function CheckoutPage() {
     finalTotal: isEn ? "Final Total" : "Total Final",
     couponInvalid: isEn ? "Invalid coupon code." : "Código de cupón inválido.",
     processError: isEn ? "Error processing order" : "Error al procesar pedido",
+    captchaRequired: isEn ? "Please complete the security verification first." : "Por favor completa la verificación de seguridad anti-robots primero.",
   };
 
   const { cartItems, clearCart, updateAddonCustomText } = useCart();
@@ -105,6 +107,10 @@ export default function CheckoutPage() {
   // Datos de Configuración de Cuentas de Pago
   const [paymentConfigs, setPaymentConfigs] = useState<Record<string, any>>({});
   const [copiedText, setCopiedText] = useState("");
+
+  // Estado del CAPTCHA Anti-Robots
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaHoneypot, setCaptchaHoneypot] = useState("");
 
   useEffect(() => {
     async function loadConfigsAndCoupon() {
@@ -218,6 +224,11 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!captchaToken) {
+      alert(t.captchaRequired);
+      return;
+    }
+
     setLoading(true);
 
     const data = new FormData(e.currentTarget);
@@ -244,7 +255,9 @@ export default function CheckoutPage() {
       paymentMethod: data.get("paymentMethod")?.toString() || "",
       paymentRef: data.get("paymentRef")?.toString() || "N/A",
       items: cartItems,
-      total: finalTotal
+      total: finalTotal,
+      captchaToken: captchaToken,
+      honeypot: captchaHoneypot,
     };
 
     const existingOrderId = localStorage.getItem("lastOrderId") || undefined;
@@ -263,7 +276,7 @@ export default function CheckoutPage() {
         : `/checkout/confirmacion?orderId=${result.orderId}`;
       router.push(confirmPath);
     } else {
-      alert(t.processError);
+      alert(result.error || t.processError);
       setLoading(false);
     }
   };
@@ -498,10 +511,23 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
+                {/* 4. Verificación de Seguridad Anti-Robots / CAPTCHA */}
+                <CheckoutCaptcha
+                  isEn={isEn}
+                  onVerified={(token, hp) => {
+                    setCaptchaToken(token);
+                    setCaptchaHoneypot(hp);
+                  }}
+                  onReset={() => {
+                    setCaptchaToken("");
+                    setCaptchaHoneypot("");
+                  }}
+                />
+
                 <button 
                   type="submit" 
-                  disabled={loading} 
-                  className="w-full bg-[#1A1C1C] hover:bg-black text-white p-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all disabled:opacity-50 shadow-lg shadow-black/10 flex items-center justify-center gap-2"
+                  disabled={loading || !captchaToken} 
+                  className="w-full bg-[#1A1C1C] hover:bg-black text-white p-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-black/10 flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <span>{t.processing}</span>

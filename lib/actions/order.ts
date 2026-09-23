@@ -4,8 +4,16 @@ import dbConnect from "@/lib/db";
 import { Order } from "@/lib/models/Order";
 import { EmailMessage } from "@/lib/models/EmailMessage";
 import { sendEmail, getAdminEmails, getCorporateEmailConfig } from "@/lib/email";
+import { validateOrderSecurity } from "@/lib/captcha";
 
 export async function createOrder(orderData: any, existingOrderId?: string) {
+  // Verificación de seguridad Anti-Robots y Trampa Honeypot
+  const securityCheck = validateOrderSecurity(orderData?.captchaToken, orderData?.honeypot);
+  if (!securityCheck.valid) {
+    console.warn(`[Security Alert] Automated bot or unverified order blocked: ${securityCheck.reason}`);
+    return { success: false, error: "Verificación de seguridad requerida. Por favor completa el captcha." };
+  }
+
   await dbConnect();
   let savedOrder: any;
   let originalOrder: any = null;

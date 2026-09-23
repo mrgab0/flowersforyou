@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { generateCaptchaChallengeAction, verifyCaptchaSolutionAction, CaptchaChallenge } from "@/lib/captcha";
-import { ShieldCheck, RefreshCw, CheckCircle2, AlertCircle, Sparkles, Lock, ShieldAlert } from "lucide-react";
+import { ShieldCheck, RefreshCw, CheckCircle2, AlertCircle, Sparkles, Lock } from "lucide-react";
 
 interface CheckoutCaptchaProps {
   isEn?: boolean;
@@ -34,12 +34,12 @@ export function CheckoutCaptcha({ isEn = false, onVerified, onReset }: CheckoutC
     protectedBadge: isEn ? "Spam & Bot Shield" : "Escudo Anti-Spam",
   };
 
-  const loadNewChallenge = async () => {
+  const loadNewChallenge = async (resetParent: boolean = true) => {
     setLoading(true);
     setErrorMsg("");
     setUserAnswer("");
     setIsVerified(false);
-    if (onReset) onReset();
+    if (resetParent && onReset) onReset();
 
     try {
       const newChal = await generateCaptchaChallengeAction();
@@ -52,11 +52,14 @@ export function CheckoutCaptcha({ isEn = false, onVerified, onReset }: CheckoutC
   };
 
   useEffect(() => {
-    loadNewChallenge();
+    loadNewChallenge(false);
   }, []);
 
-  const handleVerify = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleVerify = async (e?: any) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+      if (typeof e.stopPropagation === "function") e.stopPropagation();
+    }
     if (!challenge) return;
 
     if (!userAnswer.trim()) {
@@ -74,9 +77,8 @@ export function CheckoutCaptcha({ isEn = false, onVerified, onReset }: CheckoutC
         onVerified(res.verificationToken, honeypot);
       } else {
         setErrorMsg(res.error || (isEn ? "Incorrect answer. Try again." : "Respuesta incorrecta. Intenta de nuevo."));
-        // Recargar desafío tras respuesta fallida
         setTimeout(() => {
-          loadNewChallenge();
+          loadNewChallenge(true);
         }, 1200);
       }
     } catch (err) {
@@ -141,7 +143,7 @@ export function CheckoutCaptcha({ isEn = false, onVerified, onReset }: CheckoutC
             {t.subtitle}
           </p>
 
-          <form onSubmit={handleVerify} className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {/* Caja del Desafío Matemático */}
             <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-pink-200 shadow-inner flex-shrink-0">
               <span className="text-sm font-black text-gray-800 font-mono tracking-wider">
@@ -156,6 +158,13 @@ export function CheckoutCaptcha({ isEn = false, onVerified, onReset }: CheckoutC
               pattern="[0-9]*"
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleVerify(e);
+                }
+              }}
               placeholder={t.placeholder}
               disabled={loading || verifying}
               className="w-24 p-2 text-center text-sm font-mono font-extrabold border-2 border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF97A4] bg-white text-gray-800"
@@ -164,9 +173,10 @@ export function CheckoutCaptcha({ isEn = false, onVerified, onReset }: CheckoutC
 
             {/* Botón de Verificar */}
             <button
-              type="submit"
+              type="button"
+              onClick={handleVerify}
               disabled={loading || verifying || !userAnswer.trim()}
-              className="bg-[#1A1C1C] hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 flex-shrink-0"
+              className="bg-[#1A1C1C] hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
             >
               {verifying ? (
                 <>
@@ -181,14 +191,14 @@ export function CheckoutCaptcha({ isEn = false, onVerified, onReset }: CheckoutC
             {/* Botón para recargar desafío */}
             <button
               type="button"
-              onClick={loadNewChallenge}
+              onClick={() => loadNewChallenge(true)}
               disabled={loading || verifying}
               title={t.reloadTooltip}
-              className="p-2 text-gray-400 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0"
+              className="p-2 text-gray-400 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0 cursor-pointer"
             >
               <RefreshCw size={14} className={loading ? "animate-spin text-[#FF97A4]" : ""} />
             </button>
-          </form>
+          </div>
 
           {/* Mensaje de Error si la respuesta fue incorrecta */}
           {errorMsg && (

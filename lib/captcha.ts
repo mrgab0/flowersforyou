@@ -100,7 +100,7 @@ export async function verifyCaptchaSolutionAction(
 /**
  * Valida en createOrder que el pedido incluya un verificationToken legítimo y que el honeypot esté vacío.
  */
-export function validateOrderSecurity(verificationToken?: string, honeypot?: string): { valid: boolean; reason?: string } {
+export async function validateOrderSecurity(verificationToken?: string, honeypot?: string): Promise<{ valid: boolean; reason?: string }> {
   // 1. Validar trampa Honeypot
   if (honeypot && honeypot.trim().length > 0) {
     return { valid: false, reason: "Honeypot trap triggered by automated bot." };

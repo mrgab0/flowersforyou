@@ -4,21 +4,33 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IProduct extends Document {
   name: string;
   slug: string;
-  sku: string;
+  sku?: string;
   description: string;
+  description_en?: string;
   price: number;
   images: string[];
   stock: number;
   category: string;
-  flowerType: string;
-  dimensions: string;
-  careInstructions: string;
-  addons: mongoose.Types.ObjectId[] | any[]; // Reforzado
-  seo: {
-    title: string;
-    description: string;
+  flowerType?: string;
+  dimensions?: string;
+  careInstructions?: string;
+  addons?: mongoose.Types.ObjectId[] | any[];
+  variants?: mongoose.Types.ObjectId[] | any[];
+  badge?: string;
+  isActive?: boolean;
+  flowerCount?: number;
+  bouquetType?: string;
+  features?: any[];
+  availableColors?: string[];
+  stemTiers?: Array<{ label: string; stems: number; price: number }>;
+  pricePerExtraRose?: number;
+  seo?: {
+    title?: string;
+    description?: string;
   };
-  createdAt: Date;
+  isDeleted?: boolean;
+  deletedAt?: Date | null;
+  createdAt?: Date;
 }
 
 const ProductSchema: Schema = new Schema({
@@ -26,6 +38,7 @@ const ProductSchema: Schema = new Schema({
   slug: { type: String, required: true, unique: true },
   sku: { type: String, default: "" },
   description: { type: String, required: true },
+  description_en: { type: String, default: "" },
   price: { type: Number, required: true },
   images: [{ type: String }],
   stock: { type: Number, default: 0 },
@@ -33,16 +46,28 @@ const ProductSchema: Schema = new Schema({
   flowerType: { type: String, default: "" },
   dimensions: { type: String, default: "" },
   careInstructions: { type: String, default: "" },
-  features: [{ label: String, value: String }],
-  flowerCount: { type: Number },
-  bouquetType: { type: String },
   addons: [{ type: Schema.Types.ObjectId, ref: 'Addon' }],
+  variants: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
+  badge: { type: String, default: "" },
+  isActive: { type: Boolean, default: true },
+  isDeleted: { type: Boolean, default: false, index: true },
+  deletedAt: { type: Date, default: null },
+  flowerCount: { type: Number, default: 0 },
+  bouquetType: { type: String, default: "" },
+  availableColors: [{ type: String }],
+  stemTiers: [{ label: String, stems: Number, price: Number }],
+  pricePerExtraRose: { type: Number, default: 3.50 },
+  features: [{ label: String, value: String }],
   seo: {
     title: { type: String },
     description: { type: String }
   },
   createdAt: { type: Date, default: Date.now }
 });
+
+// Índices para consultas optimizadas
+ProductSchema.index({ category: 1, isActive: 1 });
+ProductSchema.index({ isActive: 1, createdAt: -1 });
 
 export function slugify(text: string) {
   return text
@@ -51,13 +76,13 @@ export function slugify(text: string) {
     .normalize('NFD') // Normaliza acentos
     .replace(/[\u0300-\u036f]/g, '') // Elimina acentos
     .replace(/\s+/g, '-') // Reemplaza espacios por -
-    .replace(/[^\w\-]+/g, '') // Elimina caracteres especiales (incluyendo rayas especiales)
+    .replace(/[^\w\-]+/g, '') // Elimina caracteres especiales
     .replace(/\-\-+/g, '-') // Evita guiones múltiples --
     .replace(/^-+/, '') // Quita guiones iniciales
     .replace(/-+$/, ''); // Quita guiones finales
 }
 
-// Middleware para generar slug si no existe (opcional)
+// Middleware para generar slug si cambia el nombre
 ProductSchema.pre('save', function(next) {
   if (this.isModified('name')) {
     const name = this.get('name') as string;

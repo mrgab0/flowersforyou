@@ -1,0 +1,249 @@
+/**
+ * Formateador de Tickets para Impresora Térmica Star Micronics TSP100III y Matriz de Puntos
+ * Especificación de papel: 80mm de ancho / 72mm imprimibles (48 columnas Fuente A)
+ * Branded for Flowers For You
+ */
+
+export interface TicketItem {
+  name: string;
+  quantity: number;
+  price: number;
+  addons?: Array<{ name?: string; value?: string; price?: number; customText?: string }>;
+}
+
+export interface TicketOrderData {
+  orderId: string;
+  createdAt: Date | string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  address: string;
+  deliveryMethod?: string;
+  deliveryFee?: number;
+  discountAmount?: number;
+  taxAmount?: number;
+  total: number;
+  cardMessage?: string;
+  items: TicketItem[];
+}
+
+const LINE_WIDTH = 48; // Columnas estándar en papel de 80mm (203 DPI)
+
+/**
+ * Centra una cadena de texto en el ancho de 48 columnas
+ */
+function centerText(text: string, width = LINE_WIDTH): string {
+  if (text.length >= width) return text.substring(0, width);
+  const leftPadding = Math.floor((width - text.length) / 2);
+  return " ".repeat(leftPadding) + text;
+}
+
+/**
+ * Alinea dos textos a los extremos: izquierda y derecha (ej. "Rosas Rojas ........ $120.00")
+ */
+function justifyRow(left: string, right: string, width = LINE_WIDTH): string {
+  const maxLeft = width - right.length - 1;
+  const truncatedLeft = left.length > maxLeft ? left.substring(0, maxLeft) : left;
+  const spaces = Math.max(1, width - truncatedLeft.length - right.length);
+  return truncatedLeft + " ".repeat(spaces) + right;
+}
+
+/**
+ * Genera el texto plano formateado a 48 columnas
+ */
+export function formatTicketText(order: TicketOrderData, lang: "es" | "en" = "es"): string {
+  const isEs = lang === "es";
+  const dateStr = new Date(order.createdAt).toLocaleString(isEs ? "es-US" : "en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  const divider = "=".repeat(LINE_WIDTH);
+  const dashLine = "-".repeat(LINE_WIDTH);
+
+  let out = "";
+  out += centerText("FLOWERS FOR YOU") + "\n";
+  out += centerText("Boutique Floral de Lujo") + "\n";
+  out += centerText("Diseño Floral Exclusivo") + "\n";
+  out += divider + "\n";
+
+  out += justifyRow(isEs ? "ORDEN #" : "ORDER #", order.orderId) + "\n";
+  out += justifyRow(isEs ? "FECHA:" : "DATE:", dateStr) + "\n";
+  out += dashLine + "\n";
+
+  out += (isEs ? "CLIENTE:" : "CUSTOMER:") + "\n";
+  out += `  ${order.customerName}\n`;
+  out += `  Tel: ${order.customerPhone}\n`;
+  if (order.customerEmail) out += `  Email: ${order.customerEmail}\n`;
+
+  out += (isEs ? "ENTREGA EN:" : "DELIVERY TO:") + "\n";
+  out += `  ${order.address}\n`;
+  out += justifyRow(isEs ? "METODO:" : "METHOD:", order.deliveryMethod || "Envío a Domicilio") + "\n";
+
+  if (order.cardMessage && order.cardMessage.trim()) {
+    out += dashLine + "\n";
+    out += (isEs ? "💌 DEDICATORIA DE REGALO:" : "💌 GIFT CARD MESSAGE:") + "\n";
+    out += `  "${order.cardMessage.trim()}"\n`;
+  }
+
+  out += divider + "\n";
+  out += justifyRow(isEs ? "DESCRIPCION" : "ITEM", isEs ? "TOTAL" : "AMOUNT") + "\n";
+  out += dashLine + "\n";
+
+  let itemsSubtotal = 0;
+  for (const item of order.items || []) {
+    const qty = item.quantity || 1;
+    const price = item.price || 0;
+    const sub = qty * price;
+    itemsSubtotal += sub;
+
+    out += justifyRow(`${qty}x ${item.name}`, `$${sub.toFixed(2)}`) + "\n";
+
+    if (item.addons && item.addons.length > 0) {
+      for (const addon of item.addons) {
+        const aName = addon.name || addon.value || "";
+        const aPrice = addon.price ? `(+$${addon.price.toFixed(2)})` : "";
+        out += `   + ${aName} ${aPrice}\n`;
+        if (addon.customText) {
+          out += `     "${addon.customText}"\n`;
+        }
+      }
+    }
+  }
+
+  out += dashLine + "\n";
+  out += justifyRow(isEs ? "Subtotal:" : "Subtotal:", `$${itemsSubtotal.toFixed(2)}`) + "\n";
+
+  if (order.discountAmount && order.discountAmount > 0) {
+    out += justifyRow(isEs ? "Descuento:" : "Discount:", `-$${order.discountAmount.toFixed(2)}`) + "\n";
+  }
+
+  out += justifyRow(isEs ? "Impuestos (Tax):" : "Tax:", `+$${(order.taxAmount || 0).toFixed(2)}`) + "\n";
+  out += justifyRow(isEs ? "Envío / Delivery:" : "Delivery:", (order.deliveryFee || 0) > 0 ? `+$${order.deliveryFee?.toFixed(2)}` : (isEs ? "Gratis" : "Free")) + "\n";
+  out += divider + "\n";
+  out += justifyRow(isEs ? "TOTAL A PAGAR:" : "TOTAL DUE:", `$${(order.total || 0).toFixed(2)} USD`) + "\n";
+  out += divider + "\n";
+
+  out += centerText(isEs ? "¡Gracias por su preferencia!" : "Thank you for your order!") + "\n";
+  out += centerText("Flowers For You Boutique") + "\n\n\n";
+
+  return out;
+}
+
+import { buildStarRasterPayload } from "./starRaster";
+
+export { buildStarRasterPayload };
+
+/**
+ * Genera el Buffer de bytes para la Star Micronics TSP100III.
+ * Por defecto genera el stream en modo Star Graphic Raster (576 dots / 203 DPI)
+ * requerido por el firmware de hardware de la TSP143IIILAN.
+ */
+export function buildStarPrinterPayload(order: TicketOrderData, lang: "es" | "en" = "es"): Buffer {
+  return buildStarRasterPayload(order, lang);
+}
+
+/**
+ * Modo heredado de texto Star Line Mode / ESC/POS
+ */
+export function buildStarLineModePayload(order: TicketOrderData, lang: "es" | "en" = "es"): Buffer {
+  const chunks: Buffer[] = [];
+
+  const ESC = 0x1b;
+  const GS = 0x1d;
+
+  // Inicializar impresora (ESC @)
+  chunks.push(Buffer.from([ESC, 0x40]));
+
+  // Centrar texto (ESC a 1)
+  chunks.push(Buffer.from([ESC, 0x61, 0x01]));
+
+  // Doble altura y anchura para el nombre de la tienda (GS ! 0x11)
+  chunks.push(Buffer.from([GS, 0x21, 0x11]));
+  chunks.push(Buffer.from("FLOWERS FOR YOU\n", "latin1"));
+
+  // Tamaño normal (GS ! 0x00)
+  chunks.push(Buffer.from([GS, 0x21, 0x00]));
+  chunks.push(Buffer.from("Boutique Floral Moderna\n", "latin1"));
+  chunks.push(Buffer.from("================================================\n", "latin1"));
+
+  // Alineación izquierda (ESC a 0)
+  chunks.push(Buffer.from([ESC, 0x61, 0x00]));
+
+  // Negrita para el número de orden (ESC E 1)
+  chunks.push(Buffer.from([ESC, 0x45, 0x01]));
+  chunks.push(Buffer.from(`ORDEN: ${order.orderId}\n`, "latin1"));
+  chunks.push(Buffer.from([ESC, 0x45, 0x00]));
+
+  const dateStr = new Date(order.createdAt).toLocaleString("es-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  chunks.push(Buffer.from(`FECHA: ${dateStr}\n`, "latin1"));
+  chunks.push(Buffer.from("------------------------------------------------\n", "latin1"));
+
+  // Datos del Cliente
+  chunks.push(Buffer.from([ESC, 0x45, 0x01]));
+  chunks.push(Buffer.from("CLIENTE:\n", "latin1"));
+  chunks.push(Buffer.from([ESC, 0x45, 0x00]));
+  chunks.push(Buffer.from(`  ${order.customerName}\n`, "latin1"));
+  chunks.push(Buffer.from(`  Tel: ${order.customerPhone}\n`, "latin1"));
+
+  chunks.push(Buffer.from([ESC, 0x45, 0x01]));
+  chunks.push(Buffer.from("ENTREGA:\n", "latin1"));
+  chunks.push(Buffer.from([ESC, 0x45, 0x00]));
+  chunks.push(Buffer.from(`  ${order.address}\n`, "latin1"));
+
+  // Mensaje de dedicatoria
+  if (order.cardMessage && order.cardMessage.trim()) {
+    chunks.push(Buffer.from("------------------------------------------------\n", "latin1"));
+    chunks.push(Buffer.from([ESC, 0x45, 0x01]));
+    chunks.push(Buffer.from("DEDICATORIA DE REGALO:\n", "latin1"));
+    chunks.push(Buffer.from([ESC, 0x45, 0x00]));
+    chunks.push(Buffer.from(`  "${order.cardMessage.trim()}"\n`, "latin1"));
+  }
+
+  chunks.push(Buffer.from("================================================\n", "latin1"));
+  chunks.push(Buffer.from(justifyRow("DESCRIPCION", "TOTAL") + "\n", "latin1"));
+  chunks.push(Buffer.from("------------------------------------------------\n", "latin1"));
+
+  for (const item of order.items || []) {
+    const qty = item.quantity || 1;
+    const price = item.price || 0;
+    const sub = qty * price;
+
+    chunks.push(Buffer.from(justifyRow(`${qty}x ${item.name}`, `$${sub.toFixed(2)}`) + "\n", "latin1"));
+
+    if (item.addons && item.addons.length > 0) {
+      for (const addon of item.addons) {
+        const aName = addon.name || addon.value || "";
+        const aPrice = addon.price ? `(+$${addon.price.toFixed(2)})` : "";
+        chunks.push(Buffer.from(`   + ${aName} ${aPrice}\n`, "latin1"));
+        if (addon.customText) {
+          chunks.push(Buffer.from(`     "${addon.customText}"\n`, "latin1"));
+        }
+      }
+    }
+  }
+
+  chunks.push(Buffer.from("------------------------------------------------\n", "latin1"));
+  chunks.push(Buffer.from(justifyRow("Impuestos (Tax):", `+$${(order.taxAmount || 0).toFixed(2)}`) + "\n", "latin1"));
+  chunks.push(Buffer.from(justifyRow("Envio / Delivery:", (order.deliveryFee || 0) > 0 ? `+$${order.deliveryFee?.toFixed(2)}` : "Gratis") + "\n", "latin1"));
+  chunks.push(Buffer.from("================================================\n", "latin1"));
+
+  // TOTAL FINAL EN NEGRITA
+  chunks.push(Buffer.from([ESC, 0x45, 0x01]));
+  chunks.push(Buffer.from([GS, 0x21, 0x01]));
+  chunks.push(Buffer.from(justifyRow("TOTAL FINAL:", `$${(order.total || 0).toFixed(2)} USD`) + "\n", "latin1"));
+  chunks.push(Buffer.from([GS, 0x21, 0x00]));
+  chunks.push(Buffer.from([ESC, 0x45, 0x00]));
+
+  chunks.push(Buffer.from([ESC, 0x61, 0x01]));
+  chunks.push(Buffer.from("Flowers For You Boutique\n", "latin1"));
+
+  chunks.push(Buffer.from("\n\n\n\n", "latin1"));
+  chunks.push(Buffer.from([ESC, 0x64, 0x02]));
+  chunks.push(Buffer.from([GS, 0x56, 0x41, 0x00]));
+
+  return Buffer.concat(chunks);
+}
